@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package eth.erc20.v1;
+
+message Transfers {
+  repeated Transfer transfers = 1;
+}
+
+message Approvals {
+  repeated Approval approvals = 1;
+}
+
+message Events {
+  Transfers transfers = 1;
+  Approvals approvals = 2;
+}
+
+message Transfer {
+  string id = 1;
+  bytes from = 2;
+  bytes to = 3;
+  string value = 4;
+  uint64 ordinal = 5;
+}
+
+message Approval {
+  string id = 1;
+  bytes owner = 2;
+  bytes spender = 3;
+  string amount = 4;
+  uint64 ordinal = 5;
+}
+
+
+
