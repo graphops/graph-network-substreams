@@ -8,10 +8,6 @@ type GraphNetwork @entity {
     "Total delegated tokens in the protocol, is totalDelegatedTokens in the original subgraph"
     totalTokensDelegated: BigInt!
 
-    # Curation global aggregate values
-    "The total amount of GRT signalled in the Curation contract"
-    totalTokensSignalled: BigInt!
-
     # Graph Token global variables
     "Graph Token supply"
     totalSupply: BigInt!
@@ -21,21 +17,6 @@ type GraphNetwork @entity {
     totalGRTMinted: BigInt!
     "Total amount of GRT burned"
     totalGRTBurned: BigInt!
-
-    # Count aggregate values. Note, deprecated subgraphs or inactive users not removed from counts
-    "Total indexers"
-    indexerCount: Int!
-    "Number of indexers that currently have some stake in the protocol"
-    stakedIndexersCount: Int!
-    "Total amount of delegators historically"
-    delegatorCount: Int!
-    "Total active delegators. Those that still have at least one active delegation."
-    activeDelegatorCount: Int!
-    "Total amount of delegations historically"
-    curatorCount: Int!
-    "Total amount of curators historically"
-    activeCuratorCount: Int!
-    "Total amount of Subgraph entities"
 }
 
 type GraphAccount @entity {
@@ -45,16 +26,8 @@ type GraphAccount @entity {
     # GRT info
     "Graph token balance"
     balance: BigInt!
-    "Amount this account has approved staking to transfer their GRT"
-    curationApproval: BigInt!
-    "Amount this account has approved curation to transfer their GRT"
-    stakingApproval: BigInt!
-    "Amount this account has approved the GNS to transfer their GRT"
-    gnsApproval: BigInt!
 
     # Staking and Curating and Delegating
-     "Curator fields for this GraphAccount. Null if never curated"
-    curator: Curator
     "Indexer fields for this GraphAccount. Null if never indexed"
     indexer: Indexer
     "Delegator fields for this GraphAccount. Null if never delegated"
@@ -98,19 +71,5 @@ type DelegatedStake @entity {
     delegator: Delegator!
     "CUMULATIVE tokens delegated"
     stakedTokens: BigInt!
-    "CUMULATIVE tokens undelegated"
-    unstakedTokens: BigInt!
 }
 
-type Curator @entity {
-    "Eth address of the Curator"
-    id: ID!
-    "Time this curator was created"
-    createdAt: Int!
-    "Graph account of this curator"
-    account: GraphAccount!
-    "CUMULATIVE tokens signalled on all the subgraphs"
-    totalSignalledTokens: BigInt!
-    "CUMULATIVE tokens unsignalled on all the subgraphs"
-    totalUnsignalledTokens: BigInt!
-}
