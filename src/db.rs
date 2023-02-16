@@ -14,7 +14,6 @@ pub fn grt_balance_change(grt_deltas: Deltas<DeltaBigInt>, entity_changes: &mut 
             )
             .change("balance", delta);
     }
-
 }
 
 
@@ -38,5 +37,4 @@ pub fn grt_global_change(grt_global_deltas: Deltas<DeltaBigInt>, entity_changes:
             )
             .change(name, delta);
     }
-
 }
