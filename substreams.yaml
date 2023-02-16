@@ -20,16 +20,50 @@ binaries:
 modules:
   - name: map_events
     kind: map
-    initialBlock: 12178594
+    initialBlock: 11446769
     inputs:
       - source: sf.ethereum.type.v2.Block
     output:
       type: proto:eth.erc20.v1.Events
 
-  - name: graph_out
-    kind: map
-    initialBlock: 12178594
+  - name: store_grt_balances
+    kind: store
+    initialBlock: 11446769
+    updatePolicy: add
+    valueType: int64
     inputs:
-      - map: 
+      - map: map_events
+
+  - name: store_grt_global
+    kind: store
+    initialBlock: 11446769
+    updatePolicy: add
+    valueType: int64
+    inputs:
+      - map: map_events
+
+  - name: map_graph_network_entities
+    kind: map
+    initialBlock: 11446769
+    inputs:
+      - store: store_grt_global
+        mode: deltas
     output:
-      type: proto:substreams.entity.v1.EntityChanges
+      type: proto:substreams.entity.v1.EntityChange
+
+  - name: map_graph_account_entities
+    kind: map
+    initialBlock: 11446769
+    inputs:
+      - store: store_grt_balances
+        mode: deltas
+    output:
+      type: proto:substreams.entity.v1.EntityChange
+
+  # - name: graph_out
+  #   kind: map
+  #   initialBlock: 11446769
+  #   inputs:
+  #     - map: 
+  #   output:
+  #     type: proto:substreams.entity.v1.EntityChanges

@@ -12,7 +12,6 @@ message Approvals {
 
 message Events {
   Transfers transfers = 1;
-  Approvals approvals = 2;
 }
 
 message Transfer {

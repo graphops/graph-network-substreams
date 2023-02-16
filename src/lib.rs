@@ -1,42 +1,117 @@
 mod abi;
 mod pb;
 mod db;
-use pb::erc20;
+use pb::erc20::{ Events, Transfers, Transfer };
 use substreams::prelude::*;
 use std::str::FromStr;
-use substreams::{log, hex, store::StoreAddBigInt,store::StoreSetProto, Hex};
+use substreams::{ log, hex, store::StoreAddBigInt, store::StoreSetProto, Hex };
 use substreams_entity_change::pb::entity::EntityChanges;
 use substreams::store;
-use substreams::store::{DeltaBigInt};
-use substreams_ethereum::{pb::eth::v2 as eth, NULL_ADDRESS};
+use substreams::errors::Error;
+use substreams::store::{ Deltas, DeltaBigInt };
+use substreams_ethereum::{ pb::eth::v2 as eth, NULL_ADDRESS };
 use substreams::scalar::BigInt;
 use substreams_ethereum::Event;
 
 // Contract Addresses
+const GRAPH_TOKEN_ADDRESS: [u8; 20] = hex!("c944E90C64B2c07662A292be6244BDf05Cda44a7");
 
 substreams_ethereum::init!();
 
 // -------------------- INITIAL MAPS --------------------
 
-
-// -------------------- STORES --------------------
-
-
-
-// -------------------- MAPS FOR ENTITY CHANGES --------------------
-// We have an entity change map for each entity in our subgraph schema.graphql 
-// These maps take necessary stores or maps as inputs and create/update corresponding entitites in the subgraph using entity changes
-
-
-// -------------------- GRAPH_OUT --------------------
-// Final map for executing all entity change maps together 
-// Run this map to check the health of the entire substream 
-
 #[substreams::handlers::map]
-pub fn graph_out(
-    ) -> Result<EntityChanges, substreams::errors::Error> {
+fn map_events(blk: eth::Block) -> Result<Events, Error> {
+    let mut events = Events::default();
+    let mut transfers = vec![];
 
+    for log in blk.logs() {
+        if !(&Hex(&GRAPH_TOKEN_ADDRESS).to_string() == &Hex(&log.address()).to_string()) {
+            continue;
+        }
+
+        if let Some(event) = abi::erc20::events::Transfer::match_and_decode(log) {
+            transfers.push(Transfer {
+                id: Hex(&log.receipt.transaction.hash).to_string(), // Each Transfer needs a unique id
+                from: event.from,
+                to: event.to,
+                value: event.value.to_string(), // Value is origanally BigInt but proto does not have BigInt so we use string
+                ordinal: log.block_index() as u64,
+            });
+        }
+    }
+    events.transfers = Some(Transfers {
+        transfers: transfers,
+    });
+    Ok(events)
 }
 
-// -------------------- KEY GENERATORS --------------------
+// -------------------- STORES --------------------
+#[substreams::handlers::store]
+fn store_grt_balances(events: Events, s: StoreAddBigInt) {
+    let transfers = events.transfers.unwrap();
+    for transfer in transfers.transfers {
+        s.add(
+            transfer.ordinal,
+            generate_key_transfer(&transfer.from),
+            BigInt::from_str(&transfer.value).unwrap().neg()
+        );
+        s.add(
+            transfer.ordinal,
+            generate_key_transfer(&transfer.to),
+            BigInt::from_str(&transfer.value).unwrap()
+        );
+    }
+}
 
+#[substreams::handlers::store]
+fn store_grt_global(events: Events, s: StoreAddBigInt) {
+    let transfers = events.transfers.unwrap();
+    for transfer in transfers.transfers {
+        if transfer.to == NULL_ADDRESS {
+            s.add(transfer.ordinal, "totalSupply", BigInt::from_str(&transfer.value).unwrap().neg());
+            s.add(transfer.ordinal, "totalGRTBurned", BigInt::from_str(&transfer.value).unwrap());
+        }
+        if transfer.from == NULL_ADDRESS {
+            s.add(
+                transfer.ordinal,
+                "totalSupply",
+                BigInt::from_str(&transfer.value).unwrap()
+            );
+            s.add(transfer.ordinal, "totalGRTMinted", BigInt::from_str(&transfer.value).unwrap());
+        }
+    }
+}
+// -------------------- MAPS FOR ENTITY CHANGES --------------------
+// We have an entity change map for each entity in our subgraph schema.graphql
+// These maps take necessary stores or maps as inputs and create/update corresponding entitites in the subgraph using entity changes
+
+#[substreams::handlers::map]
+pub fn map_graph_network_entities(
+    grt_global_deltas: Deltas<DeltaBigInt>
+) -> Result<EntityChanges, Error> {
+    let mut entity_changes: EntityChanges = Default::default();
+    db::grt_global_change(grt_global_deltas, &mut entity_changes);
+    Ok(entity_changes)
+}
+
+#[substreams::handlers::map]
+pub fn map_graph_account_entities(
+    grt_balance_deltas: Deltas<DeltaBigInt>
+) -> Result<EntityChanges, Error> {
+    let mut entity_changes: EntityChanges = Default::default();
+    db::grt_balance_change(grt_balance_deltas, &mut entity_changes);
+    Ok(entity_changes)
+}
+
+// -------------------- GRAPH_OUT --------------------
+// Final map for executing all entity change maps together
+// Run this map to check the health of the entire substream
+
+// #[substreams::handlers::map]
+// pub fn graph_out() -> Result<EntityChanges, substreams::errors::Error> {}
+
+// -------------------- KEY GENERATORS --------------------
+fn generate_key_transfer(holder: &Vec<u8>) -> String {
+    return Hex(holder).to_string();
+}
