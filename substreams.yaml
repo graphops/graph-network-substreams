@@ -60,10 +60,11 @@ modules:
     output:
       type: proto:substreams.entity.v1.EntityChange
 
-  # - name: graph_out
-  #   kind: map
-  #   initialBlock: 11446769
-  #   inputs:
-  #     - map: 
-  #   output:
-  #     type: proto:substreams.entity.v1.EntityChanges
+  - name: graph_out
+    kind: map
+    initialBlock: 11446769
+    inputs:
+      - map: map_graph_network_entities
+      - map: map_graph_account_entities
+    output:
+      type: proto:substreams.entity.v1.EntityChanges

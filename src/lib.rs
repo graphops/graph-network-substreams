@@ -108,8 +108,18 @@ pub fn map_graph_account_entities(
 // Final map for executing all entity change maps together
 // Run this map to check the health of the entire substream
 
-// #[substreams::handlers::map]
-// pub fn graph_out() -> Result<EntityChanges, substreams::errors::Error> {}
+#[substreams::handlers::map]
+pub fn graph_out(graph_network_entities: EntityChanges,
+    graph_account_entities: EntityChanges,
+) -> Result<EntityChanges, substreams::errors::Error> {
+    Ok(EntityChanges {
+        entity_changes: [
+            graph_network_entities.entity_changes,
+            graph_account_entities.entity_changes,
+        ]
+        .concat(),
+    })
+}
 
 // -------------------- KEY GENERATORS --------------------
 fn generate_key_transfer(holder: &Vec<u8>) -> String {
