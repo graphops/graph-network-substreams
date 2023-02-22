@@ -1,4 +1,4 @@
-GRAPH_CONFIG ?= ../graph-node-dev/config/graphman.toml
+
 
 .PHONY: build
 build:
@@ -25,4 +25,4 @@ deploy_local: package
 
 .PHONE: undeploy_local
 undeploy_local:
-	graphman --config "$(GRAPH_CONFIG)" drop --force graph-network-substreams
+	graphman --config "../data/config/config.toml" drop --force graph-network-substreams
