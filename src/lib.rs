@@ -138,6 +138,15 @@ pub fn map_graph_account_entities(
     Ok(entity_changes)
 }
 
+#[substreams::handlers::map]
+pub fn map_indexer_entities(
+    indexer_stake_deltas: Deltas<DeltaBigInt>
+) -> Result<EntityChanges, Error> {
+    let mut entity_changes: EntityChanges = Default::default();
+    db::indexer_stake_change(indexer_stake_deltas, &mut entity_changes);
+    Ok(entity_changes)
+}
+
 // -------------------- GRAPH_OUT --------------------
 // Final map for executing all entity change maps together
 // Run this map to check the health of the entire substream
@@ -145,11 +154,13 @@ pub fn map_graph_account_entities(
 #[substreams::handlers::map]
 pub fn graph_out(graph_network_entities: EntityChanges,
     graph_account_entities: EntityChanges,
+    indexer_entities: EntityChanges,
 ) -> Result<EntityChanges, substreams::errors::Error> {
     Ok(EntityChanges {
         entity_changes: [
             graph_network_entities.entity_changes,
             graph_account_entities.entity_changes,
+            indexer_entities.entity_changes
         ]
         .concat(),
     })

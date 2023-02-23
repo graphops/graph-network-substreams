@@ -42,3 +42,22 @@ pub fn grt_global_change(
             .change(name, delta);
     }
 }
+
+// --------------------
+//  Map Indexer Stake Entity Changes
+// --------------------
+pub fn indexer_stake_change(
+    indexer_stake_deltas: Deltas<DeltaBigInt>,
+    entity_changes: &mut EntityChanges
+) {
+    for delta in indexer_stake_deltas.deltas {
+        entity_changes
+            .push_change(
+                "Indexer",
+                &delta.key, // id is set to 1 since there is only one LUSD entity
+                delta.ordinal,
+                Operation::Update // Update will create the entity if it does not exist
+            )
+            .change("stakedTokens", delta);
+    }
+}
