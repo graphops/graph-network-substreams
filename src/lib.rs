@@ -1,17 +1,20 @@
 mod abi;
-mod pb;
 mod db;
-use pb::erc20::{ Events, Transfers, Transfer, StakeDeposited, StakeDepositedEvents };
-use substreams::prelude::*;
+mod pb;
+use pb::erc20::{Events, Indexer, StakeDeposited, StakeDepositedEvents, Transfer, Transfers};
 use std::str::FromStr;
-use substreams::{ log, hex, store::StoreAddBigInt, store::StoreSetProto, Hex };
-use substreams_entity_change::pb::entity::EntityChanges;
-use substreams::store;
 use substreams::errors::Error;
-use substreams::store::{ Deltas, DeltaBigInt };
-use substreams_ethereum::{ pb::eth::v2 as eth, NULL_ADDRESS };
+use substreams::prelude::*;
 use substreams::scalar::BigInt;
+use substreams::store;
+use substreams::store::{DeltaBigInt, DeltaString, Deltas};
+use substreams::{
+    hex, log, store::StoreAddBigInt, store::StoreSetIfNotExists, store::StoreSetIfNotExistsString,
+    store::StoreSetProto, Hex,
+};
+use substreams_entity_change::pb::entity::EntityChanges;
 use substreams_ethereum::Event;
+use substreams_ethereum::{pb::eth::v2 as eth, NULL_ADDRESS};
 
 // Contract Addresses
 const GRAPH_TOKEN_ADDRESS: [u8; 20] = hex!("c944E90C64B2c07662A292be6244BDf05Cda44a7");
@@ -28,7 +31,9 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
     let mut stake_deposited_events = vec![];
 
     for log in blk.logs() {
-        if !(&Hex(&GRAPH_TOKEN_ADDRESS).to_string() == &Hex(&log.address()).to_string() || &Hex(&STAKING_CONTRACT).to_string() == &Hex(&log.address()).to_string() ) {
+        if !(&Hex(&GRAPH_TOKEN_ADDRESS).to_string() == &Hex(&log.address()).to_string()
+            || &Hex(&STAKING_CONTRACT).to_string() == &Hex(&log.address()).to_string())
+        {
             continue;
         }
 
@@ -40,9 +45,7 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
                 value: event.value.to_string(), // Value is origanally BigInt but proto does not have BigInt so we use string
                 ordinal: log.block_index() as u64,
             });
-        }
-
-        else if let Some(event) = abi::staking::events::StakeDeposited::match_and_decode(log) {
+        } else if let Some(event) = abi::staking::events::StakeDeposited::match_and_decode(log) {
             stake_deposited_events.push(StakeDeposited {
                 id: Hex(&log.receipt.transaction.hash).to_string(), // Each event needs a unique id
                 indexer: event.indexer,
@@ -70,12 +73,12 @@ fn store_grt_balances(events: Events, s: StoreAddBigInt) {
         s.add(
             transfer.ordinal,
             generate_key_transfer(&transfer.from),
-            BigInt::from_str(&transfer.value).unwrap().neg()
+            BigInt::from_str(&transfer.value).unwrap().neg(),
         );
         s.add(
             transfer.ordinal,
             generate_key_transfer(&transfer.to),
-            BigInt::from_str(&transfer.value).unwrap()
+            BigInt::from_str(&transfer.value).unwrap(),
         );
     }
 }
@@ -85,16 +88,28 @@ fn store_grt_global(events: Events, s: StoreAddBigInt) {
     let transfers = events.transfers.unwrap();
     for transfer in transfers.transfers {
         if transfer.to == NULL_ADDRESS {
-            s.add(transfer.ordinal, "totalSupply", BigInt::from_str(&transfer.value).unwrap().neg());
-            s.add(transfer.ordinal, "totalGRTBurned", BigInt::from_str(&transfer.value).unwrap());
+            s.add(
+                transfer.ordinal,
+                "totalSupply",
+                BigInt::from_str(&transfer.value).unwrap().neg(),
+            );
+            s.add(
+                transfer.ordinal,
+                "totalGRTBurned",
+                BigInt::from_str(&transfer.value).unwrap(),
+            );
         }
         if transfer.from == NULL_ADDRESS {
             s.add(
                 transfer.ordinal,
                 "totalSupply",
-                BigInt::from_str(&transfer.value).unwrap()
+                BigInt::from_str(&transfer.value).unwrap(),
             );
-            s.add(transfer.ordinal, "totalGRTMinted", BigInt::from_str(&transfer.value).unwrap());
+            s.add(
+                transfer.ordinal,
+                "totalGRTMinted",
+                BigInt::from_str(&transfer.value).unwrap(),
+            );
         }
     }
 }
@@ -106,12 +121,26 @@ fn store_indexer_stakes(events: Events, s: StoreAddBigInt) {
         s.add(
             stakeDeposited.ordinal,
             generate_key_transfer(&stakeDeposited.indexer),
-            BigInt::from_str(&stakeDeposited.tokens).unwrap()
+            BigInt::from_str(&stakeDeposited.tokens).unwrap(),
         );
         s.add(
             stakeDeposited.ordinal,
             "totalTokensStaked",
-            BigInt::from_str(&stakeDeposited.tokens).unwrap()
+            BigInt::from_str(&stakeDeposited.tokens).unwrap(),
+        );
+    }
+}
+
+#[substreams::handlers::store]
+fn store_graph_account_indexer(events: Events, s: StoreSetIfNotExistsProto<Indexer>) {
+    let stake_deposited_events = events.stake_deposited_events.unwrap();
+    for stakeDeposited in stake_deposited_events.stake_deposited_events {
+        s.set_if_not_exists(
+            stakeDeposited.ordinal,
+            generate_key_transfer(&stakeDeposited.indexer),
+            &Indexer {
+                id: generate_key_transfer(&stakeDeposited.indexer),
+            },
         );
     }
 }
@@ -122,7 +151,7 @@ fn store_indexer_stakes(events: Events, s: StoreAddBigInt) {
 
 #[substreams::handlers::map]
 pub fn map_graph_network_entities(
-    grt_global_deltas: Deltas<DeltaBigInt>
+    grt_global_deltas: Deltas<DeltaBigInt>,
 ) -> Result<EntityChanges, Error> {
     let mut entity_changes: EntityChanges = Default::default();
     db::grt_global_change(grt_global_deltas, &mut entity_changes);
@@ -131,16 +160,18 @@ pub fn map_graph_network_entities(
 
 #[substreams::handlers::map]
 pub fn map_graph_account_entities(
-    grt_balance_deltas: Deltas<DeltaBigInt>
+    grt_balance_deltas: Deltas<DeltaBigInt>,
+    graph_account_indexer_deltas: Deltas<DeltaString>,
 ) -> Result<EntityChanges, Error> {
     let mut entity_changes: EntityChanges = Default::default();
     db::grt_balance_change(grt_balance_deltas, &mut entity_changes);
+    db::graph_account_indexer_change(graph_account_indexer_deltas, &mut entity_changes);
     Ok(entity_changes)
 }
 
 #[substreams::handlers::map]
 pub fn map_indexer_entities(
-    indexer_stake_deltas: Deltas<DeltaBigInt>
+    indexer_stake_deltas: Deltas<DeltaBigInt>,
 ) -> Result<EntityChanges, Error> {
     let mut entity_changes: EntityChanges = Default::default();
     db::indexer_stake_change(indexer_stake_deltas, &mut entity_changes);
@@ -152,7 +183,8 @@ pub fn map_indexer_entities(
 // Run this map to check the health of the entire substream
 
 #[substreams::handlers::map]
-pub fn graph_out(graph_network_entities: EntityChanges,
+pub fn graph_out(
+    graph_network_entities: EntityChanges,
     graph_account_entities: EntityChanges,
     indexer_entities: EntityChanges,
 ) -> Result<EntityChanges, substreams::errors::Error> {
@@ -160,7 +192,7 @@ pub fn graph_out(graph_network_entities: EntityChanges,
         entity_changes: [
             graph_network_entities.entity_changes,
             graph_account_entities.entity_changes,
-            indexer_entities.entity_changes
+            indexer_entities.entity_changes,
         ]
         .concat(),
     })

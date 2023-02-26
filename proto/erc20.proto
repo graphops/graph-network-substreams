@@ -41,5 +41,8 @@ message Approval {
   uint64 ordinal = 5;
 }
 
+message Indexer {
+  string id = 1;
+}
 
 

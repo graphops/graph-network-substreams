@@ -27,9 +27,9 @@ type GraphAccount @entity {
     "Graph token balance"
     balance: BigInt
 
-    # Staking and Curating and Delegating
-    # "Indexer fields for this GraphAccount. Null if never indexed"
-    # indexer: Indexer
+    Staking and Curating and Delegating
+    "Indexer fields for this GraphAccount. Null if never indexed"
+    indexer: Indexer
     # "Delegator fields for this GraphAccount. Null if never delegated"
     # delegator: Delegator
 }

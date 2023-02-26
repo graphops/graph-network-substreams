@@ -49,6 +49,14 @@ modules:
     valueType: bigint
     inputs:
       - map: map_events
+  
+  - name: store_graph_account_indexer
+    kind: store
+    initialBlock: 11446769
+    updatePolicy: set_if_not_exists
+    valueType: string
+    inputs:
+      - map: map_events
 
   - name: map_graph_network_entities
     kind: map
@@ -64,6 +72,8 @@ modules:
     initialBlock: 11446769
     inputs:
       - store: store_grt_balances
+        mode: deltas
+      - store: store_graph_account_indexer
         mode: deltas
     output:
       type: proto:substreams.entity.v1.EntityChange
