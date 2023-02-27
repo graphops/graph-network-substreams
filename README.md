@@ -19,6 +19,38 @@ This project is a [subgraph](https://thegraph.com/docs/en/developing/creating-a-
 
 Here is the graph of the modules of the substreams: 
 
+```mermaid
+graph TD;
+  map_events[map: map_events]
+  sf.ethereum.type.v2.Block[source: sf.ethereum.type.v2.Block] --> map_events
+  store_grt_balances[store: store_grt_balances]
+  map_events --> store_grt_balances
+  store_grt_global[store: store_grt_global]
+  map_events --> store_grt_global
+  store_indexer_stakes[store: store_indexer_stakes]
+  map_events --> store_indexer_stakes
+  store_graph_account_indexer[store: store_graph_account_indexer]
+  map_events --> store_graph_account_indexer
+  store_graph_account_delegator[store: store_graph_account_delegator]
+  map_events --> store_graph_account_delegator
+  store_delegated_stakes[store: store_delegated_stakes]
+  map_events --> store_delegated_stakes
+  map_graph_network_entities[map: map_graph_network_entities]
+  store_grt_global -- deltas --> map_graph_network_entities
+  map_graph_account_entities[map: map_graph_account_entities]
+  store_grt_balances -- deltas --> map_graph_account_entities
+  store_graph_account_indexer -- deltas --> map_graph_account_entities
+  store_graph_account_delegator -- deltas --> map_graph_account_entities
+  map_indexer_entities[map: map_indexer_entities]
+  store_indexer_stakes -- deltas --> map_indexer_entities
+  map_delegated_stake_entities[map: map_delegated_stake_entities]
+  store_delegated_stakes -- deltas --> map_delegated_stake_entities
+  graph_out[map: graph_out]
+  map_graph_network_entities --> graph_out
+  map_graph_account_entities --> graph_out
+  map_indexer_entities --> graph_out
+  map_delegated_stake_entities --> graph_out
+```
 
 
 ## Quickstart
