@@ -5,3 +5,4 @@
 *.spkg
 node_modules
 yarn-error.log
+replay.log
