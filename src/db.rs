@@ -69,7 +69,6 @@ pub fn indexer_stake_change(
                     delta.ordinal,
                     Operation::Update, // Update will create the entity if it does not exist
                 )
-                .change("account", &delta.key)
                 .change("stakedTokens", delta);
         }
     }
@@ -91,5 +90,13 @@ pub fn graph_account_indexer_change(
                 Operation::Update, // Update will create the entity if it does not exist
             )
             .change("Indexer", &delta.key);
+        entity_changes
+            .push_change(
+                "Indexer",
+                &delta.key,
+                delta.ordinal,
+                Operation::Update, // Update will create the entity if it does not exist
+            )
+            .change("account", &delta.key);
     }
 }

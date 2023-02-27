@@ -4,7 +4,7 @@ type GraphNetwork @entity {
 
     # Staking global aggregate values
     "The total amount of GRT staked in the staking contract"
-    totalTokensStaked: BigInt!
+    totalTokensStaked: BigInt
     # "Total delegated tokens in the protocol, is totalDelegatedTokens in the original subgraph"
     # totalTokensDelegated: BigInt!
 
@@ -27,7 +27,7 @@ type GraphAccount @entity {
     "Graph token balance"
     balance: BigInt
 
-    Staking and Curating and Delegating
+    # Staking and Curating and Delegating
     "Indexer fields for this GraphAccount. Null if never indexed"
     indexer: Indexer
     # "Delegator fields for this GraphAccount. Null if never delegated"
@@ -38,11 +38,11 @@ type Indexer @entity {
     "Eth address of Indexer"
     id: ID!
     "Graph account of this indexer"
-    account: GraphAccount!
+    account: GraphAccount
 
     # Staking data
     "CURRENT tokens staked in the protocol. Decreases on withdraw, not on lock"
-    stakedTokens: BigInt!
+    stakedTokens: BigInt
 
 #     # Delegation Pool
 #     "Delegators to this Indexer"
