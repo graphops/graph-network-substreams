@@ -1,7 +1,10 @@
 mod abi;
 mod db;
 mod pb;
-use pb::erc20::{Events, Indexer, StakeDeposited, StakeDepositedEvents, Transfer, Transfers};
+use pb::erc20::{
+    Events, Indexer, StakeDeposited, StakeDepositedEvents, StakeWithdrawn, StakeWithdrawnEvents,
+    Transfer, Transfers,
+};
 use std::str::FromStr;
 use substreams::errors::Error;
 use substreams::prelude::*;
@@ -29,6 +32,7 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
     let mut events = Events::default();
     let mut transfers = vec![];
     let mut stake_deposited_events = vec![];
+    let mut stake_withdrawn_events = vec![];
 
     for log in blk.logs() {
         if !(&Hex(&GRAPH_TOKEN_ADDRESS).to_string() == &Hex(&log.address()).to_string()
@@ -52,6 +56,13 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
                 tokens: event.tokens.to_string(), // Tokens is origanally BigInt but proto does not have BigInt so we use string
                 ordinal: log.block_index() as u64,
             });
+        } else if let Some(event) = abi::staking::events::StakeWithdrawn::match_and_decode(log) {
+            stake_withdrawn_events.push(StakeWithdrawn {
+                id: Hex(&log.receipt.transaction.hash).to_string(), // Each event needs a unique id
+                indexer: event.indexer,
+                tokens: event.tokens.to_string(), // Tokens is origanally BigInt but proto does not have BigInt so we use string
+                ordinal: log.block_index() as u64,
+            });
         }
     }
 
@@ -60,6 +71,9 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
     });
     events.stake_deposited_events = Some(StakeDepositedEvents {
         stake_deposited_events: stake_deposited_events,
+    });
+    events.stake_withdrawn_events = Some(StakeWithdrawnEvents {
+        stake_withdrawn_events: stake_withdrawn_events,
     });
 
     Ok(events)
@@ -117,6 +131,8 @@ fn store_grt_global(events: Events, s: StoreAddBigInt) {
 #[substreams::handlers::store]
 fn store_indexer_stakes(events: Events, s: StoreAddBigInt) {
     let stake_deposited_events = events.stake_deposited_events.unwrap();
+    let stake_withdrawn_events = events.stake_withdrawn_events.unwrap();
+
     for stakeDeposited in stake_deposited_events.stake_deposited_events {
         s.add(
             stakeDeposited.ordinal,
@@ -127,6 +143,19 @@ fn store_indexer_stakes(events: Events, s: StoreAddBigInt) {
             stakeDeposited.ordinal,
             "totalTokensStaked",
             BigInt::from_str(&stakeDeposited.tokens).unwrap(),
+        );
+    }
+
+    for stakeWithdrawn in stake_withdrawn_events.stake_withdrawn_events {
+        s.add(
+            stakeWithdrawn.ordinal,
+            generate_key_transfer(&stakeWithdrawn.indexer),
+            BigInt::from_str(&stakeWithdrawn.tokens).unwrap().neg(),
+        );
+        s.add(
+            stakeWithdrawn.ordinal,
+            "totalTokensStaked",
+            BigInt::from_str(&stakeWithdrawn.tokens).unwrap().neg(),
         );
     }
 }
