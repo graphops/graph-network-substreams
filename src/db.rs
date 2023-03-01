@@ -153,7 +153,7 @@ pub fn graph_account_indexer_change(
 }
 
 // --------------------
-//  Map Indexer Stake Entity Changes
+//  Map Delegator Stake Entity Changes
 // --------------------
 pub fn graph_account_delegator_change(
     graph_account_delegator_deltas: Deltas<DeltaString>,
