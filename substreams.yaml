@@ -120,6 +120,7 @@ modules:
       - store: store_cumulative_delegated_stakes
         mode: deltas
       - store: store_total_delegated_stakes
+        mode: deltas
     output:
       type: proto:substreams.entity.v1.EntityChange
 
