@@ -184,6 +184,7 @@ fn store_indexer_stakes(events: Events, s: StoreAddBigInt) {
     }
 }
 
+// DelegatedStake and Delegator entities track the cumulative delegated stake, not the total amount
 #[substreams::handlers::store]
 fn store_cumulative_delegated_stakes(events: Events, s: StoreAddBigInt) {
     let stake_delegated_events = events.stake_delegated_events.unwrap();
@@ -197,6 +198,7 @@ fn store_cumulative_delegated_stakes(events: Events, s: StoreAddBigInt) {
     }
 }
 
+// Indexer and GraphNetwork entities track the total delegated stake, not the cumulative amount
 #[substreams::handlers::store]
 fn store_total_delegated_stakes(events: Events, s: StoreAddBigInt) {
     let stake_delegated_events = events.stake_delegated_events.unwrap();
