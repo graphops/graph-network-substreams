@@ -3,7 +3,7 @@ mod db;
 mod pb;
 use pb::erc20::{
     Delegator, Events, Indexer, StakeDelegated, StakeDelegatedEvents, StakeDeposited,
-    StakeDepositedEvents, StakeWithdrawn, StakeWithdrawnEvents, Transfer, Transfers,
+    StakeDepositedEvents, StakeWithdrawn, StakeWithdrawnEvents, StakeDelegatedLocked, StakeDelegatedLockedEvents, Transfer, Transfers,
 };
 use std::str::FromStr;
 use substreams::errors::Error;
@@ -34,6 +34,7 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
     let mut stake_deposited_events = vec![];
     let mut stake_withdrawn_events = vec![];
     let mut stake_delegated_events = vec![];
+    let mut stake_delegated_locked_events = vec![];
 
     for log in blk.logs() {
         if !(&Hex(&GRAPH_TOKEN_ADDRESS).to_string() == &Hex(&log.address()).to_string()
@@ -72,6 +73,14 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
                 tokens: event.tokens.to_string(), // Tokens is origanally BigInt but proto does not have BigInt so we use string
                 ordinal: log.block_index() as u64,
             });
+        } else if let Some(event) = abi::staking::events::StakeDelegatedLocked::match_and_decode(log) {
+            stake_delegated_locked_events.push(StakeDelegatedLocked {
+                id: Hex(&log.receipt.transaction.hash).to_string(), // Each event needs a unique id
+                indexer: event.indexer,
+                delegator: event.delegator,
+                tokens: event.tokens.to_string(), // Tokens is origanally BigInt but proto does not have BigInt so we use string
+                ordinal: log.block_index() as u64,
+            });
         }
     }
 
@@ -87,6 +96,9 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
     events.stake_delegated_events = Some(StakeDelegatedEvents {
         stake_delegated_events: stake_delegated_events,
     });
+    events.stake_delegated_locked_events = Some(StakeDelegatedLockedEvents {
+        stake_delegated_locked_events: stake_delegated_locked_events,
+    });
 
     Ok(events)
 }
@@ -98,12 +110,12 @@ fn store_grt_balances(events: Events, s: StoreAddBigInt) {
     for transfer in transfers.transfers {
         s.add(
             transfer.ordinal,
-            generate_key_transfer(&transfer.from),
+            generate_key(&transfer.from),
             BigInt::from_str(&transfer.value).unwrap().neg(),
         );
         s.add(
             transfer.ordinal,
-            generate_key_transfer(&transfer.to),
+            generate_key(&transfer.to),
             BigInt::from_str(&transfer.value).unwrap(),
         );
     }
@@ -148,7 +160,7 @@ fn store_indexer_stakes(events: Events, s: StoreAddBigInt) {
     for stakeDeposited in stake_deposited_events.stake_deposited_events {
         s.add(
             stakeDeposited.ordinal,
-            generate_key_transfer(&stakeDeposited.indexer),
+            generate_key(&stakeDeposited.indexer),
             BigInt::from_str(&stakeDeposited.tokens).unwrap(),
         );
         s.add(
@@ -161,7 +173,7 @@ fn store_indexer_stakes(events: Events, s: StoreAddBigInt) {
     for stakeWithdrawn in stake_withdrawn_events.stake_withdrawn_events {
         s.add(
             stakeWithdrawn.ordinal,
-            generate_key_transfer(&stakeWithdrawn.indexer),
+            generate_key(&stakeWithdrawn.indexer),
             BigInt::from_str(&stakeWithdrawn.tokens).unwrap().neg(),
         );
         s.add(
@@ -173,7 +185,7 @@ fn store_indexer_stakes(events: Events, s: StoreAddBigInt) {
 }
 
 #[substreams::handlers::store]
-fn store_delegated_stakes(events: Events, s: StoreAddBigInt) {
+fn store_cumulative_delegated_stakes(events: Events, s: StoreAddBigInt) {
     let stake_delegated_events = events.stake_delegated_events.unwrap();
 
     for stakeDelegated in stake_delegated_events.stake_delegated_events {
@@ -182,10 +194,37 @@ fn store_delegated_stakes(events: Events, s: StoreAddBigInt) {
             generate_key_delegated_stake(&stakeDelegated.delegator, &stakeDelegated.indexer),
             BigInt::from_str(&stakeDelegated.tokens).unwrap(),
         );
+    }
+}
+
+#[substreams::handlers::store]
+fn store_total_delegated_stakes(events: Events, s: StoreAddBigInt) {
+    let stake_delegated_events = events.stake_delegated_events.unwrap();
+    let stake_delegated_locked_events = events.stake_delegated_locked_events.unwrap();
+
+    for stakeDelegated in stake_delegated_events.stake_delegated_events {
+        s.add(
+            stakeDelegated.ordinal,
+            generate_key(&stakeDelegated.indexer),
+            BigInt::from_str(&stakeDelegated.tokens).unwrap(),
+        );
         s.add(
             stakeDelegated.ordinal,
             "totalTokensDelegated",
             BigInt::from_str(&stakeDelegated.tokens).unwrap(),
+        );
+    }
+
+    for stakeDelegatedLocked in stake_delegated_locked_events.stake_delegated_locked_events {
+        s.add(
+            stakeDelegatedLocked.ordinal,
+            generate_key(&stakeDelegatedLocked.indexer),
+            BigInt::from_str(&stakeDelegatedLocked.tokens).unwrap().neg(),
+        );
+        s.add(
+            stakeDelegatedLocked.ordinal,
+            "totalTokensDelegated",
+            BigInt::from_str(&stakeDelegatedLocked.tokens).unwrap().neg(),
         );
     }
 }
@@ -196,9 +235,9 @@ fn store_graph_account_indexer(events: Events, s: StoreSetIfNotExistsProto<Index
     for stakeDeposited in stake_deposited_events.stake_deposited_events {
         s.set_if_not_exists(
             stakeDeposited.ordinal,
-            generate_key_transfer(&stakeDeposited.indexer),
+            generate_key(&stakeDeposited.indexer),
             &Indexer {
-                id: generate_key_transfer(&stakeDeposited.indexer),
+                id: generate_key(&stakeDeposited.indexer),
             },
         );
     }
@@ -210,9 +249,9 @@ fn store_graph_account_delegator(events: Events, s: StoreSetIfNotExistsProto<Del
     for stakeDelegated in stake_delegated_events.stake_delegated_events {
         s.set_if_not_exists(
             stakeDelegated.ordinal,
-            generate_key_transfer(&stakeDelegated.delegator),
+            generate_key(&stakeDelegated.delegator),
             &Delegator {
-                id: generate_key_transfer(&stakeDelegated.indexer),
+                id: generate_key(&stakeDelegated.indexer),
             },
         );
     }
@@ -255,10 +294,11 @@ pub fn map_indexer_entities(
 
 #[substreams::handlers::map]
 pub fn map_delegated_stake_entities(
-    delegated_stake_deltas: Deltas<DeltaBigInt>,
+    cumulative_delegated_stake_deltas: Deltas<DeltaBigInt>,
+    total_delegated_stake_deltas: Deltas<DeltaBigInt>,
 ) -> Result<EntityChanges, Error> {
     let mut entity_changes: EntityChanges = Default::default();
-    db::delegated_stake_change(delegated_stake_deltas, &mut entity_changes);
+    db::delegated_stake_change(cumulative_delegated_stake_deltas, total_delegated_stake_deltas, &mut entity_changes);
     Ok(entity_changes)
 }
 
@@ -285,8 +325,8 @@ pub fn graph_out(
 }
 
 // -------------------- KEY GENERATORS --------------------
-fn generate_key_transfer(holder: &Vec<u8>) -> String {
-    return Hex(holder).to_string();
+fn generate_key(account: &Vec<u8>) -> String {
+    return Hex(account).to_string();
 }
 
 fn generate_key_delegated_stake(delegator: &Vec<u8>, indexer: &Vec<u8>) -> String {

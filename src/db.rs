@@ -79,20 +79,11 @@ pub fn indexer_stake_change(
 //  Map Delegated Stake Entity Changes
 // --------------------
 pub fn delegated_stake_change(
-    delegated_stake_deltas: Deltas<DeltaBigInt>,
+    cumulative_delegated_stake_deltas: Deltas<DeltaBigInt>,
+    total_delegated_stake_deltas: Deltas<DeltaBigInt>,
     entity_changes: &mut EntityChanges,
 ) {
-    for delta in delegated_stake_deltas.deltas {
-        if delta.key == "totalTokensDelegated" {
-            entity_changes
-                .push_change(
-                    "GraphNetwork",
-                    "1",
-                    delta.ordinal,
-                    Operation::Update, // Update will create the entity if it does not exist
-                )
-                .change("totalTokensDelegated", delta);
-        } else {
+    for delta in cumulative_delegated_stake_deltas.deltas {
             entity_changes
                 .push_change(
                     "DelegatedStake",
@@ -108,8 +99,30 @@ pub fn delegated_stake_change(
                     delta.ordinal,
                     Operation::Update, // Update will create the entity if it does not exist
                 ).change("totalStakedTokens", delta);
+    }
+
+    for delta in total_delegated_stake_deltas.deltas {
+        if delta.key == "totalTokensDelegated" {
+            entity_changes
+                .push_change(
+                    "GraphNetwork",
+                    "1",
+                    delta.ordinal,
+                    Operation::Update, // Update will create the entity if it does not exist
+                )
+                .change("totalTokensDelegated", delta);
+        } else {
+            entity_changes
+                .push_change(
+                    "Indexer",
+                    &delta.key,
+                    delta.ordinal,
+                    Operation::Update, // Update will create the entity if it does not exist
+                )
+                .change("delegatedTokens", delta);
         }
     }
+
 }
 
 // --------------------
