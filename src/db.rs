@@ -163,27 +163,27 @@ pub fn graph_account_delegator_change(
         entity_changes
             .push_change(
                 "GraphAccount",
-                &delta.key,
+                &delta.key.as_str().split(":").nth(0).unwrap().to_string(),
                 delta.ordinal,
                 Operation::Update, // Update will create the entity if it does not exist
             )
-            .change("Delegator", &delta.key);
+            .change("Delegator",  &delta.key.as_str().split(":").nth(0).unwrap().to_string());
         entity_changes
             .push_change(
                 "Delegator",
-                &delta.key,
+                &delta.key.as_str().split(":").nth(0).unwrap().to_string(),
                 delta.ordinal,
                 Operation::Update, // Update will create the entity if it does not exist
             )
-            .change("account", &delta.key);
+            .change("account", &delta.key.as_str().split(":").nth(0).unwrap().to_string());
         entity_changes
             .push_change(
                 "DelegatedStake",
-                &generate_key_delegated_stake(&delta.key, &delta.new_value), 
+                &delta.key, 
                 delta.ordinal,
                 Operation::Update, // Update will create the entity if it does not exist
-            ).change("indexer", &delta.new_value)
-             .change("delegator", &delta.key);
+            ).change("indexer", &delta.key.as_str().split(":").last().unwrap().to_string())
+             .change("delegator", &delta.key.as_str().split(":").nth(0).unwrap().to_string());
     }
 }
 

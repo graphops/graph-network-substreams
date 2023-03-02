@@ -232,29 +232,25 @@ fn store_total_delegated_stakes(events: Events, s: StoreAddBigInt) {
 }
 
 #[substreams::handlers::store]
-fn store_graph_account_indexer(events: Events, s: StoreSetIfNotExistsProto<Indexer>) {
+fn store_graph_account_indexer(events: Events, s: StoreSetIfNotExistsString) {
     let stake_deposited_events = events.stake_deposited_events.unwrap();
     for stakeDeposited in stake_deposited_events.stake_deposited_events {
         s.set_if_not_exists(
             stakeDeposited.ordinal,
             generate_key(&stakeDeposited.indexer),
-            &Indexer {
-                id: generate_key(&stakeDeposited.indexer),
-            },
+                &generate_key(&stakeDeposited.indexer),
         );
     }
 }
 
 #[substreams::handlers::store]
-fn store_graph_account_delegator(events: Events, s: StoreSetIfNotExistsProto<Delegator>) {
+fn store_graph_account_delegator(events: Events, s: StoreSetIfNotExistsString) {
     let stake_delegated_events = events.stake_delegated_events.unwrap();
     for stakeDelegated in stake_delegated_events.stake_delegated_events {
         s.set_if_not_exists(
             stakeDelegated.ordinal,
-            generate_key(&stakeDelegated.delegator),
-            &Delegator {
-                id: generate_key(&stakeDelegated.indexer),
-            },
+            generate_key_delegated_stake(&stakeDelegated.delegator, &stakeDelegated.indexer),
+            &generate_key(&stakeDelegated.delegator)
         );
     }
 }
