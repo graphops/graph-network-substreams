@@ -79,13 +79,3 @@ message Approval {
   string amount = 4;
   uint64 ordinal = 5;
 }
-
-message Indexer {
-  string id = 1;
-}
-
-message Delegator {
-  string id = 1;
-}
-
-
