@@ -206,12 +206,12 @@ fn store_total_delegated_stakes(events: Events, s: StoreAddBigInt) {
 
     for stakeDelegated in stake_delegated_events.stake_delegated_events {
         s.add(
-            stakeDelegated.ordinal,
+            1,
             generate_key(&stakeDelegated.indexer),
             BigInt::from_str(&stakeDelegated.tokens).unwrap(),
         );
         s.add(
-            stakeDelegated.ordinal,
+            1,
             "totalTokensDelegated",
             BigInt::from_str(&stakeDelegated.tokens).unwrap(),
         );
@@ -219,12 +219,12 @@ fn store_total_delegated_stakes(events: Events, s: StoreAddBigInt) {
 
     for stakeDelegatedLocked in stake_delegated_locked_events.stake_delegated_locked_events {
         s.add(
-            stakeDelegatedLocked.ordinal,
+            1,
             generate_key(&stakeDelegatedLocked.indexer),
             BigInt::from_str(&stakeDelegatedLocked.tokens).unwrap().neg(),
         );
         s.add(
-            stakeDelegatedLocked.ordinal,
+            1,
             "totalTokensDelegated",
             BigInt::from_str(&stakeDelegatedLocked.tokens).unwrap().neg(),
         );
