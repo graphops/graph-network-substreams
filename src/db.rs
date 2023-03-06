@@ -140,7 +140,7 @@ pub fn graph_account_indexer_change(
                 delta.ordinal,
                 Operation::Update, // Update will create the entity if it does not exist
             )
-            .change("Indexer", &delta.key);
+            .change("indexer", &delta.key);
         entity_changes
             .push_change(
                 "Indexer",
@@ -167,7 +167,7 @@ pub fn graph_account_delegator_change(
                 delta.ordinal,
                 Operation::Update, // Update will create the entity if it does not exist
             )
-            .change("Delegator",  &delta.key.as_str().split(":").nth(0).unwrap().to_string());
+            .change("delegator",  &delta.key.as_str().split(":").nth(0).unwrap().to_string());
         entity_changes
             .push_change(
                 "Delegator",
