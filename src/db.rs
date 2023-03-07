@@ -98,7 +98,7 @@ pub fn delegated_stake_change(
                     &delta.key.as_str().split(":").nth(0).unwrap().to_string(),
                     delta.ordinal,
                     Operation::Update, // Update will create the entity if it does not exist
-                ).change("totalStakedTokens", delta);
+                ).change("totalStakedTokens", &delta);
     }
 
     for delta in total_delegated_stake_deltas.deltas {
@@ -110,7 +110,7 @@ pub fn delegated_stake_change(
                     delta.ordinal,
                     Operation::Update, // Update will create the entity if it does not exist
                 )
-                .change("totalTokensDelegated", delta);
+                .change("totalTokensDelegated", &delta);
         } else {
             entity_changes
                 .push_change(
@@ -119,7 +119,7 @@ pub fn delegated_stake_change(
                     delta.ordinal,
                     Operation::Update, // Update will create the entity if it does not exist
                 )
-                .change("delegatedTokens", delta);
+                .change("delegatedTokens", &delta);
         }
     }
 

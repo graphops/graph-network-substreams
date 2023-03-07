@@ -2,8 +2,9 @@ mod abi;
 mod db;
 mod pb;
 use pb::erc20::{
-    Delegator, Events, Indexer, StakeDelegated, StakeDelegatedEvents, StakeDeposited,
-    StakeDepositedEvents, StakeWithdrawn, StakeWithdrawnEvents, StakeDelegatedLocked, StakeDelegatedLockedEvents, Transfer, Transfers,
+    Events, RebateClaimed, RebateClaimedEvents, StakeDelegated, StakeDelegatedEvents,
+    StakeDelegatedLocked, StakeDelegatedLockedEvents, StakeDeposited, StakeDepositedEvents,
+    StakeWithdrawn, StakeWithdrawnEvents, Transfer, Transfers,
 };
 use std::str::FromStr;
 use substreams::errors::Error;
@@ -35,6 +36,7 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
     let mut stake_withdrawn_events = vec![];
     let mut stake_delegated_events = vec![];
     let mut stake_delegated_locked_events = vec![];
+    let mut rebate_claimed_events = vec![];
 
     for log in blk.logs() {
         if !(&Hex(&GRAPH_TOKEN_ADDRESS).to_string() == &Hex(&log.address()).to_string()
@@ -73,12 +75,21 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
                 tokens: event.tokens.to_string(), // Tokens is origanally BigInt but proto does not have BigInt so we use string
                 ordinal: log.block_index() as u64,
             });
-        } else if let Some(event) = abi::staking::events::StakeDelegatedLocked::match_and_decode(log) {
+        } else if let Some(event) =
+            abi::staking::events::StakeDelegatedLocked::match_and_decode(log)
+        {
             stake_delegated_locked_events.push(StakeDelegatedLocked {
                 id: Hex(&log.receipt.transaction.hash).to_string(), // Each event needs a unique id
                 indexer: event.indexer,
                 delegator: event.delegator,
                 tokens: event.tokens.to_string(), // Tokens is origanally BigInt but proto does not have BigInt so we use string
+                ordinal: log.block_index() as u64,
+            });
+        } else if let Some(event) = abi::staking::events::RebateClaimed::match_and_decode(log) {
+            rebate_claimed_events.push(RebateClaimed {
+                id: Hex(&log.receipt.transaction.hash).to_string(), // Each event needs a unique id
+                indexer: event.indexer,
+                delegated_tokens: event.delegation_fees.to_string(), // Tokens is origanally BigInt but proto does not have BigInt so we use string
                 ordinal: log.block_index() as u64,
             });
         }
@@ -98,6 +109,9 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
     });
     events.stake_delegated_locked_events = Some(StakeDelegatedLockedEvents {
         stake_delegated_locked_events: stake_delegated_locked_events,
+    });
+    events.rebate_claimed_events = Some(RebateClaimedEvents {
+        rebate_claimed_events: rebate_claimed_events,
     });
 
     Ok(events)
@@ -203,6 +217,7 @@ fn store_cumulative_delegated_stakes(events: Events, s: StoreAddBigInt) {
 fn store_total_delegated_stakes(events: Events, s: StoreAddBigInt) {
     let stake_delegated_events = events.stake_delegated_events.unwrap();
     let stake_delegated_locked_events = events.stake_delegated_locked_events.unwrap();
+    let rebate_claimed_events = events.rebate_claimed_events.unwrap();
 
     for stakeDelegated in stake_delegated_events.stake_delegated_events {
         s.add(
@@ -221,12 +236,26 @@ fn store_total_delegated_stakes(events: Events, s: StoreAddBigInt) {
         s.add(
             1,
             generate_key(&stakeDelegatedLocked.indexer),
-            BigInt::from_str(&stakeDelegatedLocked.tokens).unwrap().neg(),
+            BigInt::from_str(&stakeDelegatedLocked.tokens)
+                .unwrap()
+                .neg(),
         );
         s.add(
             1,
             "totalTokensDelegated",
-            BigInt::from_str(&stakeDelegatedLocked.tokens).unwrap().neg(),
+            BigInt::from_str(&stakeDelegatedLocked.tokens)
+                .unwrap()
+                .neg(),
+        );
+    }
+
+    for rebateClaimed in rebate_claimed_events.rebate_claimed_events {
+        s.add(
+            1,
+            generate_key(&rebateClaimed.indexer),
+            BigInt::from_str(&rebateClaimed.delegated_tokens)
+                .unwrap()
+                .neg(),
         );
     }
 }
@@ -238,7 +267,7 @@ fn store_graph_account_indexer(events: Events, s: StoreSetIfNotExistsString) {
         s.set_if_not_exists(
             stakeDeposited.ordinal,
             generate_key(&stakeDeposited.indexer),
-                &generate_key(&stakeDeposited.indexer),
+            &generate_key(&stakeDeposited.indexer),
         );
     }
 }
@@ -250,7 +279,7 @@ fn store_graph_account_delegator(events: Events, s: StoreSetIfNotExistsString) {
         s.set_if_not_exists(
             stakeDelegated.ordinal,
             generate_key_delegated_stake(&stakeDelegated.delegator, &stakeDelegated.indexer),
-            &generate_key(&stakeDelegated.delegator)
+            &generate_key(&stakeDelegated.delegator),
         );
     }
 }
@@ -296,7 +325,11 @@ pub fn map_delegated_stake_entities(
     total_delegated_stake_deltas: Deltas<DeltaBigInt>,
 ) -> Result<EntityChanges, Error> {
     let mut entity_changes: EntityChanges = Default::default();
-    db::delegated_stake_change(cumulative_delegated_stake_deltas, total_delegated_stake_deltas, &mut entity_changes);
+    db::delegated_stake_change(
+        cumulative_delegated_stake_deltas,
+        total_delegated_stake_deltas,
+        &mut entity_changes,
+    );
     Ok(entity_changes)
 }
 
