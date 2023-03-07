@@ -16,6 +16,14 @@ message StakeWithdrawnEvents {
 
 message StakeDelegatedEvents {
   repeated StakeDelegated stake_delegated_events = 1;
+}
+
+message StakeDelegatedLockedEvents {
+  repeated StakeDelegatedLocked stake_delegated_locked_events = 1;
+}
+
+message RebateClaimedEvents {
+  repeated RebateClaimed rebate_claimed_events = 1;
 } 
 
 message Approvals {
@@ -27,6 +35,8 @@ message Events {
   StakeDepositedEvents stake_deposited_events = 2;
   StakeWithdrawnEvents stake_withdrawn_events = 3;
   StakeDelegatedEvents stake_delegated_events = 4;
+  StakeDelegatedLockedEvents stake_delegated_locked_events = 5;
+  RebateClaimedEvents rebate_claimed_events = 6;
 }
 
 message Transfer {
@@ -59,6 +69,21 @@ message StakeDelegated{
   uint64 ordinal = 5;
 }
 
+message StakeDelegatedLocked{
+  string id = 1;
+  bytes indexer = 2;
+  bytes delegator = 3;
+  string tokens = 4;
+  uint64 ordinal = 5;
+}
+
+message RebateClaimed{
+  string id = 1;
+  bytes indexer = 2;
+  string delegated_tokens = 3;
+  uint64 ordinal = 4;
+}
+
 message Approval {
   string id = 1;
   bytes owner = 2;
@@ -66,13 +91,3 @@ message Approval {
   string amount = 4;
   uint64 ordinal = 5;
 }
-
-message Indexer {
-  string id = 1;
-}
-
-message Delegator {
-  string id = 1;
-}
-
-

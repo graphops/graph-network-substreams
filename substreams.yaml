@@ -66,7 +66,23 @@ modules:
     inputs:
       - map: map_events
 
-  - name: store_delegated_stakes
+  - name: store_cumulative_delegated_stakes
+    kind: store
+    initialBlock: 11446769
+    updatePolicy: add
+    valueType: bigint
+    inputs:
+      - map: map_events
+
+  - name: store_cumulative_delegator_stakes
+    kind: store
+    initialBlock: 11446769
+    updatePolicy: add
+    valueType: bigint
+    inputs:
+      - map: map_events
+
+  - name: store_total_delegated_stakes
     kind: store
     initialBlock: 11446769
     updatePolicy: add
@@ -109,7 +125,11 @@ modules:
     kind: map
     initialBlock: 11446769
     inputs:
-      - store: store_delegated_stakes
+      - store: store_cumulative_delegated_stakes
+        mode: deltas
+      - store: store_cumulative_delegator_stakes
+        mode: deltas
+      - store: store_total_delegated_stakes
         mode: deltas
     output:
       type: proto:substreams.entity.v1.EntityChange
