@@ -74,6 +74,14 @@ modules:
     inputs:
       - map: map_events
 
+  - name: store_cumulative_delegator_stakes
+    kind: store
+    initialBlock: 11446769
+    updatePolicy: add
+    valueType: bigint
+    inputs:
+      - map: map_events
+
   - name: store_total_delegated_stakes
     kind: store
     initialBlock: 11446769
@@ -118,6 +126,8 @@ modules:
     initialBlock: 11446769
     inputs:
       - store: store_cumulative_delegated_stakes
+        mode: deltas
+      - store: store_cumulative_delegator_stakes
         mode: deltas
       - store: store_total_delegated_stakes
         mode: deltas

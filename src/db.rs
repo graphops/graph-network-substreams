@@ -80,6 +80,7 @@ pub fn indexer_stake_change(
 // --------------------
 pub fn delegated_stake_change(
     cumulative_delegated_stake_deltas: Deltas<DeltaBigInt>,
+    cumulative_delegator_stake_deltas: Deltas<DeltaBigInt>,
     total_delegated_stake_deltas: Deltas<DeltaBigInt>,
     entity_changes: &mut EntityChanges,
 ) {
@@ -92,10 +93,13 @@ pub fn delegated_stake_change(
                     Operation::Update, // Update will create the entity if it does not exist
                 )
                 .change("stakedTokens", &delta);
+    }
+
+    for delta in cumulative_delegator_stake_deltas.deltas {
             entity_changes
                 .push_change(
                     "Delegator",
-                    &delta.key.as_str().split(":").nth(0).unwrap().to_string(),
+                    &delta.key,
                     delta.ordinal,
                     Operation::Update, // Update will create the entity if it does not exist
                 ).change("totalStakedTokens", &delta);
