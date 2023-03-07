@@ -72,4 +72,3 @@ type DelegatedStake @entity {
     "CUMULATIVE tokens delegated"
     stakedTokens: BigInt
 }
-

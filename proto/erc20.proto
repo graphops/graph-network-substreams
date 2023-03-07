@@ -8,11 +8,11 @@ message Transfers {
 
 message StakeDepositedEvents {
   repeated StakeDeposited stake_deposited_events = 1;
-} 
+}
 
 message StakeWithdrawnEvents {
   repeated StakeWithdrawn stake_withdrawn_events = 1;
-} 
+}
 
 message StakeDelegatedEvents {
   repeated StakeDelegated stake_delegated_events = 1;
@@ -24,7 +24,7 @@ message StakeDelegatedLockedEvents {
 
 message RebateClaimedEvents {
   repeated RebateClaimed rebate_claimed_events = 1;
-} 
+}
 
 message DelegationParametersUpdatedEvents {
   repeated DelegationParametersUpdated delegation_parameters_updated_events = 1;
