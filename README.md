@@ -33,8 +33,12 @@ graph TD;
   map_events --> store_graph_account_indexer
   store_graph_account_delegator[store: store_graph_account_delegator]
   map_events --> store_graph_account_delegator
-  store_delegated_stakes[store: store_delegated_stakes]
-  map_events --> store_delegated_stakes
+  store_cumulative_delegated_stakes[store: store_cumulative_delegated_stakes]
+  map_events --> store_cumulative_delegated_stakes
+  store_cumulative_delegator_stakes[store: store_cumulative_delegator_stakes]
+  map_events --> store_cumulative_delegator_stakes
+  store_total_delegated_stakes[store: store_total_delegated_stakes]
+  map_events --> store_total_delegated_stakes
   map_graph_network_entities[map: map_graph_network_entities]
   store_grt_global -- deltas --> map_graph_network_entities
   map_graph_account_entities[map: map_graph_account_entities]
@@ -44,12 +48,15 @@ graph TD;
   map_indexer_entities[map: map_indexer_entities]
   store_indexer_stakes -- deltas --> map_indexer_entities
   map_delegated_stake_entities[map: map_delegated_stake_entities]
-  store_delegated_stakes -- deltas --> map_delegated_stake_entities
+  store_cumulative_delegated_stakes -- deltas --> map_delegated_stake_entities
+  store_cumulative_delegator_stakes -- deltas --> map_delegated_stake_entities
+  store_total_delegated_stakes -- deltas --> map_delegated_stake_entities
   graph_out[map: graph_out]
   map_graph_network_entities --> graph_out
   map_graph_account_entities --> graph_out
   map_indexer_entities --> graph_out
   map_delegated_stake_entities --> graph_out
+
 ```
 
 
