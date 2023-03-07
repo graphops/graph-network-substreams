@@ -5,8 +5,8 @@ type GraphNetwork @entity {
     # Staking global aggregate values
     "The total amount of GRT staked in the staking contract"
     totalTokensStaked: BigInt
-    # "Total delegated tokens in the protocol, is totalDelegatedTokens in the original subgraph"
-    # totalTokensDelegated: BigInt!
+    "Total delegated tokens in the protocol, is totalDelegatedTokens in the original subgraph"
+    totalTokensDelegated: BigInt
 
     # Graph Token global variables
     "Graph Token supply"
@@ -30,8 +30,8 @@ type GraphAccount @entity {
     # Staking and Curating and Delegating
     "Indexer fields for this GraphAccount. Null if never indexed"
     indexer: Indexer
-    # "Delegator fields for this GraphAccount. Null if never delegated"
-    # delegator: Delegator
+    "Delegator fields for this GraphAccount. Null if never delegated"
+    delegator: Delegator
 }
 
 type Indexer @entity {
@@ -44,32 +44,32 @@ type Indexer @entity {
     "CURRENT tokens staked in the protocol. Decreases on withdraw, not on lock"
     stakedTokens: BigInt
 
-#     # Delegation Pool
-#     "Delegators to this Indexer"
-#     delegators: [DelegatedStake!]! @derivedFrom(field: "indexer")
-#     "CURRENT tokens delegated to the indexer"
-#     delegatedTokens: BigInt!
+    # Delegation Pool
+    "Delegators to this Indexer"
+    delegators: [DelegatedStake!]! @derivedFrom(field: "indexer")
+    "CURRENT tokens delegated to the indexer"
+    delegatedTokens: BigInt
 }
 
-# type Delegator @entity {
-#     "Delegator address"
-#     id: ID!
-#     "Graph account of the delegator"
-#     account: GraphAccount!
-#     "Stakes of this delegator"
-#     stakes: [DelegatedStake!]! @derivedFrom(field: "delegator")
-#     "CUMULATIVE staked tokens in DelegatorStakes of this Delegator ?????"
-#     totalStakedTokens: BigInt!
-# }
+type Delegator @entity {
+    "Delegator address"
+    id: ID!
+    "Graph account of the delegator"
+    account: GraphAccount
+    "Stakes of this delegator"
+    stakes: [DelegatedStake!]! @derivedFrom(field: "delegator")
+    "CUMULATIVE staked tokens in DelegatorStakes of this Delegator"
+    totalStakedTokens: BigInt
+}
 
-# type DelegatedStake @entity {
-#     "Concatenation of Delegator address and Indexer address"
-#     id: ID!
-#     "Index the stake is delegated to"
-#     indexer: Indexer!
-#     "Delegator"
-#     delegator: Delegator!
-#     "CUMULATIVE tokens delegated"
-#     stakedTokens: BigInt!
-# }
+type DelegatedStake @entity {
+    "Concatenation of Delegator address and Indexer address"
+    id: ID!
+    "Index the stake is delegated to"
+    indexer: Indexer
+    "Delegator"
+    delegator: Delegator
+    "CUMULATIVE tokens delegated"
+    stakedTokens: BigInt
+}
 
