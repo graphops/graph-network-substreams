@@ -212,6 +212,20 @@ fn store_cumulative_delegated_stakes(events: Events, s: StoreAddBigInt) {
     }
 }
 
+// DelegatedStake and Delegator entities track the cumulative delegated stake, not the total amount
+#[substreams::handlers::store]
+fn store_cumulative_delegator_stakes(events: Events, s: StoreAddBigInt) {
+    let stake_delegated_events = events.stake_delegated_events.unwrap();
+
+    for stakeDelegated in stake_delegated_events.stake_delegated_events {
+        s.add(
+            stakeDelegated.ordinal,
+            generate_key(&stakeDelegated.delegator),
+            BigInt::from_str(&stakeDelegated.tokens).unwrap(),
+        );
+    }
+}
+
 // Indexer and GraphNetwork entities track the total delegated stake, not the cumulative amount
 #[substreams::handlers::store]
 fn store_total_delegated_stakes(events: Events, s: StoreAddBigInt) {
@@ -322,11 +336,13 @@ pub fn map_indexer_entities(
 #[substreams::handlers::map]
 pub fn map_delegated_stake_entities(
     cumulative_delegated_stake_deltas: Deltas<DeltaBigInt>,
+    cumulative_delegator_stake_deltas: Deltas<DeltaBigInt>,
     total_delegated_stake_deltas: Deltas<DeltaBigInt>,
 ) -> Result<EntityChanges, Error> {
     let mut entity_changes: EntityChanges = Default::default();
     db::delegated_stake_change(
         cumulative_delegated_stake_deltas,
+        cumulative_delegator_stake_deltas,
         total_delegated_stake_deltas,
         &mut entity_changes,
     );
