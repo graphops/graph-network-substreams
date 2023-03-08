@@ -2,10 +2,28 @@ mod abi;
 mod db;
 mod pb;
 use pb::erc20::{
-    DelegationParametersUpdated, DelegationParametersUpdatedEvents, Events, RebateClaimed,
-    RebateClaimedEvents, RewardsAssigned, RewardsAssignedEvents, StakeDelegated,
-    StakeDelegatedEvents, StakeDelegatedLocked, StakeDelegatedLockedEvents, StakeDeposited,
-    StakeDepositedEvents, StakeWithdrawn, StakeWithdrawnEvents, Transfer, Transfers,
+    Events,
+    RebateClaimed,
+    RebateClaimedEvents,
+    StakeDelegated,
+    StakeDelegatedEvents,
+    StakeDelegatedLocked,
+    StakeDelegatedLockedEvents,
+    StakeDeposited,
+    StakeDepositedEvents,
+    StakeWithdrawn,
+    StakeWithdrawnEvents,
+    Transfer,
+    Transfers,
+    Signalled,
+    SignalledEvents,
+    Burned,
+    BurnedEvents,
+    DelegationParametersUpdated,
+    DelegationParametersUpdatedEvents,
+    RewardsAssigned,
+    RewardsAssignedEvents,
+
 };
 use std::ops::{Div, Mul, Sub};
 use std::str::FromStr;
@@ -13,7 +31,7 @@ use substreams::errors::Error;
 use substreams::prelude::*;
 use substreams::scalar::BigInt;
 use substreams::store;
-use substreams::store::{DeltaBigInt, DeltaString, Deltas};
+use substreams::store::{ DeltaBigInt, DeltaString, Deltas };
 use substreams::{
     hex, log, store::StoreAddBigInt, store::StoreSetIfNotExists, store::StoreSetIfNotExistsString,
     store::StoreSetProto, Hex,
@@ -26,6 +44,10 @@ use substreams_ethereum::{pb::eth::v2 as eth, NULL_ADDRESS};
 const GRAPH_TOKEN_ADDRESS: [u8; 20] = hex!("c944E90C64B2c07662A292be6244BDf05Cda44a7");
 const STAKING_CONTRACT: [u8; 20] = hex!("F55041E37E12cD407ad00CE2910B8269B01263b9");
 const REWARDS_MANAGER_CONTRACT: [u8; 20] = hex!("9Ac758AB77733b4150A901ebd659cbF8cB93ED66");
+const GNS_CONTRACT: [u8; 20] = hex!("F55041E37E12cD407ad00CE2910B8269B01263b9");
+const CURATION_CONTRACT: [u8; 20] = hex!("F55041E37E12cD407ad00CE2910B8269B01263b9");
+
+// Probably improve this to be a list/vec in the future, as this doesn't really scale later
 
 substreams_ethereum::init!();
 
@@ -42,11 +64,17 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
     let mut rebate_claimed_events = vec![];
     let mut delegation_parameters_updated_events = vec![];
     let mut rewards_assigned_events = vec![];
+    let mut signalled_events = vec![];
+    let mut burned_events = vec![];
 
+    // Potentially consider adding log.index() to the IDs, to have them be truly unique in
+    // transactions with potentially more than 1 of these messages
     for log in blk.logs() {
         if !(&Hex(&GRAPH_TOKEN_ADDRESS).to_string() == &Hex(&log.address()).to_string()
             || &Hex(&STAKING_CONTRACT).to_string() == &Hex(&log.address()).to_string()
             || &Hex(&REWARDS_MANAGER_CONTRACT).to_string() == &Hex(&log.address()).to_string())
+            || &Hex(&GNS_CONTRACT).to_string() == &Hex(&log.address()).to_string()
+            || &Hex(&CURATION_CONTRACT).to_string() == &Hex(&log.address()).to_string())
         {
             continue;
         }
@@ -119,6 +147,25 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
                 amount: event.amount.to_string(), // Tokens is origanally BigInt but proto does not have BigInt so we use string
                 ordinal: log.block_index() as u64,
             });
+        } else if let Some(event) = abi::curation::events::Signalled::match_and_decode(log) {
+            signalled_events.push(Signalled {
+                id: Hex(&log.receipt.transaction.hash).to_string(), // Each event needs a unique id
+                curator: event.curator,
+                subgraphDeploymentID: event.subgraphDeploymentID,
+                tokens: event.tokens.to_string(), // Tokens is origanally BigInt but proto does not have BigInt so we use string
+                signal: event.signal.to_string(), // Tokens is origanally BigInt but proto does not have BigInt so we use string
+                curationTax: event.curationTax.to_string(), // Tokens is origanally BigInt but proto does not have BigInt so we use string
+                ordinal: log.block_index() as u64,
+            });
+        } else if let Some(event) = abi::curation::events::Burned::match_and_decode(log) {
+            burned_events.push(Burned {
+                id: Hex(&log.receipt.transaction.hash).to_string(), // Each event needs a unique id
+                curator: event.curator,
+                subgraphDeploymentID: event.subgraphDeploymentID,
+                tokens: event.tokens.to_string(), // Tokens is origanally BigInt but proto does not have BigInt so we use string
+                signal: event.signal.to_string(), // Tokens is origanally BigInt but proto does not have BigInt so we use string
+                ordinal: log.block_index() as u64,
+            });
         }
     }
 
@@ -145,6 +192,12 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
     });
     events.rewards_assigned_events = Some(RewardsAssignedEvents {
         rewards_assigned_events: rewards_assigned_events,
+    });
+    events.signalled_events = Some(SignalledEvents {
+        signalled_events: signalled_events,
+    });
+    events.burned_events = Some(BurnedEvents {
+        burned_events: burned_events,
     });
 
     Ok(events)
@@ -310,7 +363,7 @@ fn store_total_delegated_stakes(
     }
 
     for rewardsAssigned in rewards_assigned_events.rewards_assigned_events {
-        // This code assumes indexer.delegatedTokens are non-zero when rewardsAssigned event is emitted. 
+        // This code assumes indexer.delegatedTokens are non-zero when rewardsAssigned event is emitted.
         // It will give wrong results indexer.delegatedTokens is zero. Needs to be updated to handle zero case
         // See the original subgraph implementation of rewardsAssigned event for more details
         let indexing_reward_cut = store_delegation_parameters
