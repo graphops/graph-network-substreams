@@ -30,6 +30,10 @@ message RewardsAssignedEvents {
   repeated RewardsAssigned rewards_assigned_events = 1;
 } 
 
+message DelegationParametersUpdatedEvents {
+  repeated DelegationParametersUpdated delegation_parameters_updated_events = 1;
+} 
+
 message Approvals {
   repeated Approval approvals = 1;
 }
@@ -42,6 +46,7 @@ message Events {
   StakeDelegatedLockedEvents stake_delegated_locked_events = 5;
   RebateClaimedEvents rebate_claimed_events = 6;
   RewardsAssignedEvents rewards_assigned_events = 7;
+  DelegationParametersUpdatedEvents delegation_parameters_updated_events = 8;
 }
 
 message Transfer {
@@ -87,6 +92,16 @@ message RebateClaimed{
   bytes indexer = 2;
   string delegated_tokens = 3;
   uint64 ordinal = 4;
+}
+
+message DelegationParametersUpdated{
+  string id = 1;
+  bytes indexer = 2;
+  string indexing_reward_cut = 3;
+  string query_fee_cut = 4;
+  string delegator_parameter_cooldown = 5;
+  uint64 block_number = 6;
+  uint64 ordinal = 7;
 }
 
 message RewardsAssigned{
