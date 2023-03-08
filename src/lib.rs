@@ -332,7 +332,7 @@ fn store_cumulative_curator_signalled(events: Events, s: StoreAddBigInt) {
 
 // Curator entities track the cumulative burned amount, not the current amount
 #[substreams::handlers::store]
-fn store_cumulative_curator_signalled(events: Events, s: StoreAddBigInt) {
+fn store_cumulative_curator_burned(events: Events, s: StoreAddBigInt) {
     let burned_events = events.burned_events.unwrap();
 
     for burned in burned_events.burned_events {
@@ -474,6 +474,18 @@ fn store_delegation_parameters(events: Events, s: StoreSetProto<DelegationParame
             delegationParametersUpdated.ordinal,
             generate_key(&delegationParametersUpdated.indexer),
             &delegationParametersUpdated,
+        );
+    }
+}
+
+#[substreams::handlers::store]
+fn store_graph_account_curator(events: Events, s: StoreSetIfNotExistsString) {
+    let signalled_events = events.signalled_events.unwrap();
+    for signalled in signalled_events.signalled_events {
+        s.set_if_not_exists(
+            signalled.ordinal,
+            generate_key(&signalled.curator),
+            &generate_key(&signalled.curator),
         );
     }
 }
