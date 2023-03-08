@@ -23,6 +23,7 @@ use substreams_ethereum::{pb::eth::v2 as eth, NULL_ADDRESS};
 // Contract Addresses
 const GRAPH_TOKEN_ADDRESS: [u8; 20] = hex!("c944E90C64B2c07662A292be6244BDf05Cda44a7");
 const STAKING_CONTRACT: [u8; 20] = hex!("F55041E37E12cD407ad00CE2910B8269B01263b9");
+const REWARDS_MANAGER_CONTRACT: [u8; 20] = hex!("9Ac758AB77733b4150A901ebd659cbF8cB93ED66");
 
 substreams_ethereum::init!();
 
@@ -40,7 +41,8 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
 
     for log in blk.logs() {
         if !(&Hex(&GRAPH_TOKEN_ADDRESS).to_string() == &Hex(&log.address()).to_string()
-            || &Hex(&STAKING_CONTRACT).to_string() == &Hex(&log.address()).to_string())
+            || &Hex(&STAKING_CONTRACT).to_string() == &Hex(&log.address()).to_string()
+            || &Hex(&REWARDS_MANAGER_CONTRACT).to_string() == &Hex(&log.address()).to_string())
         {
             continue;
         }
