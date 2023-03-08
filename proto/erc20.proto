@@ -26,6 +26,10 @@ message RebateClaimedEvents {
   repeated RebateClaimed rebate_claimed_events = 1;
 } 
 
+message RewardsAssignedEvents {
+  repeated RewardsAssigned rewards_assigned_events = 1;
+} 
+
 message Approvals {
   repeated Approval approvals = 1;
 }
@@ -37,6 +41,7 @@ message Events {
   StakeDelegatedEvents stake_delegated_events = 4;
   StakeDelegatedLockedEvents stake_delegated_locked_events = 5;
   RebateClaimedEvents rebate_claimed_events = 6;
+  RewardsAssignedEvents rewards_assigned_events = 7;
 }
 
 message Transfer {
@@ -81,6 +86,13 @@ message RebateClaimed{
   string id = 1;
   bytes indexer = 2;
   string delegated_tokens = 3;
+  uint64 ordinal = 4;
+}
+
+message RewardsAssigned{
+  string id = 1;
+  bytes indexer = 2;
+  string amount = 3;
   uint64 ordinal = 4;
 }
 

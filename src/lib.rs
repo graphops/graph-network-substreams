@@ -4,7 +4,7 @@ mod pb;
 use pb::erc20::{
     Events, RebateClaimed, RebateClaimedEvents, StakeDelegated, StakeDelegatedEvents,
     StakeDelegatedLocked, StakeDelegatedLockedEvents, StakeDeposited, StakeDepositedEvents,
-    StakeWithdrawn, StakeWithdrawnEvents, Transfer, Transfers,
+    StakeWithdrawn, StakeWithdrawnEvents, RewardsAssigned, RewardsAssignedEvents, Transfer, Transfers,
 };
 use std::str::FromStr;
 use substreams::errors::Error;
@@ -38,6 +38,7 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
     let mut stake_delegated_events = vec![];
     let mut stake_delegated_locked_events = vec![];
     let mut rebate_claimed_events = vec![];
+    let mut rewards_assigned_events = vec![];
 
     for log in blk.logs() {
         if !(&Hex(&GRAPH_TOKEN_ADDRESS).to_string() == &Hex(&log.address()).to_string()
@@ -94,6 +95,13 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
                 delegated_tokens: event.delegation_fees.to_string(), // Tokens is origanally BigInt but proto does not have BigInt so we use string
                 ordinal: log.block_index() as u64,
             });
+        } else if let Some(event) = abi::rewardsManager::events::RewardsAssigned::match_and_decode(log) {
+            rewards_assigned_events.push(RewardsAssigned {
+                id: Hex(&log.receipt.transaction.hash).to_string(), // Each event needs a unique id
+                indexer: event.indexer,
+                amount: event.amount.to_string(), // Tokens is origanally BigInt but proto does not have BigInt so we use string
+                ordinal: log.block_index() as u64,
+            });
         }
     }
 
@@ -114,6 +122,9 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
     });
     events.rebate_claimed_events = Some(RebateClaimedEvents {
         rebate_claimed_events: rebate_claimed_events,
+    });
+    events.rewards_assigned_events = Some(RewardsAssignedEvents {
+        rewards_assigned_events: rewards_assigned_events,
     });
 
     Ok(events)

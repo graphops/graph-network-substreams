@@ -431,9 +431,9 @@
         "type": "bytes32[]"
       },
       {
-        "internalType": "bool[]",
+        "internalType": "bool",
         "name": "_deny",
-        "type": "bool[]"
+        "type": "bool"
       }
     ],
     "name": "setDeniedMany",

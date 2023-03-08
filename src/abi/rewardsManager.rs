@@ -1832,10 +1832,10 @@
         #[derive(Debug, Clone, PartialEq)]
         pub struct SetDeniedMany {
             pub subgraph_deployment_id: Vec<[u8; 32usize]>,
-            pub deny: Vec<bool>,
+            pub deny: bool,
         }
         impl SetDeniedMany {
-            const METHOD_ID: [u8; 4] = [29u8, 235u8, 173u8, 237u8];
+            const METHOD_ID: [u8; 4] = [154u8, 205u8, 1u8, 72u8];
             pub fn decode(
                 call: &substreams_ethereum::pb::eth::v2::Call,
             ) -> Result<Self, String> {
@@ -1848,7 +1848,7 @@
                             ethabi::ParamType::Array(
                                 Box::new(ethabi::ParamType::FixedBytes(32usize)),
                             ),
-                            ethabi::ParamType::Array(Box::new(ethabi::ParamType::Bool)),
+                            ethabi::ParamType::Bool,
                         ],
                         maybe_data.unwrap(),
                     )
@@ -1871,11 +1871,8 @@
                     deny: values
                         .pop()
                         .expect(INTERNAL_ERR)
-                        .into_array()
-                        .expect(INTERNAL_ERR)
-                        .into_iter()
-                        .map(|inner| inner.into_bool().expect(INTERNAL_ERR))
-                        .collect(),
+                        .into_bool()
+                        .expect(INTERNAL_ERR),
                 })
             }
             pub fn encode(&self) -> Vec<u8> {
@@ -1891,14 +1888,7 @@
                                 .collect();
                             ethabi::Token::Array(v)
                         },
-                        {
-                            let v = self
-                                .deny
-                                .iter()
-                                .map(|inner| ethabi::Token::Bool(inner))
-                                .collect();
-                            ethabi::Token::Array(v)
-                        },
+                        ethabi::Token::Bool(self.deny),
                     ],
                 );
                 let mut encoded = Vec::with_capacity(4 + data.len());
