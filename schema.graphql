@@ -7,6 +7,13 @@ type GraphNetwork @entity {
     totalTokensStaked: BigInt
     "Total delegated tokens in the protocol. totalDelegatedTokens in the original subgraph"
     totalTokensDelegated: BigInt
+    # Curation global aggregate values
+    "The total amount of GRT signalled in the Curation contract"
+    totalTokensSignalled: BigInt!
+    "NOT IMPLEMENTED - Total GRT currently curating via the Auto-Migrate function"
+    totalTokensSignalledAutoMigrate: BigDecimal!
+    "NOT IMPLEMENTED - Total GRT currently curating to a specific version"
+    totalTokensSignalledDirectly: BigDecimal!
 
     # Graph Token global variables
     "Graph Token supply"
@@ -84,13 +91,9 @@ type Curator @entity {
     totalSignalledTokens: BigInt!
     "CUMULATIVE tokens unsignalled on all the subgraphs"
     totalUnsignalledTokens: BigInt!
-    "Subgraphs the curator is curating"
-    signals: [Signal!]! @derivedFrom(field: "curator")
 
     "CUMULATIVE tokens signalled on all names"
     totalNameSignalledTokens: BigInt!
     "CUMULATIVE tokens unsignalled on all names"
     totalNameUnsignalledTokens: BigInt!
-    "Subgraphs the curator is curating"
-    nameSignals: [NameSignal!]! @derivedFrom(field: "curator")
 }

@@ -11,7 +11,7 @@ protobuf:
 
 imports:
   entity: https://github.com/streamingfast/substreams-entity-change/releases/download/v0.2.1/substreams-entity-change-v0.2.1.spkg
-  
+
 binaries:
   default:
     type: wasm/rust-v1
@@ -41,7 +41,7 @@ modules:
     valueType: bigint
     inputs:
       - map: map_events
-  
+
   - name: store_indexer_stakes
     kind: store
     initialBlock: 11446769
@@ -49,7 +49,7 @@ modules:
     valueType: bigint
     inputs:
       - map: map_events
-  
+
   - name: store_graph_account_indexer
     kind: store
     initialBlock: 11446769
@@ -99,6 +99,14 @@ modules:
     inputs:
       - map: map_events
 
+  - name: store_total_signalled
+    kind: store
+    initialBlock: 11446769
+    updatePolicy: add
+    valueType: bigint
+    inputs:
+      - map: map_events
+
   - name: map_graph_network_entities
     kind: map
     initialBlock: 11446769
@@ -117,7 +125,7 @@ modules:
       - store: store_graph_account_indexer
         mode: deltas
       - store: store_graph_account_delegator
-        mode: deltas 
+        mode: deltas
     output:
       type: proto:substreams.entity.v1.EntityChange
 

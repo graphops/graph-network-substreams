@@ -169,6 +169,10 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
         }
     }
 
+    // GNS ones require a bit extra work, as they are 2 different versions of the name signal and burn
+    // due to the subgraph ID change/migration from address+index to nft id
+    // Might be a bit tricky to support them.
+
     events.transfers = Some(Transfers {
         transfers: transfers,
     });
@@ -312,6 +316,34 @@ fn store_cumulative_delegator_stakes(events: Events, s: StoreAddBigInt) {
     }
 }
 
+// Curator entities track the cumulative signalled amount, not the current amount
+#[substreams::handlers::store]
+fn store_cumulative_curator_signalled(events: Events, s: StoreAddBigInt) {
+    let signalled_events = events.signalled_events.unwrap();
+
+    for signalled in signalled_events.signalled_events {
+        s.add(
+            signalled.ordinal,
+            generate_key(&signalled.curator),
+            BigInt::from_str(&signalled.tokens).unwrap().sub(BigInt::from_str(&signalled.curationTax).unwrap()),
+        );
+    }
+}
+
+// Curator entities track the cumulative burned amount, not the current amount
+#[substreams::handlers::store]
+fn store_cumulative_curator_signalled(events: Events, s: StoreAddBigInt) {
+    let burned_events = events.burned_events.unwrap();
+
+    for burned in burned_events.burned_events {
+        s.add(
+            burned.ordinal,
+            generate_key(&burned.curator),
+            BigInt::from_str(&burned.tokens).unwrap(),
+        );
+    }
+}
+
 // Indexer and GraphNetwork entities track the total delegated stake, not the cumulative amount
 #[substreams::handlers::store]
 fn store_total_delegated_stakes(
@@ -381,6 +413,29 @@ fn store_total_delegated_stakes(
             1,
             generate_key(&rewardsAssigned.indexer),
             delegator_indexing_rewards,
+        );
+    }
+}
+
+// GraphNetwork entity tracks the total signalled, not the cumulative amount separately
+#[substreams::handlers::store]
+fn store_total_signalled(events: Events, s: StoreAddBigInt) {
+    let signalled_events = events.signalled_events.unwrap();
+    let burned_events = events.burned_events.unwrap();
+
+    for signalled in signalled_events.signalled_events {
+        s.add(
+            1,
+            "totalTokensSignalled",
+            BigInt::from_str(&signalled.tokens).unwrap(),
+        );
+    }
+
+    for burned in burned_events.burned_events {
+        s.add(
+            1,
+            "totalTokensSignalled",
+            BigInt::from_str(&burned.tokens).unwrap().neg(),
         );
     }
 }
