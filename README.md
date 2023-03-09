@@ -10,10 +10,12 @@ This project is a [subgraph](https://thegraph.com/docs/en/developing/creating-a-
 
 ## Features 
 
-
-
 ### Available Data 
 
+This subgraph makes available the following data:
+- Total supply, total mints and burns of GRT, 
+- GRT balances of addresses
+- In-protocol balances like indexer stakes and delegator stakes 
 
 ### Substreams Module Graph
 
@@ -21,7 +23,7 @@ Here is the graph of the modules of the substreams:
 
 ```mermaid
 graph TD;
-  map_events[map: map_events]
+map_events[map: map_events]
   sf.ethereum.type.v2.Block[source: sf.ethereum.type.v2.Block] --> map_events
   store_grt_balances[store: store_grt_balances]
   map_events --> store_grt_balances
@@ -39,6 +41,9 @@ graph TD;
   map_events --> store_cumulative_delegator_stakes
   store_total_delegated_stakes[store: store_total_delegated_stakes]
   map_events --> store_total_delegated_stakes
+  store_delegation_parameters --> store_total_delegated_stakes
+  store_delegation_parameters[store: store_delegation_parameters]
+  map_events --> store_delegation_parameters
   map_graph_network_entities[map: map_graph_network_entities]
   store_grt_global -- deltas --> map_graph_network_entities
   map_graph_account_entities[map: map_graph_account_entities]
@@ -56,7 +61,6 @@ graph TD;
   map_graph_account_entities --> graph_out
   map_indexer_entities --> graph_out
   map_delegated_stake_entities --> graph_out
-
 ```
 
 
