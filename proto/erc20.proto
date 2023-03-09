@@ -26,12 +26,12 @@ message RebateClaimedEvents {
   repeated RebateClaimed rebate_claimed_events = 1;
 } 
 
-message RewardsAssignedEvents {
-  repeated RewardsAssigned rewards_assigned_events = 1;
-} 
-
 message DelegationParametersUpdatedEvents {
   repeated DelegationParametersUpdated delegation_parameters_updated_events = 1;
+} 
+
+message RewardsAssignedEvents {
+  repeated RewardsAssigned rewards_assigned_events = 1;
 } 
 
 message Approvals {

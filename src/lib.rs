@@ -2,11 +2,12 @@ mod abi;
 mod db;
 mod pb;
 use pb::erc20::{
-    Events, DelegationParametersUpdated, DelegationParametersUpdatedEvents, RebateClaimed, RebateClaimedEvents, RewardsAssigned, RewardsAssignedEvents,
-    StakeDelegated, StakeDelegatedEvents, StakeDelegatedLocked, StakeDelegatedLockedEvents,
-    StakeDeposited, StakeDepositedEvents, StakeWithdrawn, StakeWithdrawnEvents, Transfer,
-    Transfers,
+    DelegationParametersUpdated, DelegationParametersUpdatedEvents, Events, RebateClaimed,
+    RebateClaimedEvents, RewardsAssigned, RewardsAssignedEvents, StakeDelegated,
+    StakeDelegatedEvents, StakeDelegatedLocked, StakeDelegatedLockedEvents, StakeDeposited,
+    StakeDepositedEvents, StakeWithdrawn, StakeWithdrawnEvents, Transfer, Transfers,
 };
+use std::ops::{Div, Mul, Sub};
 use std::str::FromStr;
 use substreams::errors::Error;
 use substreams::prelude::*;
@@ -41,7 +42,6 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
     let mut rebate_claimed_events = vec![];
     let mut delegation_parameters_updated_events = vec![];
     let mut rewards_assigned_events = vec![];
-
 
     for log in blk.logs() {
         if !(&Hex(&GRAPH_TOKEN_ADDRESS).to_string() == &Hex(&log.address()).to_string()
@@ -98,7 +98,9 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
                 delegated_tokens: event.delegation_fees.to_string(), // Tokens is origanally BigInt but proto does not have BigInt so we use string
                 ordinal: log.block_index() as u64,
             });
-        } else if let Some(event) = abi::staking::events::DelegationParametersUpdated::match_and_decode(log) {
+        } else if let Some(event) =
+            abi::staking::events::DelegationParametersUpdated::match_and_decode(log)
+        {
             delegation_parameters_updated_events.push(DelegationParametersUpdated {
                 id: Hex(&log.receipt.transaction.hash).to_string(), // Each event needs a unique id
                 indexer: event.indexer,
@@ -259,10 +261,15 @@ fn store_cumulative_delegator_stakes(events: Events, s: StoreAddBigInt) {
 
 // Indexer and GraphNetwork entities track the total delegated stake, not the cumulative amount
 #[substreams::handlers::store]
-fn store_total_delegated_stakes(events: Events, s: StoreAddBigInt) {
+fn store_total_delegated_stakes(
+    events: Events,
+    store_delegation_parameters: StoreGetProto<DelegationParametersUpdated>,
+    s: StoreAddBigInt,
+) {
     let stake_delegated_events = events.stake_delegated_events.unwrap();
     let stake_delegated_locked_events = events.stake_delegated_locked_events.unwrap();
     let rebate_claimed_events = events.rebate_claimed_events.unwrap();
+    let rewards_assigned_events = events.rewards_assigned_events.unwrap();
 
     for stakeDelegated in stake_delegated_events.stake_delegated_events {
         s.add(
@@ -298,9 +305,26 @@ fn store_total_delegated_stakes(events: Events, s: StoreAddBigInt) {
         s.add(
             1,
             generate_key(&rebateClaimed.indexer),
-            BigInt::from_str(&rebateClaimed.delegated_tokens)
-                .unwrap()
-                .neg(),
+            BigInt::from_str(&rebateClaimed.delegated_tokens).unwrap(),
+        );
+    }
+
+    for rewardsAssigned in rewards_assigned_events.rewards_assigned_events {
+        let indexing_reward_cut = store_delegation_parameters
+            .get_last(generate_key(&rewardsAssigned.indexer))
+            .unwrap()
+            .indexing_reward_cut;
+        let indexer_indexing_rewards = BigInt::from_str(&rewardsAssigned.amount)
+            .unwrap()
+            .mul(BigInt::from_str(&indexing_reward_cut).unwrap()).div(1000000);
+        let delegator_indexing_rewards = BigInt::from_str(&rewardsAssigned.amount)
+            .unwrap()
+            .sub(indexer_indexing_rewards);
+
+        s.add(
+            1,
+            generate_key(&rewardsAssigned.indexer),
+            delegator_indexing_rewards,
         );
     }
 }
@@ -325,6 +349,20 @@ fn store_graph_account_delegator(events: Events, s: StoreSetIfNotExistsString) {
             stakeDelegated.ordinal,
             generate_key_delegated_stake(&stakeDelegated.delegator, &stakeDelegated.indexer),
             &generate_key(&stakeDelegated.delegator),
+        );
+    }
+}
+
+#[substreams::handlers::store]
+fn store_delegation_parameters(events: Events, s: StoreSetProto<DelegationParametersUpdated>) {
+    let delegation_parameters_updated_events = events.delegation_parameters_updated_events.unwrap();
+    for delegationParametersUpdated in
+        delegation_parameters_updated_events.delegation_parameters_updated_events
+    {
+        s.set(
+            delegationParametersUpdated.ordinal,
+            generate_key(&delegationParametersUpdated.indexer),
+            &delegationParametersUpdated,
         );
     }
 }

@@ -1,6 +1,6 @@
 use substreams::store::{DeltaBigInt, DeltaString, Deltas};
+use substreams::Hex;
 use substreams_entity_change::pb::entity::{entity_change::Operation, EntityChanges};
-use substreams::{Hex};
 
 // --------------------
 //  Map GRT Balances Entity Changes
@@ -85,24 +85,25 @@ pub fn delegated_stake_change(
     entity_changes: &mut EntityChanges,
 ) {
     for delta in cumulative_delegated_stake_deltas.deltas {
-            entity_changes
-                .push_change(
-                    "DelegatedStake",
-                    &delta.key,
-                    delta.ordinal,
-                    Operation::Update, // Update will create the entity if it does not exist
-                )
-                .change("stakedTokens", &delta);
+        entity_changes
+            .push_change(
+                "DelegatedStake",
+                &delta.key,
+                delta.ordinal,
+                Operation::Update, // Update will create the entity if it does not exist
+            )
+            .change("stakedTokens", &delta);
     }
 
     for delta in cumulative_delegator_stake_deltas.deltas {
-            entity_changes
-                .push_change(
-                    "Delegator",
-                    &delta.key,
-                    delta.ordinal,
-                    Operation::Update, // Update will create the entity if it does not exist
-                ).change("totalStakedTokens", &delta);
+        entity_changes
+            .push_change(
+                "Delegator",
+                &delta.key,
+                delta.ordinal,
+                Operation::Update, // Update will create the entity if it does not exist
+            )
+            .change("totalStakedTokens", &delta);
     }
 
     for delta in total_delegated_stake_deltas.deltas {
@@ -126,7 +127,6 @@ pub fn delegated_stake_change(
                 .change("delegatedTokens", &delta);
         }
     }
-
 }
 
 // --------------------
@@ -171,7 +171,10 @@ pub fn graph_account_delegator_change(
                 delta.ordinal,
                 Operation::Update, // Update will create the entity if it does not exist
             )
-            .change("delegator",  &delta.key.as_str().split(":").nth(0).unwrap().to_string());
+            .change(
+                "delegator",
+                &delta.key.as_str().split(":").nth(0).unwrap().to_string(),
+            );
         entity_changes
             .push_change(
                 "Delegator",
@@ -179,18 +182,32 @@ pub fn graph_account_delegator_change(
                 delta.ordinal,
                 Operation::Update, // Update will create the entity if it does not exist
             )
-            .change("account", &delta.key.as_str().split(":").nth(0).unwrap().to_string());
+            .change(
+                "account",
+                &delta.key.as_str().split(":").nth(0).unwrap().to_string(),
+            );
         entity_changes
             .push_change(
                 "DelegatedStake",
-                &delta.key, 
+                &delta.key,
                 delta.ordinal,
                 Operation::Update, // Update will create the entity if it does not exist
-            ).change("indexer", &delta.key.as_str().split(":").last().unwrap().to_string())
-             .change("delegator", &delta.key.as_str().split(":").nth(0).unwrap().to_string());
+            )
+            .change(
+                "indexer",
+                &delta.key.as_str().split(":").last().unwrap().to_string(),
+            )
+            .change(
+                "delegator",
+                &delta.key.as_str().split(":").nth(0).unwrap().to_string(),
+            );
     }
 }
 
 fn generate_key_delegated_stake(delegator: &String, indexer: &String) -> String {
-    return format!("{}:{}", Hex(delegator).to_string(), Hex(indexer).to_string())
+    return format!(
+        "{}:{}",
+        Hex(delegator).to_string(),
+        Hex(indexer).to_string()
+    );
 }

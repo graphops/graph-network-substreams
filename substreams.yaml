@@ -89,6 +89,15 @@ modules:
     valueType: bigint
     inputs:
       - map: map_events
+      - store: store_delegation_parameters
+
+  - name: store_delegation_parameters
+    kind: store
+    initialBlock: 11446769
+    updatePolicy: set
+    valueType: proto:eth.erc20.v1.DelegationParametersUpdated
+    inputs:
+      - map: map_events
 
   - name: map_graph_network_entities
     kind: map
