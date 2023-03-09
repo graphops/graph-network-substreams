@@ -9,5 +9,8 @@ fn main() -> Result<(), anyhow::Error> {
     Abigen::new("staking", "./abis/staking.json")?
         .generate()?
         .write_to_file("src/abi/staking.rs")?;
+    Abigen::new("rewardsManager", "./abis/rewardsManager.json")?
+        .generate()?
+        .write_to_file("src/abi/rewardsManager.rs")?;
     Ok(())
 }
