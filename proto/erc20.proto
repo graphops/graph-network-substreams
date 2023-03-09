@@ -132,17 +132,17 @@ message RewardsAssigned{
 message Signalled {
   string id = 1;
   bytes curator = 2;
-  bytes subgraphDeploymentID =3;
+  bytes subgraph_deployment_id =3;
   string tokens = 4;
   string signal = 5;
-  string curationTax = 6;
+  string curation_tax = 6;
   uint64 ordinal = 7;
 }
 
 message Burned {
   string id = 1;
   bytes curator = 2;
-  bytes subgraphDeploymentID =3;
+  bytes subgraph_deployment_id =3;
   string tokens = 4;
   string signal = 5;
   uint64 ordinal = 6;

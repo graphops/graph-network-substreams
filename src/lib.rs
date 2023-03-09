@@ -72,7 +72,7 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
     for log in blk.logs() {
         if !(&Hex(&GRAPH_TOKEN_ADDRESS).to_string() == &Hex(&log.address()).to_string()
             || &Hex(&STAKING_CONTRACT).to_string() == &Hex(&log.address()).to_string()
-            || &Hex(&REWARDS_MANAGER_CONTRACT).to_string() == &Hex(&log.address()).to_string())
+            || &Hex(&REWARDS_MANAGER_CONTRACT).to_string() == &Hex(&log.address()).to_string()
             || &Hex(&GNS_CONTRACT).to_string() == &Hex(&log.address()).to_string()
             || &Hex(&CURATION_CONTRACT).to_string() == &Hex(&log.address()).to_string())
         {
@@ -151,17 +151,17 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
             signalled_events.push(Signalled {
                 id: Hex(&log.receipt.transaction.hash).to_string(), // Each event needs a unique id
                 curator: event.curator,
-                subgraphDeploymentID: event.subgraphDeploymentID,
+                subgraph_deployment_id: event.subgraph_deployment_id.to_vec(),
                 tokens: event.tokens.to_string(), // Tokens is origanally BigInt but proto does not have BigInt so we use string
                 signal: event.signal.to_string(), // Tokens is origanally BigInt but proto does not have BigInt so we use string
-                curationTax: event.curationTax.to_string(), // Tokens is origanally BigInt but proto does not have BigInt so we use string
+                curation_tax: event.curation_tax.to_string(), // Tokens is origanally BigInt but proto does not have BigInt so we use string
                 ordinal: log.block_index() as u64,
             });
         } else if let Some(event) = abi::curation::events::Burned::match_and_decode(log) {
             burned_events.push(Burned {
                 id: Hex(&log.receipt.transaction.hash).to_string(), // Each event needs a unique id
                 curator: event.curator,
-                subgraphDeploymentID: event.subgraphDeploymentID,
+                subgraph_deployment_id: event.subgraph_deployment_id.to_vec(),
                 tokens: event.tokens.to_string(), // Tokens is origanally BigInt but proto does not have BigInt so we use string
                 signal: event.signal.to_string(), // Tokens is origanally BigInt but proto does not have BigInt so we use string
                 ordinal: log.block_index() as u64,
@@ -325,7 +325,7 @@ fn store_cumulative_curator_signalled(events: Events, s: StoreAddBigInt) {
         s.add(
             signalled.ordinal,
             generate_key(&signalled.curator),
-            BigInt::from_str(&signalled.tokens).unwrap().sub(BigInt::from_str(&signalled.curationTax).unwrap()),
+            BigInt::from_str(&signalled.tokens).unwrap().sub(BigInt::from_str(&signalled.curation_tax).unwrap()),
         );
     }
 }
@@ -508,11 +508,13 @@ pub fn map_graph_account_entities(
     grt_balance_deltas: Deltas<DeltaBigInt>,
     graph_account_indexer_deltas: Deltas<DeltaString>,
     graph_account_delegator_deltas: Deltas<DeltaString>,
+    graph_account_curator_deltas: Deltas<DeltaString>,
 ) -> Result<EntityChanges, Error> {
     let mut entity_changes: EntityChanges = Default::default();
     db::grt_balance_change(grt_balance_deltas, &mut entity_changes);
     db::graph_account_indexer_change(graph_account_indexer_deltas, &mut entity_changes);
     db::graph_account_delegator_change(graph_account_delegator_deltas, &mut entity_changes);
+    db::graph_account_curator_change(graph_account_curator_deltas, &mut entity_changes);
     Ok(entity_changes)
 }
 
@@ -541,6 +543,22 @@ pub fn map_delegated_stake_entities(
     Ok(entity_changes)
 }
 
+#[substreams::handlers::map]
+pub fn map_curator_entities(
+    cumulative_curator_signalled_deltas: Deltas<DeltaBigInt>,
+    cumulative_curator_burned_deltas: Deltas<DeltaBigInt>,
+    total_signalled_deltas: Deltas<DeltaBigInt>,
+) -> Result<EntityChanges, Error> {
+    let mut entity_changes: EntityChanges = Default::default();
+    db::curation_signal_change(
+        cumulative_curator_signalled_deltas,
+        cumulative_curator_burned_deltas,
+        total_signalled_deltas,
+        &mut entity_changes,
+    );
+    Ok(entity_changes)
+}
+
 // -------------------- GRAPH_OUT --------------------
 // Final map for executing all entity change maps together
 // Run this map to check the health of the entire substream
@@ -551,6 +569,7 @@ pub fn graph_out(
     graph_account_entities: EntityChanges,
     indexer_entities: EntityChanges,
     delegated_stake_entities: EntityChanges,
+    curator_entities: EntityChanges,
 ) -> Result<EntityChanges, substreams::errors::Error> {
     Ok(EntityChanges {
         entity_changes: [
@@ -558,6 +577,7 @@ pub fn graph_out(
             graph_account_entities.entity_changes,
             indexer_entities.entity_changes,
             delegated_stake_entities.entity_changes,
+            curator_entities.entity_changes,
         ]
         .concat(),
     })

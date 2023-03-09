@@ -150,8 +150,8 @@ modules:
         mode: deltas
       - store: store_graph_account_delegator
         mode: deltas
-      # - store: store_graph_account_curator
-      #   mode: deltas
+      - store: store_graph_account_curator
+        mode: deltas
     output:
       type: proto:substreams.entity.v1.EntityChange
 
@@ -198,6 +198,6 @@ modules:
       - map: map_graph_account_entities
       - map: map_indexer_entities
       - map: map_delegated_stake_entities
-      # - map: map_curator_entities
+      - map: map_curator_entities
     output:
       type: proto:substreams.entity.v1.EntityChanges
