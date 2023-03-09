@@ -310,6 +310,9 @@ fn store_total_delegated_stakes(
     }
 
     for rewardsAssigned in rewards_assigned_events.rewards_assigned_events {
+        // This code assumes indexer.delegatedTokens are non-zero when rewardsAssigned event is emitted. 
+        // It will give wrong results indexer.delegatedTokens is zero. Needs to be updated to handle zero case
+        // See the original subgraph implementation of rewardsAssigned event for more details
         let indexing_reward_cut = store_delegation_parameters
             .get_last(generate_key(&rewardsAssigned.indexer))
             .unwrap()
