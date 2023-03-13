@@ -44,8 +44,8 @@ use substreams_ethereum::{pb::eth::v2 as eth, NULL_ADDRESS};
 const GRAPH_TOKEN_ADDRESS: [u8; 20] = hex!("c944E90C64B2c07662A292be6244BDf05Cda44a7");
 const STAKING_CONTRACT: [u8; 20] = hex!("F55041E37E12cD407ad00CE2910B8269B01263b9");
 const REWARDS_MANAGER_CONTRACT: [u8; 20] = hex!("9Ac758AB77733b4150A901ebd659cbF8cB93ED66");
-const GNS_CONTRACT: [u8; 20] = hex!("F55041E37E12cD407ad00CE2910B8269B01263b9");
-const CURATION_CONTRACT: [u8; 20] = hex!("F55041E37E12cD407ad00CE2910B8269B01263b9");
+const GNS_CONTRACT: [u8; 20] = hex!("aDcA0dd4729c8BA3aCf3E99F3A9f471EF37b6825");
+const CURATION_CONTRACT: [u8; 20] = hex!("8FE00a685Bcb3B2cc296ff6FfEaB10acA4CE1538");
 
 // Probably improve this to be a list/vec in the future, as this doesn't really scale later
 
@@ -427,7 +427,7 @@ fn store_total_signalled(events: Events, s: StoreAddBigInt) {
         s.add(
             1,
             "totalTokensSignalled",
-            BigInt::from_str(&signalled.tokens).unwrap(),
+            BigInt::from_str(&signalled.tokens).unwrap().sub(BigInt::from_str(&signalled.curation_tax).unwrap()),
         );
     }
 

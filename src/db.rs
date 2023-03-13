@@ -152,7 +152,7 @@ pub fn curation_signal_change(
     for delta in cumulative_curator_burned_deltas.deltas {
             entity_changes
                 .push_change(
-                    "Delegator",
+                    "Curator",
                     &delta.key,
                     delta.ordinal,
                     Operation::Update, // Update will create the entity if it does not exist

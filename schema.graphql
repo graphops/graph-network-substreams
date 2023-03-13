@@ -9,11 +9,11 @@ type GraphNetwork @entity {
     totalTokensDelegated: BigInt
     # Curation global aggregate values
     "The total amount of GRT signalled in the Curation contract"
-    totalTokensSignalled: BigInt!
+    totalTokensSignalled: BigInt
     "NOT IMPLEMENTED - Total GRT currently curating via the Auto-Migrate function"
-    totalTokensSignalledAutoMigrate: BigDecimal!
+    totalTokensSignalledAutoMigrate: BigDecimal
     "NOT IMPLEMENTED - Total GRT currently curating to a specific version"
-    totalTokensSignalledDirectly: BigDecimal!
+    totalTokensSignalledDirectly: BigDecimal
 
     # Graph Token global variables
     "Graph Token supply"
@@ -88,12 +88,12 @@ type Curator @entity {
     "Graph account of the curator"
     account: GraphAccount
     "CUMULATIVE tokens signalled on all the subgraphs"
-    totalSignalledTokens: BigInt!
+    totalSignalledTokens: BigInt
     "CUMULATIVE tokens unsignalled on all the subgraphs"
-    totalUnsignalledTokens: BigInt!
+    totalUnsignalledTokens: BigInt
 
     "CUMULATIVE tokens signalled on all names"
-    totalNameSignalledTokens: BigInt!
+    totalNameSignalledTokens: BigInt
     "CUMULATIVE tokens unsignalled on all names"
-    totalNameUnsignalledTokens: BigInt!
+    totalNameUnsignalledTokens: BigInt
 }
