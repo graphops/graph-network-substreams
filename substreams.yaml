@@ -11,7 +11,7 @@ protobuf:
 
 imports:
   entity: https://github.com/streamingfast/substreams-entity-change/releases/download/v0.2.1/substreams-entity-change-v0.2.1.spkg
-  
+
 binaries:
   default:
     type: wasm/rust-v1
@@ -41,7 +41,7 @@ modules:
     valueType: bigint
     inputs:
       - map: map_events
-  
+
   - name: store_indexer_stakes
     kind: store
     initialBlock: 11446769
@@ -49,7 +49,7 @@ modules:
     valueType: bigint
     inputs:
       - map: map_events
-  
+
   - name: store_graph_account_indexer
     kind: store
     initialBlock: 11446769
@@ -59,6 +59,14 @@ modules:
       - map: map_events
 
   - name: store_graph_account_delegator
+    kind: store
+    initialBlock: 11446769
+    updatePolicy: set_if_not_exists
+    valueType: string
+    inputs:
+      - map: map_events
+
+  - name: store_graph_account_curator
     kind: store
     initialBlock: 11446769
     updatePolicy: set_if_not_exists
@@ -99,6 +107,30 @@ modules:
     inputs:
       - map: map_events
 
+  - name: store_total_signalled
+    kind: store
+    initialBlock: 11446769
+    updatePolicy: add
+    valueType: bigint
+    inputs:
+      - map: map_events
+
+  - name: store_cumulative_curator_signalled
+    kind: store
+    initialBlock: 11446769
+    updatePolicy: add
+    valueType: bigint
+    inputs:
+      - map: map_events
+
+  - name: store_cumulative_curator_burned
+    kind: store
+    initialBlock: 11446769
+    updatePolicy: add
+    valueType: bigint
+    inputs:
+      - map: map_events
+
   - name: map_graph_network_entities
     kind: map
     initialBlock: 11446769
@@ -117,7 +149,9 @@ modules:
       - store: store_graph_account_indexer
         mode: deltas
       - store: store_graph_account_delegator
-        mode: deltas 
+        mode: deltas
+      - store: store_graph_account_curator
+        mode: deltas
     output:
       type: proto:substreams.entity.v1.EntityChange
 
@@ -143,6 +177,19 @@ modules:
     output:
       type: proto:substreams.entity.v1.EntityChange
 
+  - name: map_curator_entities
+    kind: map
+    initialBlock: 11446769
+    inputs:
+      - store: store_cumulative_curator_signalled
+        mode: deltas
+      - store: store_cumulative_curator_burned
+        mode: deltas
+      - store: store_total_signalled
+        mode: deltas
+    output:
+      type: proto:substreams.entity.v1.EntityChange
+
   - name: graph_out
     kind: map
     initialBlock: 11446769
@@ -151,5 +198,6 @@ modules:
       - map: map_graph_account_entities
       - map: map_indexer_entities
       - map: map_delegated_stake_entities
+      - map: map_curator_entities
     output:
       type: proto:substreams.entity.v1.EntityChanges

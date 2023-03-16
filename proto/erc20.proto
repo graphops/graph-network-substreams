@@ -6,13 +6,17 @@ message Transfers {
   repeated Transfer transfers = 1;
 }
 
+message Approvals {
+repeated Approval approvals = 1;
+}
+
 message StakeDepositedEvents {
   repeated StakeDeposited stake_deposited_events = 1;
-} 
+}
 
 message StakeWithdrawnEvents {
   repeated StakeWithdrawn stake_withdrawn_events = 1;
-} 
+}
 
 message StakeDelegatedEvents {
   repeated StakeDelegated stake_delegated_events = 1;
@@ -24,18 +28,22 @@ message StakeDelegatedLockedEvents {
 
 message RebateClaimedEvents {
   repeated RebateClaimed rebate_claimed_events = 1;
-} 
+}
 
 message DelegationParametersUpdatedEvents {
   repeated DelegationParametersUpdated delegation_parameters_updated_events = 1;
-} 
+}
 
 message RewardsAssignedEvents {
   repeated RewardsAssigned rewards_assigned_events = 1;
-} 
+}
 
-message Approvals {
-  repeated Approval approvals = 1;
+message SignalledEvents {
+  repeated Signalled signalled_events = 1;
+}
+
+message BurnedEvents {
+  repeated Burned burned_events = 1;
 }
 
 message Events {
@@ -47,6 +55,8 @@ message Events {
   RebateClaimedEvents rebate_claimed_events = 6;
   RewardsAssignedEvents rewards_assigned_events = 7;
   DelegationParametersUpdatedEvents delegation_parameters_updated_events = 8;
+  SignalledEvents signalled_events = 9;
+  BurnedEvents burned_events = 10;
 }
 
 message Transfer {
@@ -57,6 +67,14 @@ message Transfer {
   uint64 ordinal = 5;
 }
 
+message Approval {
+string id = 1;
+bytes owner = 2;
+bytes spender = 3;
+string amount = 4;
+uint64 ordinal = 5;
+}
+
 message StakeDeposited {
   string id = 1;
   bytes indexer = 2;
@@ -64,14 +82,14 @@ message StakeDeposited {
   uint64 ordinal = 4;
 }
 
-message StakeWithdrawn{
+message StakeWithdrawn {
   string id = 1;
   bytes indexer = 2;
   string tokens = 3;
   uint64 ordinal = 4;
 }
 
-message StakeDelegated{
+message StakeDelegated {
   string id = 1;
   bytes indexer = 2;
   bytes delegator = 3;
@@ -79,7 +97,7 @@ message StakeDelegated{
   uint64 ordinal = 5;
 }
 
-message StakeDelegatedLocked{
+message StakeDelegatedLocked {
   string id = 1;
   bytes indexer = 2;
   bytes delegator = 3;
@@ -87,7 +105,7 @@ message StakeDelegatedLocked{
   uint64 ordinal = 5;
 }
 
-message RebateClaimed{
+message RebateClaimed {
   string id = 1;
   bytes indexer = 2;
   string delegated_tokens = 3;
@@ -111,10 +129,21 @@ message RewardsAssigned{
   uint64 ordinal = 4;
 }
 
-message Approval {
+message Signalled {
   string id = 1;
-  bytes owner = 2;
-  bytes spender = 3;
-  string amount = 4;
-  uint64 ordinal = 5;
+  bytes curator = 2;
+  bytes subgraph_deployment_id =3;
+  string tokens = 4;
+  string signal = 5;
+  string curation_tax = 6;
+  uint64 ordinal = 7;
+}
+
+message Burned {
+  string id = 1;
+  bytes curator = 2;
+  bytes subgraph_deployment_id =3;
+  string tokens = 4;
+  string signal = 5;
+  uint64 ordinal = 6;
 }

@@ -12,5 +12,11 @@ fn main() -> Result<(), anyhow::Error> {
     Abigen::new("rewardsManager", "./abis/rewardsManager.json")?
         .generate()?
         .write_to_file("src/abi/rewardsManager.rs")?;
+    Abigen::new("curation", "./abis/curation.json")?
+        .generate()?
+        .write_to_file("src/abi/curation.rs")?;
+    Abigen::new("gns", "./abis/gns.json")?
+        .generate()?
+        .write_to_file("src/abi/gns.rs")?;
     Ok(())
 }

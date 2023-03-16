@@ -130,6 +130,49 @@ pub fn delegated_stake_change(
 }
 
 // --------------------
+//  Map Curation Entity Changes
+// --------------------
+pub fn curation_signal_change(
+    cumulative_curator_signalled_deltas: Deltas<DeltaBigInt>,
+    cumulative_curator_burned_deltas: Deltas<DeltaBigInt>,
+    total_signalled_deltas: Deltas<DeltaBigInt>,
+    entity_changes: &mut EntityChanges,
+) {
+    for delta in cumulative_curator_signalled_deltas.deltas {
+            entity_changes
+                .push_change(
+                    "Curator",
+                    &delta.key,
+                    delta.ordinal,
+                    Operation::Update, // Update will create the entity if it does not exist
+                )
+                .change("totalSignalledTokens", &delta);
+    }
+
+    for delta in cumulative_curator_burned_deltas.deltas {
+            entity_changes
+                .push_change(
+                    "Curator",
+                    &delta.key,
+                    delta.ordinal,
+                    Operation::Update, // Update will create the entity if it does not exist
+                ).change("totalUnsignalledTokens", &delta);
+    }
+
+    for delta in total_signalled_deltas.deltas {
+            entity_changes
+                .push_change(
+                    "GraphNetwork",
+                    "1",
+                    delta.ordinal,
+                    Operation::Update, // Update will create the entity if it does not exist
+                )
+                .change("totalTokensSignalled", &delta);
+    }
+
+}
+
+// --------------------
 //  Map Indexer Stake Entity Changes
 // --------------------
 pub fn graph_account_indexer_change(
@@ -201,6 +244,33 @@ pub fn graph_account_delegator_change(
                 "delegator",
                 &delta.key.as_str().split(":").nth(0).unwrap().to_string(),
             );
+    }
+}
+
+// --------------------
+//  Map Curator Entity Changes
+// --------------------
+pub fn graph_account_curator_change(
+    graph_account_curator_deltas: Deltas<DeltaString>,
+    entity_changes: &mut EntityChanges,
+) {
+    for delta in graph_account_curator_deltas.deltas {
+        entity_changes
+            .push_change(
+                "GraphAccount",
+                &delta.key,
+                delta.ordinal,
+                Operation::Update, // Update will create the entity if it does not exist
+            )
+            .change("curator", &delta.key);
+        entity_changes
+            .push_change(
+                "Curator",
+                &delta.key,
+                delta.ordinal,
+                Operation::Update, // Update will create the entity if it does not exist
+            )
+            .change("account", &delta.key);
     }
 }
 

@@ -2,10 +2,28 @@ mod abi;
 mod db;
 mod pb;
 use pb::erc20::{
-    DelegationParametersUpdated, DelegationParametersUpdatedEvents, Events, RebateClaimed,
-    RebateClaimedEvents, RewardsAssigned, RewardsAssignedEvents, StakeDelegated,
-    StakeDelegatedEvents, StakeDelegatedLocked, StakeDelegatedLockedEvents, StakeDeposited,
-    StakeDepositedEvents, StakeWithdrawn, StakeWithdrawnEvents, Transfer, Transfers,
+    Events,
+    RebateClaimed,
+    RebateClaimedEvents,
+    StakeDelegated,
+    StakeDelegatedEvents,
+    StakeDelegatedLocked,
+    StakeDelegatedLockedEvents,
+    StakeDeposited,
+    StakeDepositedEvents,
+    StakeWithdrawn,
+    StakeWithdrawnEvents,
+    Transfer,
+    Transfers,
+    Signalled,
+    SignalledEvents,
+    Burned,
+    BurnedEvents,
+    DelegationParametersUpdated,
+    DelegationParametersUpdatedEvents,
+    RewardsAssigned,
+    RewardsAssignedEvents,
+
 };
 use std::ops::{Div, Mul, Sub};
 use std::str::FromStr;
@@ -13,7 +31,7 @@ use substreams::errors::Error;
 use substreams::prelude::*;
 use substreams::scalar::BigInt;
 use substreams::store;
-use substreams::store::{DeltaBigInt, DeltaString, Deltas};
+use substreams::store::{ DeltaBigInt, DeltaString, Deltas };
 use substreams::{
     hex, log, store::StoreAddBigInt, store::StoreSetIfNotExists, store::StoreSetIfNotExistsString,
     store::StoreSetProto, Hex,
@@ -26,6 +44,10 @@ use substreams_ethereum::{pb::eth::v2 as eth, NULL_ADDRESS};
 const GRAPH_TOKEN_ADDRESS: [u8; 20] = hex!("c944E90C64B2c07662A292be6244BDf05Cda44a7");
 const STAKING_CONTRACT: [u8; 20] = hex!("F55041E37E12cD407ad00CE2910B8269B01263b9");
 const REWARDS_MANAGER_CONTRACT: [u8; 20] = hex!("9Ac758AB77733b4150A901ebd659cbF8cB93ED66");
+const GNS_CONTRACT: [u8; 20] = hex!("aDcA0dd4729c8BA3aCf3E99F3A9f471EF37b6825");
+const CURATION_CONTRACT: [u8; 20] = hex!("8FE00a685Bcb3B2cc296ff6FfEaB10acA4CE1538");
+
+// Probably improve this to be a list/vec in the future, as this doesn't really scale later
 
 substreams_ethereum::init!();
 
@@ -42,11 +64,17 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
     let mut rebate_claimed_events = vec![];
     let mut delegation_parameters_updated_events = vec![];
     let mut rewards_assigned_events = vec![];
+    let mut signalled_events = vec![];
+    let mut burned_events = vec![];
 
+    // Potentially consider adding log.index() to the IDs, to have them be truly unique in
+    // transactions with potentially more than 1 of these messages
     for log in blk.logs() {
         if !(&Hex(&GRAPH_TOKEN_ADDRESS).to_string() == &Hex(&log.address()).to_string()
             || &Hex(&STAKING_CONTRACT).to_string() == &Hex(&log.address()).to_string()
-            || &Hex(&REWARDS_MANAGER_CONTRACT).to_string() == &Hex(&log.address()).to_string())
+            || &Hex(&REWARDS_MANAGER_CONTRACT).to_string() == &Hex(&log.address()).to_string()
+            || &Hex(&GNS_CONTRACT).to_string() == &Hex(&log.address()).to_string()
+            || &Hex(&CURATION_CONTRACT).to_string() == &Hex(&log.address()).to_string())
         {
             continue;
         }
@@ -119,8 +147,31 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
                 amount: event.amount.to_string(), // Tokens is origanally BigInt but proto does not have BigInt so we use string
                 ordinal: log.block_index() as u64,
             });
+        } else if let Some(event) = abi::curation::events::Signalled::match_and_decode(log) {
+            signalled_events.push(Signalled {
+                id: Hex(&log.receipt.transaction.hash).to_string(), // Each event needs a unique id
+                curator: event.curator,
+                subgraph_deployment_id: event.subgraph_deployment_id.to_vec(),
+                tokens: event.tokens.to_string(), // Tokens is origanally BigInt but proto does not have BigInt so we use string
+                signal: event.signal.to_string(), // Tokens is origanally BigInt but proto does not have BigInt so we use string
+                curation_tax: event.curation_tax.to_string(), // Tokens is origanally BigInt but proto does not have BigInt so we use string
+                ordinal: log.block_index() as u64,
+            });
+        } else if let Some(event) = abi::curation::events::Burned::match_and_decode(log) {
+            burned_events.push(Burned {
+                id: Hex(&log.receipt.transaction.hash).to_string(), // Each event needs a unique id
+                curator: event.curator,
+                subgraph_deployment_id: event.subgraph_deployment_id.to_vec(),
+                tokens: event.tokens.to_string(), // Tokens is origanally BigInt but proto does not have BigInt so we use string
+                signal: event.signal.to_string(), // Tokens is origanally BigInt but proto does not have BigInt so we use string
+                ordinal: log.block_index() as u64,
+            });
         }
     }
+
+    // GNS ones require a bit extra work, as they are 2 different versions of the name signal and burn
+    // due to the subgraph ID change/migration from address+index to nft id
+    // Might be a bit tricky to support them.
 
     events.transfers = Some(Transfers {
         transfers: transfers,
@@ -145,6 +196,12 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
     });
     events.rewards_assigned_events = Some(RewardsAssignedEvents {
         rewards_assigned_events: rewards_assigned_events,
+    });
+    events.signalled_events = Some(SignalledEvents {
+        signalled_events: signalled_events,
+    });
+    events.burned_events = Some(BurnedEvents {
+        burned_events: burned_events,
     });
 
     Ok(events)
@@ -259,6 +316,34 @@ fn store_cumulative_delegator_stakes(events: Events, s: StoreAddBigInt) {
     }
 }
 
+// Curator entities track the cumulative signalled amount, not the current amount
+#[substreams::handlers::store]
+fn store_cumulative_curator_signalled(events: Events, s: StoreAddBigInt) {
+    let signalled_events = events.signalled_events.unwrap();
+
+    for signalled in signalled_events.signalled_events {
+        s.add(
+            signalled.ordinal,
+            generate_key(&signalled.curator),
+            BigInt::from_str(&signalled.tokens).unwrap().sub(BigInt::from_str(&signalled.curation_tax).unwrap()),
+        );
+    }
+}
+
+// Curator entities track the cumulative burned amount, not the current amount
+#[substreams::handlers::store]
+fn store_cumulative_curator_burned(events: Events, s: StoreAddBigInt) {
+    let burned_events = events.burned_events.unwrap();
+
+    for burned in burned_events.burned_events {
+        s.add(
+            burned.ordinal,
+            generate_key(&burned.curator),
+            BigInt::from_str(&burned.tokens).unwrap(),
+        );
+    }
+}
+
 // Indexer and GraphNetwork entities track the total delegated stake, not the cumulative amount
 #[substreams::handlers::store]
 fn store_total_delegated_stakes(
@@ -310,7 +395,7 @@ fn store_total_delegated_stakes(
     }
 
     for rewardsAssigned in rewards_assigned_events.rewards_assigned_events {
-        // This code assumes indexer.delegatedTokens are non-zero when rewardsAssigned event is emitted. 
+        // This code assumes indexer.delegatedTokens are non-zero when rewardsAssigned event is emitted.
         // It will give wrong results indexer.delegatedTokens is zero. Needs to be updated to handle zero case
         // See the original subgraph implementation of rewardsAssigned event for more details
         let indexing_reward_cut = store_delegation_parameters
@@ -328,6 +413,29 @@ fn store_total_delegated_stakes(
             1,
             generate_key(&rewardsAssigned.indexer),
             delegator_indexing_rewards,
+        );
+    }
+}
+
+// GraphNetwork entity tracks the total signalled, not the cumulative amount separately
+#[substreams::handlers::store]
+fn store_total_signalled(events: Events, s: StoreAddBigInt) {
+    let signalled_events = events.signalled_events.unwrap();
+    let burned_events = events.burned_events.unwrap();
+
+    for signalled in signalled_events.signalled_events {
+        s.add(
+            1,
+            "totalTokensSignalled",
+            BigInt::from_str(&signalled.tokens).unwrap().sub(BigInt::from_str(&signalled.curation_tax).unwrap()),
+        );
+    }
+
+    for burned in burned_events.burned_events {
+        s.add(
+            1,
+            "totalTokensSignalled",
+            BigInt::from_str(&burned.tokens).unwrap().neg(),
         );
     }
 }
@@ -370,6 +478,18 @@ fn store_delegation_parameters(events: Events, s: StoreSetProto<DelegationParame
     }
 }
 
+#[substreams::handlers::store]
+fn store_graph_account_curator(events: Events, s: StoreSetIfNotExistsString) {
+    let signalled_events = events.signalled_events.unwrap();
+    for signalled in signalled_events.signalled_events {
+        s.set_if_not_exists(
+            signalled.ordinal,
+            generate_key(&signalled.curator),
+            &generate_key(&signalled.curator),
+        );
+    }
+}
+
 // -------------------- MAPS FOR ENTITY CHANGES --------------------
 // We have an entity change map for each entity in our subgraph schema.graphql
 // These maps take necessary stores or maps as inputs and create/update corresponding entitites in the subgraph using entity changes
@@ -388,11 +508,13 @@ pub fn map_graph_account_entities(
     grt_balance_deltas: Deltas<DeltaBigInt>,
     graph_account_indexer_deltas: Deltas<DeltaString>,
     graph_account_delegator_deltas: Deltas<DeltaString>,
+    graph_account_curator_deltas: Deltas<DeltaString>,
 ) -> Result<EntityChanges, Error> {
     let mut entity_changes: EntityChanges = Default::default();
     db::grt_balance_change(grt_balance_deltas, &mut entity_changes);
     db::graph_account_indexer_change(graph_account_indexer_deltas, &mut entity_changes);
     db::graph_account_delegator_change(graph_account_delegator_deltas, &mut entity_changes);
+    db::graph_account_curator_change(graph_account_curator_deltas, &mut entity_changes);
     Ok(entity_changes)
 }
 
@@ -421,6 +543,22 @@ pub fn map_delegated_stake_entities(
     Ok(entity_changes)
 }
 
+#[substreams::handlers::map]
+pub fn map_curator_entities(
+    cumulative_curator_signalled_deltas: Deltas<DeltaBigInt>,
+    cumulative_curator_burned_deltas: Deltas<DeltaBigInt>,
+    total_signalled_deltas: Deltas<DeltaBigInt>,
+) -> Result<EntityChanges, Error> {
+    let mut entity_changes: EntityChanges = Default::default();
+    db::curation_signal_change(
+        cumulative_curator_signalled_deltas,
+        cumulative_curator_burned_deltas,
+        total_signalled_deltas,
+        &mut entity_changes,
+    );
+    Ok(entity_changes)
+}
+
 // -------------------- GRAPH_OUT --------------------
 // Final map for executing all entity change maps together
 // Run this map to check the health of the entire substream
@@ -431,6 +569,7 @@ pub fn graph_out(
     graph_account_entities: EntityChanges,
     indexer_entities: EntityChanges,
     delegated_stake_entities: EntityChanges,
+    curator_entities: EntityChanges,
 ) -> Result<EntityChanges, substreams::errors::Error> {
     Ok(EntityChanges {
         entity_changes: [
@@ -438,6 +577,7 @@ pub fn graph_out(
             graph_account_entities.entity_changes,
             indexer_entities.entity_changes,
             delegated_stake_entities.entity_changes,
+            curator_entities.entity_changes,
         ]
         .concat(),
     })
