@@ -108,7 +108,8 @@ message RewardsAssigned{
   string id = 1;
   bytes indexer = 2;
   string amount = 3;
-  uint64 ordinal = 4;
+  uint64 block_number = 4;
+  uint64 ordinal = 5;
 }
 
 message Approval {

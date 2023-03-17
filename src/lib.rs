@@ -7,7 +7,7 @@ use pb::erc20::{
     StakeDelegatedEvents, StakeDelegatedLocked, StakeDelegatedLockedEvents, StakeDeposited,
     StakeDepositedEvents, StakeWithdrawn, StakeWithdrawnEvents, Transfer, Transfers,
 };
-use std::ops::{Div, Mul, Sub};
+use std::ops::{Add, Div, Mul, Sub};
 use std::str::FromStr;
 use substreams::errors::Error;
 use substreams::prelude::*;
@@ -117,6 +117,7 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
                 id: Hex(&log.receipt.transaction.hash).to_string(), // Each event needs a unique id
                 indexer: event.indexer,
                 amount: event.amount.to_string(), // Tokens is origanally BigInt but proto does not have BigInt so we use string
+                block_number: blk.number,
                 ordinal: log.block_index() as u64,
             });
         }
@@ -261,15 +262,10 @@ fn store_cumulative_delegator_stakes(events: Events, s: StoreAddBigInt) {
 
 // Indexer and GraphNetwork entities track the total delegated stake, not the cumulative amount
 #[substreams::handlers::store]
-fn store_total_delegated_stakes(
-    events: Events,
-    store_delegation_parameters: StoreGetProto<DelegationParametersUpdated>,
-    s: StoreAddBigInt,
-) {
+fn store_delegated_stakes_one(events: Events, s: StoreAddBigInt) {
     let stake_delegated_events = events.stake_delegated_events.unwrap();
     let stake_delegated_locked_events = events.stake_delegated_locked_events.unwrap();
     let rebate_claimed_events = events.rebate_claimed_events.unwrap();
-    let rewards_assigned_events = events.rewards_assigned_events.unwrap();
 
     for stakeDelegated in stake_delegated_events.stake_delegated_events {
         s.add(
@@ -308,27 +304,71 @@ fn store_total_delegated_stakes(
             BigInt::from_str(&rebateClaimed.delegated_tokens).unwrap(),
         );
     }
+}
+// Indexer and GraphNetwork entities track the total delegated stake, not the cumulative amount
+#[substreams::handlers::store]
+fn store_delegated_stakes_two(events: Events, s: StoreAddBigInt) {
+    let rewards_assigned_events = events.rewards_assigned_events.unwrap();
 
     for rewardsAssigned in rewards_assigned_events.rewards_assigned_events {
-        // This code assumes indexer.delegatedTokens are non-zero when rewardsAssigned event is emitted. 
-        // It will give wrong results indexer.delegatedTokens is zero. Needs to be updated to handle zero case
-        // See the original subgraph implementation of rewardsAssigned event for more details
-        let indexing_reward_cut = store_delegation_parameters
-            .get_last(generate_key(&rewardsAssigned.indexer))
-            .unwrap()
-            .indexing_reward_cut;
-        let indexer_indexing_rewards = BigInt::from_str(&rewardsAssigned.amount)
-            .unwrap()
-            .mul(BigInt::from_str(&indexing_reward_cut).unwrap()).div(1000000);
-        let delegator_indexing_rewards = BigInt::from_str(&rewardsAssigned.amount)
-            .unwrap()
-            .sub(indexer_indexing_rewards);
-
         s.add(
-            1,
-            generate_key(&rewardsAssigned.indexer),
-            delegator_indexing_rewards,
+            rewardsAssigned.ordinal,
+            generate_key_rewards_assigned(&rewardsAssigned.indexer, rewardsAssigned.block_number),
+            BigInt::from_str(&rewardsAssigned.amount).unwrap(),
         );
+    }
+}
+// Indexer and GraphNetwork entities track the total delegated stake, not the cumulative amount
+#[substreams::handlers::store]
+fn store_total_delegated_stakes(
+    store_delegated_tokens_one: StoreGetBigInt,
+    store_delegated_tokens_one_deltas: Deltas<DeltaBigInt>,
+    store_delegated_tokens_two: Deltas<DeltaBigInt>,
+    store_delegator_parameters: StoreGetProto<DelegationParametersUpdated>,
+    s: StoreAddBigInt,
+) {
+    for delta in store_delegated_tokens_one_deltas.deltas {
+        s.add(delta.ordinal, delta.key, delta.new_value);
+    }
+
+    for delta in &store_delegated_tokens_two.deltas {
+        let mut sum: BigInt = BigInt::zero();
+        for delta_inner in &store_delegated_tokens_two.deltas {
+            if delta_inner.key.as_str().split(":").last().unwrap() > delta.key.as_str().split(":").last().unwrap() {
+                continue;
+            }
+            if delta.ordinal > delta_inner.ordinal {
+                continue;
+            }
+            if delta.key.as_str().split(":").nth(0).unwrap().to_string() == delta_inner.key.as_str().split(":").nth(0).unwrap().to_string() {
+                
+                let delegated_tokens: BigInt =
+                    match store_delegated_tokens_one.get_last(&delta_inner.key) {
+                        Some(delegated_tokens) => delegated_tokens,
+                        None => {
+                            continue;
+                        }
+                    };
+                let delegated_total_tokens = delegated_tokens.add(sum.clone());
+                if delegated_total_tokens == BigInt::zero() {
+                    continue;
+                } else {
+                    let indexing_reward_cut = store_delegator_parameters
+                        .get_last(&delta.key)
+                        .unwrap()
+                        .indexing_reward_cut;
+                    let indexer_indexing_rewards = delta_inner
+                        .new_value
+                        .clone()
+                        .mul(BigInt::from_str(&indexing_reward_cut).unwrap())
+                        .div(1000000);
+                    let delegator_indexing_rewards =
+                        delta_inner.new_value.clone().sub(indexer_indexing_rewards);
+                    sum = sum.add(delegator_indexing_rewards);
+                }
+            }
+        }
+        s.add(delta.ordinal, &delta.key, &sum)
     }
 }
 
@@ -453,5 +493,13 @@ fn generate_key_delegated_stake(delegator: &Vec<u8>, indexer: &Vec<u8>) -> Strin
         "{}:{}",
         Hex(delegator).to_string(),
         Hex(indexer).to_string()
+    );
+}
+
+fn generate_key_rewards_assigned(indexer: &Vec<u8>, block_number: u64) -> String {
+    return format!(
+        "{}:{}",
+        Hex(indexer).to_string(),
+        block_number.to_string()
     );
 }
