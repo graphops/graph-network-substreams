@@ -15,7 +15,7 @@ This project is a [subgraph](https://thegraph.com/docs/en/developing/creating-a-
 This subgraph makes available the following data:
 - Total supply, total mints and burns of GRT, 
 - GRT balances of addresses
-- In-protocol balances like indexer stakes and delegator stakes 
+- In-protocol balances like indexer, delegator and curator stakes 
 
 ### Substreams Module Graph
 
