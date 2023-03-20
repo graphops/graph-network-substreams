@@ -318,32 +318,59 @@ fn store_delegated_stakes_two(events: Events, s: StoreAddBigInt) {
         );
     }
 }
+#[substreams::handlers::store]
+fn store_delegated_stakes_initial(
+    events: Events,
+    store_delegated_tokens_one: StoreGetBigInt,
+    s: StoreSetIfNotExistsBigInt,
+) {
+    let rewards_assigned_events = events.rewards_assigned_events.unwrap();
+    for rewardsAssigned in rewards_assigned_events.rewards_assigned_events {
+        let delegated_tokens: BigInt =
+            match store_delegated_tokens_one.get_last(generate_key(&rewardsAssigned.indexer)) {
+                Some(delegated_tokens) => delegated_tokens,
+                None => {
+                    continue;
+                }
+            };
+        s.set_if_not_exists(1, generate_key(&rewardsAssigned.indexer), &delegated_tokens);
+    }
+}
 // Indexer and GraphNetwork entities track the total delegated stake, not the cumulative amount
 #[substreams::handlers::store]
 fn store_total_delegated_stakes(
-    store_delegated_tokens_one: StoreGetBigInt,
     store_delegated_tokens_one_deltas: Deltas<DeltaBigInt>,
     store_delegated_tokens_two: Deltas<DeltaBigInt>,
+    store_delegated_tokens_initial: StoreGetBigInt,
     store_delegator_parameters: StoreGetProto<DelegationParametersUpdated>,
     s: StoreAddBigInt,
 ) {
     for delta in store_delegated_tokens_one_deltas.deltas {
-        s.add(delta.ordinal, delta.key, delta.new_value);
+        s.add(delta.ordinal, delta.key, delta.new_value.sub(delta.old_value));
     }
 
     for delta in &store_delegated_tokens_two.deltas {
         let mut sum: BigInt = BigInt::zero();
         for delta_inner in &store_delegated_tokens_two.deltas {
-            if delta_inner.key.as_str().split(":").last().unwrap() > delta.key.as_str().split(":").last().unwrap() {
+            if delta_inner.key.as_str().split(":").last().unwrap()
+                > delta.key.as_str().split(":").last().unwrap()
+            {
                 continue;
             }
             if delta.ordinal > delta_inner.ordinal {
                 continue;
             }
-            if delta.key.as_str().split(":").nth(0).unwrap().to_string() == delta_inner.key.as_str().split(":").nth(0).unwrap().to_string() {
-                
+            if delta.key.as_str().split(":").nth(0).unwrap().to_string()
+                == delta_inner
+                    .key
+                    .as_str()
+                    .split(":")
+                    .nth(0)
+                    .unwrap()
+                    .to_string()
+            {
                 let delegated_tokens: BigInt =
-                    match store_delegated_tokens_one.get_last(&delta_inner.key) {
+                    match store_delegated_tokens_initial.get_last(&delta_inner.key) {
                         Some(delegated_tokens) => delegated_tokens,
                         None => {
                             continue;
@@ -497,9 +524,5 @@ fn generate_key_delegated_stake(delegator: &Vec<u8>, indexer: &Vec<u8>) -> Strin
 }
 
 fn generate_key_rewards_assigned(indexer: &Vec<u8>, block_number: u64) -> String {
-    return format!(
-        "{}:{}",
-        Hex(indexer).to_string(),
-        block_number.to_string()
-    );
+    return format!("{}:{}", Hex(indexer).to_string(), block_number.to_string());
 }

@@ -98,6 +98,15 @@ modules:
     inputs:
       - map: map_events
 
+  - name: store_delegated_stakes_initial
+    kind: store
+    initialBlock: 11446769
+    updatePolicy: set_if_not_exists
+    valueType: bigint
+    inputs:
+      - map: map_events
+      - store: store_delegated_stakes_one
+
   - name: store_total_delegated_stakes
     kind: store
     initialBlock: 11446769
@@ -105,10 +114,10 @@ modules:
     valueType: bigint
     inputs:
       - store: store_delegated_stakes_one
-      - store: store_delegated_stakes_one
         mode: deltas
       - store: store_delegated_stakes_two
         mode: deltas
+      - store: store_delegated_stakes_initial
       - store: store_delegation_parameters
 
   - name: store_delegation_parameters
