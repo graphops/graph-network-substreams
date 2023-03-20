@@ -22,7 +22,7 @@ This subgraph makes available the following data:
 Here is the graph of the modules of the substreams: 
 
 ```mermaid
-graph TD;
+graph LR;
   map_events[map: map_events]
   sf.ethereum.type.v2.Block[source: sf.ethereum.type.v2.Block] --> map_events
   store_grt_balances[store: store_grt_balances]
