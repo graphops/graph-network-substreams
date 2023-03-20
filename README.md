@@ -23,7 +23,7 @@ Here is the graph of the modules of the substreams:
 
 ```mermaid
 graph TD;
-map_events[map: map_events]
+  map_events[map: map_events]
   sf.ethereum.type.v2.Block[source: sf.ethereum.type.v2.Block] --> map_events
   store_grt_balances[store: store_grt_balances]
   map_events --> store_grt_balances
@@ -35,6 +35,8 @@ map_events[map: map_events]
   map_events --> store_graph_account_indexer
   store_graph_account_delegator[store: store_graph_account_delegator]
   map_events --> store_graph_account_delegator
+  store_graph_account_curator[store: store_graph_account_curator]
+  map_events --> store_graph_account_curator
   store_cumulative_delegated_stakes[store: store_cumulative_delegated_stakes]
   map_events --> store_cumulative_delegated_stakes
   store_cumulative_delegator_stakes[store: store_cumulative_delegator_stakes]
@@ -44,23 +46,35 @@ map_events[map: map_events]
   store_delegation_parameters --> store_total_delegated_stakes
   store_delegation_parameters[store: store_delegation_parameters]
   map_events --> store_delegation_parameters
+  store_total_signalled[store: store_total_signalled]
+  map_events --> store_total_signalled
+  store_cumulative_curator_signalled[store: store_cumulative_curator_signalled]
+  map_events --> store_cumulative_curator_signalled
+  store_cumulative_curator_burned[store: store_cumulative_curator_burned]
+  map_events --> store_cumulative_curator_burned
   map_graph_network_entities[map: map_graph_network_entities]
   store_grt_global -- deltas --> map_graph_network_entities
   map_graph_account_entities[map: map_graph_account_entities]
   store_grt_balances -- deltas --> map_graph_account_entities
   store_graph_account_indexer -- deltas --> map_graph_account_entities
   store_graph_account_delegator -- deltas --> map_graph_account_entities
+  store_graph_account_curator -- deltas --> map_graph_account_entities
   map_indexer_entities[map: map_indexer_entities]
   store_indexer_stakes -- deltas --> map_indexer_entities
   map_delegated_stake_entities[map: map_delegated_stake_entities]
   store_cumulative_delegated_stakes -- deltas --> map_delegated_stake_entities
   store_cumulative_delegator_stakes -- deltas --> map_delegated_stake_entities
   store_total_delegated_stakes -- deltas --> map_delegated_stake_entities
+  map_curator_entities[map: map_curator_entities]
+  store_cumulative_curator_signalled -- deltas --> map_curator_entities
+  store_cumulative_curator_burned -- deltas --> map_curator_entities
+  store_total_signalled -- deltas --> map_curator_entities
   graph_out[map: graph_out]
   map_graph_network_entities --> graph_out
   map_graph_account_entities --> graph_out
   map_indexer_entities --> graph_out
   map_delegated_stake_entities --> graph_out
+  map_curator_entities --> graph_out
 ```
 
 
