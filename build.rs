@@ -11,7 +11,7 @@ fn main() -> Result<(), anyhow::Error> {
         .write_to_file("src/abi/staking.rs")?;
     Abigen::new("rewardsManager", "./abis/rewardsManager.json")?
         .generate()?
-        .write_to_file("src/abi/rewardsManager.rs")?;
+        .write_to_file("src/abi/rewards_manager.rs")?;
     Abigen::new("curation", "./abis/curation.json")?
         .generate()?
         .write_to_file("src/abi/curation.rs")?;
