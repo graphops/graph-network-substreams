@@ -1,5 +1,4 @@
 use substreams::store::{DeltaBigInt, DeltaString, Deltas};
-use substreams::Hex;
 use substreams_entity_change::pb::entity::{entity_change::Operation, EntityChanges};
 
 // --------------------
@@ -274,10 +273,3 @@ pub fn graph_account_curator_change(
     }
 }
 
-fn generate_key_delegated_stake(delegator: &String, indexer: &String) -> String {
-    return format!(
-        "{}:{}",
-        Hex(delegator).to_string(),
-        Hex(indexer).to_string()
-    );
-}

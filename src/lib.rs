@@ -30,10 +30,9 @@ use std::str::FromStr;
 use substreams::errors::Error;
 use substreams::prelude::*;
 use substreams::scalar::BigInt;
-use substreams::store;
 use substreams::store::{ DeltaBigInt, DeltaString, Deltas };
 use substreams::{
-    hex, log, store::StoreAddBigInt, store::StoreSetIfNotExists, store::StoreSetIfNotExistsString,
+    hex, store::StoreAddBigInt, store::StoreSetIfNotExists, store::StoreSetIfNotExistsString,
     store::StoreSetProto, Hex,
 };
 use substreams_entity_change::pb::entity::EntityChanges;
@@ -139,7 +138,7 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
                 ordinal: log.block_index() as u64,
             });
         } else if let Some(event) =
-            abi::rewardsManager::events::RewardsAssigned::match_and_decode(log)
+            abi::rewards_manager::events::RewardsAssigned::match_and_decode(log)
         {
             rewards_assigned_events.push(RewardsAssigned {
                 id: Hex(&log.receipt.transaction.hash).to_string(), // Each event needs a unique id
@@ -261,29 +260,29 @@ fn store_indexer_stakes(events: Events, s: StoreAddBigInt) {
     let stake_deposited_events = events.stake_deposited_events.unwrap();
     let stake_withdrawn_events = events.stake_withdrawn_events.unwrap();
 
-    for stakeDeposited in stake_deposited_events.stake_deposited_events {
+    for stake_deposited in stake_deposited_events.stake_deposited_events {
         s.add(
-            stakeDeposited.ordinal,
-            generate_key(&stakeDeposited.indexer),
-            BigInt::from_str(&stakeDeposited.tokens).unwrap(),
+            stake_deposited.ordinal,
+            generate_key(&stake_deposited.indexer),
+            BigInt::from_str(&stake_deposited.tokens).unwrap(),
         );
         s.add(
-            stakeDeposited.ordinal,
+            stake_deposited.ordinal,
             "totalTokensStaked",
-            BigInt::from_str(&stakeDeposited.tokens).unwrap(),
+            BigInt::from_str(&stake_deposited.tokens).unwrap(),
         );
     }
 
-    for stakeWithdrawn in stake_withdrawn_events.stake_withdrawn_events {
+    for stake_withdrawn in stake_withdrawn_events.stake_withdrawn_events {
         s.add(
-            stakeWithdrawn.ordinal,
-            generate_key(&stakeWithdrawn.indexer),
-            BigInt::from_str(&stakeWithdrawn.tokens).unwrap().neg(),
+            stake_withdrawn.ordinal,
+            generate_key(&stake_withdrawn.indexer),
+            BigInt::from_str(&stake_withdrawn.tokens).unwrap().neg(),
         );
         s.add(
-            stakeWithdrawn.ordinal,
+            stake_withdrawn.ordinal,
             "totalTokensStaked",
-            BigInt::from_str(&stakeWithdrawn.tokens).unwrap().neg(),
+            BigInt::from_str(&stake_withdrawn.tokens).unwrap().neg(),
         );
     }
 }
@@ -293,11 +292,11 @@ fn store_indexer_stakes(events: Events, s: StoreAddBigInt) {
 fn store_cumulative_delegated_stakes(events: Events, s: StoreAddBigInt) {
     let stake_delegated_events = events.stake_delegated_events.unwrap();
 
-    for stakeDelegated in stake_delegated_events.stake_delegated_events {
+    for stake_delegated in stake_delegated_events.stake_delegated_events {
         s.add(
-            stakeDelegated.ordinal,
-            generate_key_delegated_stake(&stakeDelegated.delegator, &stakeDelegated.indexer),
-            BigInt::from_str(&stakeDelegated.tokens).unwrap(),
+            stake_delegated.ordinal,
+            generate_key_delegated_stake(&stake_delegated.delegator, &stake_delegated.indexer),
+            BigInt::from_str(&stake_delegated.tokens).unwrap(),
         );
     }
 }
@@ -307,11 +306,11 @@ fn store_cumulative_delegated_stakes(events: Events, s: StoreAddBigInt) {
 fn store_cumulative_delegator_stakes(events: Events, s: StoreAddBigInt) {
     let stake_delegated_events = events.stake_delegated_events.unwrap();
 
-    for stakeDelegated in stake_delegated_events.stake_delegated_events {
+    for stake_delegated in stake_delegated_events.stake_delegated_events {
         s.add(
-            stakeDelegated.ordinal,
-            generate_key(&stakeDelegated.delegator),
-            BigInt::from_str(&stakeDelegated.tokens).unwrap(),
+            stake_delegated.ordinal,
+            generate_key(&stake_delegated.delegator),
+            BigInt::from_str(&stake_delegated.tokens).unwrap(),
         );
     }
 }
@@ -356,62 +355,62 @@ fn store_total_delegated_stakes(
     let rebate_claimed_events = events.rebate_claimed_events.unwrap();
     let rewards_assigned_events = events.rewards_assigned_events.unwrap();
 
-    for stakeDelegated in stake_delegated_events.stake_delegated_events {
+    for stake_delegated in stake_delegated_events.stake_delegated_events {
         s.add(
             1,
-            generate_key(&stakeDelegated.indexer),
-            BigInt::from_str(&stakeDelegated.tokens).unwrap(),
+            generate_key(&stake_delegated.indexer),
+            BigInt::from_str(&stake_delegated.tokens).unwrap(),
         );
         s.add(
             1,
             "totalTokensDelegated",
-            BigInt::from_str(&stakeDelegated.tokens).unwrap(),
+            BigInt::from_str(&stake_delegated.tokens).unwrap(),
         );
     }
 
-    for stakeDelegatedLocked in stake_delegated_locked_events.stake_delegated_locked_events {
+    for stake_delegated_locked in stake_delegated_locked_events.stake_delegated_locked_events {
         s.add(
             1,
-            generate_key(&stakeDelegatedLocked.indexer),
-            BigInt::from_str(&stakeDelegatedLocked.tokens)
+            generate_key(&stake_delegated_locked.indexer),
+            BigInt::from_str(&stake_delegated_locked.tokens)
                 .unwrap()
                 .neg(),
         );
         s.add(
             1,
             "totalTokensDelegated",
-            BigInt::from_str(&stakeDelegatedLocked.tokens)
+            BigInt::from_str(&stake_delegated_locked.tokens)
                 .unwrap()
                 .neg(),
         );
     }
 
-    for rebateClaimed in rebate_claimed_events.rebate_claimed_events {
+    for rebate_claimed in rebate_claimed_events.rebate_claimed_events {
         s.add(
             1,
-            generate_key(&rebateClaimed.indexer),
-            BigInt::from_str(&rebateClaimed.delegated_tokens).unwrap(),
+            generate_key(&rebate_claimed.indexer),
+            BigInt::from_str(&rebate_claimed.delegated_tokens).unwrap(),
         );
     }
 
-    for rewardsAssigned in rewards_assigned_events.rewards_assigned_events {
+    for rewards_assigned in rewards_assigned_events.rewards_assigned_events {
         // This code assumes indexer.delegatedTokens are non-zero when rewardsAssigned event is emitted.
         // It will give wrong results indexer.delegatedTokens is zero. Needs to be updated to handle zero case
         // See the original subgraph implementation of rewardsAssigned event for more details
         let indexing_reward_cut = store_delegation_parameters
-            .get_last(generate_key(&rewardsAssigned.indexer))
+            .get_last(generate_key(&rewards_assigned.indexer))
             .unwrap()
             .indexing_reward_cut;
-        let indexer_indexing_rewards = BigInt::from_str(&rewardsAssigned.amount)
+        let indexer_indexing_rewards = BigInt::from_str(&rewards_assigned.amount)
             .unwrap()
             .mul(BigInt::from_str(&indexing_reward_cut).unwrap()).div(1000000);
-        let delegator_indexing_rewards = BigInt::from_str(&rewardsAssigned.amount)
+        let delegator_indexing_rewards = BigInt::from_str(&rewards_assigned.amount)
             .unwrap()
             .sub(indexer_indexing_rewards);
 
         s.add(
             1,
-            generate_key(&rewardsAssigned.indexer),
+            generate_key(&rewards_assigned.indexer),
             delegator_indexing_rewards,
         );
     }
@@ -443,11 +442,11 @@ fn store_total_signalled(events: Events, s: StoreAddBigInt) {
 #[substreams::handlers::store]
 fn store_graph_account_indexer(events: Events, s: StoreSetIfNotExistsString) {
     let stake_deposited_events = events.stake_deposited_events.unwrap();
-    for stakeDeposited in stake_deposited_events.stake_deposited_events {
+    for stake_deposited in stake_deposited_events.stake_deposited_events {
         s.set_if_not_exists(
-            stakeDeposited.ordinal,
-            generate_key(&stakeDeposited.indexer),
-            &generate_key(&stakeDeposited.indexer),
+            stake_deposited.ordinal,
+            generate_key(&stake_deposited.indexer),
+            &generate_key(&stake_deposited.indexer),
         );
     }
 }
@@ -455,11 +454,11 @@ fn store_graph_account_indexer(events: Events, s: StoreSetIfNotExistsString) {
 #[substreams::handlers::store]
 fn store_graph_account_delegator(events: Events, s: StoreSetIfNotExistsString) {
     let stake_delegated_events = events.stake_delegated_events.unwrap();
-    for stakeDelegated in stake_delegated_events.stake_delegated_events {
+    for stake_delegated in stake_delegated_events.stake_delegated_events {
         s.set_if_not_exists(
-            stakeDelegated.ordinal,
-            generate_key_delegated_stake(&stakeDelegated.delegator, &stakeDelegated.indexer),
-            &generate_key(&stakeDelegated.delegator),
+            stake_delegated.ordinal,
+            generate_key_delegated_stake(&stake_delegated.delegator, &stake_delegated.indexer),
+            &generate_key(&stake_delegated.delegator),
         );
     }
 }
@@ -467,13 +466,13 @@ fn store_graph_account_delegator(events: Events, s: StoreSetIfNotExistsString) {
 #[substreams::handlers::store]
 fn store_delegation_parameters(events: Events, s: StoreSetProto<DelegationParametersUpdated>) {
     let delegation_parameters_updated_events = events.delegation_parameters_updated_events.unwrap();
-    for delegationParametersUpdated in
+    for delegation_parameters_updated in
         delegation_parameters_updated_events.delegation_parameters_updated_events
     {
         s.set(
-            delegationParametersUpdated.ordinal,
-            generate_key(&delegationParametersUpdated.indexer),
-            &delegationParametersUpdated,
+            delegation_parameters_updated.ordinal,
+            generate_key(&delegation_parameters_updated.indexer),
+            &delegation_parameters_updated,
         );
     }
 }

@@ -1,5 +1,5 @@
 pub mod erc20;
 pub mod staking;
-pub mod rewardsManager;
+pub mod rewards_manager;
 pub mod curation;
 pub mod gns;
