@@ -85,21 +85,21 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
                 from: event.from,
                 to: event.to,
                 value: event.value.to_string(), // Value is origanally BigInt but proto does not have BigInt so we use string
-                ordinal: log.block_index() as u64,
+                ordinal: log.ordinal() as u64,
             });
         } else if let Some(event) = abi::staking::events::StakeDeposited::match_and_decode(log) {
             stake_deposited_events.push(StakeDeposited {
                 id: Hex(&log.receipt.transaction.hash).to_string(), // Each event needs a unique id
                 indexer: event.indexer,
                 tokens: event.tokens.to_string(), // Tokens is origanally BigInt but proto does not have BigInt so we use string
-                ordinal: log.block_index() as u64,
+                ordinal: log.ordinal() as u64,
             });
         } else if let Some(event) = abi::staking::events::StakeWithdrawn::match_and_decode(log) {
             stake_withdrawn_events.push(StakeWithdrawn {
                 id: Hex(&log.receipt.transaction.hash).to_string(), // Each event needs a unique id
                 indexer: event.indexer,
                 tokens: event.tokens.to_string(), // Tokens is origanally BigInt but proto does not have BigInt so we use string
-                ordinal: log.block_index() as u64,
+                ordinal: log.ordinal() as u64,
             });
         } else if let Some(event) = abi::staking::events::StakeDelegated::match_and_decode(log) {
             stake_delegated_events.push(StakeDelegated {
@@ -107,7 +107,7 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
                 indexer: event.indexer,
                 delegator: event.delegator,
                 tokens: event.tokens.to_string(), // Tokens is origanally BigInt but proto does not have BigInt so we use string
-                ordinal: log.block_index() as u64,
+                ordinal: log.ordinal() as u64,
             });
         } else if let Some(event) =
             abi::staking::events::StakeDelegatedLocked::match_and_decode(log)
@@ -117,14 +117,14 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
                 indexer: event.indexer,
                 delegator: event.delegator,
                 tokens: event.tokens.to_string(), // Tokens is origanally BigInt but proto does not have BigInt so we use string
-                ordinal: log.block_index() as u64,
+                ordinal: log.ordinal() as u64,
             });
         } else if let Some(event) = abi::staking::events::RebateClaimed::match_and_decode(log) {
             rebate_claimed_events.push(RebateClaimed {
                 id: Hex(&log.receipt.transaction.hash).to_string(), // Each event needs a unique id
                 indexer: event.indexer,
                 delegated_tokens: event.delegation_fees.to_string(), // Tokens is origanally BigInt but proto does not have BigInt so we use string
-                ordinal: log.block_index() as u64,
+                ordinal: log.ordinal() as u64,
             });
         } else if let Some(event) =
             abi::staking::events::DelegationParametersUpdated::match_and_decode(log)
@@ -136,7 +136,7 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
                 query_fee_cut: event.query_fee_cut.to_string(),
                 delegator_parameter_cooldown: event.cooldown_blocks.to_string(),
                 block_number: blk.number,
-                ordinal: log.block_index() as u64,
+                ordinal: log.ordinal() as u64,
             });
         } else if let Some(event) =
             abi::rewardsManager::events::RewardsAssigned::match_and_decode(log)
@@ -145,7 +145,7 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
                 id: Hex(&log.receipt.transaction.hash).to_string(), // Each event needs a unique id
                 indexer: event.indexer,
                 amount: event.amount.to_string(), // Tokens is origanally BigInt but proto does not have BigInt so we use string
-                ordinal: log.block_index() as u64,
+                ordinal: log.ordinal() as u64,
             });
         } else if let Some(event) = abi::curation::events::Signalled::match_and_decode(log) {
             signalled_events.push(Signalled {
@@ -155,7 +155,7 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
                 tokens: event.tokens.to_string(), // Tokens is origanally BigInt but proto does not have BigInt so we use string
                 signal: event.signal.to_string(), // Tokens is origanally BigInt but proto does not have BigInt so we use string
                 curation_tax: event.curation_tax.to_string(), // Tokens is origanally BigInt but proto does not have BigInt so we use string
-                ordinal: log.block_index() as u64,
+                ordinal: log.ordinal() as u64,
             });
         } else if let Some(event) = abi::curation::events::Burned::match_and_decode(log) {
             burned_events.push(Burned {
@@ -164,7 +164,7 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
                 subgraph_deployment_id: event.subgraph_deployment_id.to_vec(),
                 tokens: event.tokens.to_string(), // Tokens is origanally BigInt but proto does not have BigInt so we use string
                 signal: event.signal.to_string(), // Tokens is origanally BigInt but proto does not have BigInt so we use string
-                ordinal: log.block_index() as u64,
+                ordinal: log.ordinal() as u64,
             });
         }
     }
