@@ -15,7 +15,7 @@ use substreams::prelude::*;
 use substreams::scalar::BigInt;
 use substreams::store::{DeltaBigInt, DeltaString, Deltas};
 use substreams::{
-    hex, log, store::StoreAddBigInt, store::StoreSetIfNotExists, store::StoreSetIfNotExistsString,
+    hex, store::StoreAddBigInt, store::StoreSetIfNotExists, store::StoreSetIfNotExistsString,
     store::StoreSetProto, Hex,
 };
 use substreams_entity_change::pb::entity::EntityChanges;
@@ -43,18 +43,14 @@ fn pad_address_and_number(address: &Vec<u8>, number: u64) -> Vec<u8> {
     // Convert the number to a byte array
     let number_bytes = number.to_be_bytes();
 
-    log::info!("number bytes: {:?}", Hex(&number_bytes));
-
     // Pad the number with leading zeros to make it 32 bytes
     let mut padded_number = vec![0; 32 - number_bytes.len()];
     padded_number.extend_from_slice(&number_bytes);
-    log::info!("padded number: {:?}", Hex(&padded_number));
 
     // Concatenate the padded address and padded number
     let mut result = Vec::new();
     result.extend_from_slice(&padded_address);
     result.extend_from_slice(&padded_number);
-    log::info!("{:?}", Hex(&result));
     result
 }
 
@@ -63,7 +59,6 @@ pub fn keccak256(data: &Vec<u8>) -> [u8; 32] {
     let mut out: [u8; 32] = [0; 32];
     hasher.update(data);
     hasher.finalize(&mut out);
-    log::info!("Hash value: {:?}", Hex(out));
     out
 }
 
@@ -83,10 +78,8 @@ fn map_sc(blk: eth::Block) -> Result<Changes, Error> {
                 if let Some(event) = abi::staking::events::StakeDeposited::match_and_decode(&log) {
                     for storage_change in &call.storage_changes {
                         if storage_change.address.eq(&STAKING_CONTRACT) {
-                            log::info!("Indexer: {:?}", Hex(&event.indexer));
-                            log::info!("{:?}", Hex(trx.hash.clone()));
-                            let data = pad_address_and_number(&event.indexer, 14);
-                            if storage_change.key == keccak256(&data) {
+                            let key = pad_address_and_number(&event.indexer, 14);
+                            if storage_change.key == keccak256(&key) {
                                 indexer_stakes.push(IndexerStake {
                                     indexer: event.indexer.clone(),
                                     stake: BigInt::from_signed_bytes_be(&storage_change.new_value)
