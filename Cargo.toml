@@ -20,6 +20,7 @@ substreams-ethereum = "0.8.0"
 substreams-entity-change = "0.3.0"
 num-bigint = "0.4"
 bigdecimal = "0.3"
+tiny-keccak = "2.0.2"
 
 [build-dependencies]
 anyhow = "1"
