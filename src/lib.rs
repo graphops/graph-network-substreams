@@ -82,7 +82,7 @@ fn map_sc(blk: eth::Block) -> Result<Changes, Error> {
 
             for log in call.logs.iter() {
                 if let Some(event) = abi::staking::events::StakeDeposited::match_and_decode(&log) {
-                    for keccak_preimage in &call.keccak_preimages{
+                    for keccak_preimage in &call.keccak_preimages {
                         log::info!("{:?}", &keccak_preimage);
                     }
                     for storage_change in &call.storage_changes {
@@ -91,8 +91,10 @@ fn map_sc(blk: eth::Block) -> Result<Changes, Error> {
                             if storage_change.key == keccak256(&key) {
                                 indexer_stakes.push(IndexerStake {
                                     indexer: event.indexer.clone(),
-                                    stake: BigInt::from_unsigned_bytes_be(&storage_change.new_value)
-                                        .into(),
+                                    stake: BigInt::from_unsigned_bytes_be(
+                                        &storage_change.new_value,
+                                    )
+                                    .into(),
                                     ordinal: log.ordinal,
                                 })
                             }
