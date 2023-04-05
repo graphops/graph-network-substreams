@@ -2,7 +2,7 @@ mod abi;
 mod db;
 mod pb;
 use pb::erc20::{
-    Burned, BurnedEvents, Changes, DelegationParametersUpdated, DelegationParametersUpdatedEvents,
+    Burned, BurnedEvents, StorageChanges, DelegationParametersUpdated, DelegationParametersUpdatedEvents,
     Events, IndexerStake, IndexerStakes, RebateClaimed, RebateClaimedEvents, RewardsAssigned,
     RewardsAssignedEvents, Signalled, SignalledEvents, StakeDelegated, StakeDelegatedEvents,
     StakeDelegatedLocked, StakeDelegatedLockedEvents, StakeDeposited, StakeDepositedEvents,
@@ -69,8 +69,8 @@ fn add_padding<T: AsRef<[u8]>>(input: T) -> [u8; 32] {
 }
 
 #[substreams::handlers::map]
-fn map_sc(blk: eth::Block) -> Result<Changes, Error> {
-    let mut changes = Changes::default();
+fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
+    let mut storage_changes = StorageChanges::default();
     let mut indexer_stakes = vec![];
 
     for trx in blk.transactions() {
@@ -90,10 +90,36 @@ fn map_sc(blk: eth::Block) -> Result<Changes, Error> {
                             let key = find_key(&event.indexer, 14);
                             if storage_change.key == keccak256(&key) {
                                 indexer_stakes.push(IndexerStake {
+                                    id: Hex(&trx.hash).to_string(),
                                     indexer: event.indexer.clone(),
-                                    stake: BigInt::from_unsigned_bytes_be(
+                                    new_stake: BigInt::from_unsigned_bytes_be(
                                         &storage_change.new_value,
                                     )
+                                    .into(),
+                                    old_stake: BigInt::from_unsigned_bytes_be(&storage_change.old_value)
+                                    .into(),
+                                    ordinal: log.ordinal,
+                                })
+                            }
+                        }
+                    }
+                }
+                if let Some(event) = abi::staking::events::StakeWithdrawn::match_and_decode(&log) {
+                    for keccak_preimage in &call.keccak_preimages {
+                        log::info!("{:?}", &keccak_preimage);
+                    }
+                    for storage_change in &call.storage_changes {
+                        if storage_change.address.eq(&STAKING_CONTRACT) {
+                            let key = find_key(&event.indexer, 14);
+                            if storage_change.key == keccak256(&key) {
+                                indexer_stakes.push(IndexerStake {
+                                    id: Hex(&trx.hash).to_string(),
+                                    indexer: event.indexer.clone(),
+                                    new_stake: BigInt::from_unsigned_bytes_be(
+                                        &storage_change.new_value,
+                                    )
+                                    .into(),
+                                    old_stake: BigInt::from_unsigned_bytes_be(&storage_change.old_value)
                                     .into(),
                                     ordinal: log.ordinal,
                                 })
@@ -104,12 +130,13 @@ fn map_sc(blk: eth::Block) -> Result<Changes, Error> {
             }
         }
     }
-
-    changes.indexer_stakes = Some(IndexerStakes {
+    
+    indexer_stakes.sort_by(|x, y| x.ordinal.cmp(&y.ordinal));
+    storage_changes.indexer_stakes = Some(IndexerStakes {
         indexer_stakes: indexer_stakes,
     });
 
-    Ok(changes)
+    Ok(storage_changes)
 }
 
 #[substreams::handlers::map]
@@ -315,38 +342,6 @@ fn store_grt_global(events: Events, s: StoreAddBigInt) {
     }
 }
 
-#[substreams::handlers::store]
-fn store_indexer_stakes(events: Events, s: StoreAddBigInt) {
-    let stake_deposited_events = events.stake_deposited_events.unwrap();
-    let stake_withdrawn_events = events.stake_withdrawn_events.unwrap();
-
-    for stake_deposited in stake_deposited_events.stake_deposited_events {
-        s.add(
-            stake_deposited.ordinal,
-            generate_key(&stake_deposited.indexer),
-            BigInt::from_str(&stake_deposited.tokens).unwrap(),
-        );
-        s.add(
-            stake_deposited.ordinal,
-            "totalTokensStaked",
-            BigInt::from_str(&stake_deposited.tokens).unwrap(),
-        );
-    }
-
-    for stake_withdrawn in stake_withdrawn_events.stake_withdrawn_events {
-        s.add(
-            stake_withdrawn.ordinal,
-            generate_key(&stake_withdrawn.indexer),
-            BigInt::from_str(&stake_withdrawn.tokens).unwrap().neg(),
-        );
-        s.add(
-            stake_withdrawn.ordinal,
-            "totalTokensStaked",
-            BigInt::from_str(&stake_withdrawn.tokens).unwrap().neg(),
-        );
-    }
-}
-
 // DelegatedStake and Delegator entities track the cumulative delegated stake, not the total amount
 #[substreams::handlers::store]
 fn store_cumulative_delegated_stakes(events: Events, s: StoreAddBigInt) {
@@ -505,13 +500,13 @@ fn store_total_signalled(events: Events, s: StoreAddBigInt) {
 }
 
 #[substreams::handlers::store]
-fn store_graph_account_indexer(events: Events, s: StoreSetIfNotExistsString) {
-    let stake_deposited_events = events.stake_deposited_events.unwrap();
-    for stake_deposited in stake_deposited_events.stake_deposited_events {
+fn store_graph_account_indexer(storage_changes: StorageChanges, s: StoreSetIfNotExistsString) {
+    let indexer_stakes = storage_changes.indexer_stakes.unwrap();
+    for indexer_stake in indexer_stakes.indexer_stakes{
         s.set_if_not_exists(
-            stake_deposited.ordinal,
-            generate_key(&stake_deposited.indexer),
-            &generate_key(&stake_deposited.indexer),
+            indexer_stake.ordinal,
+            generate_key(&indexer_stake.indexer),
+            &generate_key(&indexer_stake.indexer),
         );
     }
 }
@@ -584,10 +579,11 @@ pub fn map_graph_account_entities(
 
 #[substreams::handlers::map]
 pub fn map_indexer_entities(
-    indexer_stake_deltas: Deltas<DeltaBigInt>,
+    storage_changes: StorageChanges,
 ) -> Result<EntityChanges, Error> {
     let mut entity_changes: EntityChanges = Default::default();
-    db::indexer_stake_change(indexer_stake_deltas, &mut entity_changes);
+    let indexer_stakes = storage_changes.indexer_stakes.unwrap();
+    db::indexer_stake_change(indexer_stakes, &mut entity_changes);
     Ok(entity_changes)
 }
 
