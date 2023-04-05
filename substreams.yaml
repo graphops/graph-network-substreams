@@ -18,6 +18,14 @@ binaries:
     file: ./target/wasm32-unknown-unknown/release/substreams.wasm
 
 modules:
+  - name: map_sc
+    kind: map
+    initialBlock: 11446769
+    inputs:
+      - source: sf.ethereum.type.v2.Block
+    output:
+      type: proto:eth.erc20.v1.Changes
+
   - name: map_events
     kind: map
     initialBlock: 11446769

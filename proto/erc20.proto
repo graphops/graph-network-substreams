@@ -46,6 +46,14 @@ message BurnedEvents {
   repeated Burned burned_events = 1;
 }
 
+message IndexerStakes {
+  repeated IndexerStake indexer_stakes = 1;
+}
+
+message Changes {
+  IndexerStakes indexer_stakes = 1;
+}
+
 message Events {
   Transfers transfers = 1;
   StakeDepositedEvents stake_deposited_events = 2;
@@ -146,4 +154,10 @@ message Burned {
   string tokens = 4;
   string signal = 5;
   uint64 ordinal = 6;
+}
+
+message IndexerStake {
+  bytes indexer = 1;
+  string stake = 2;
+  uint64 ordinal = 3;
 }
