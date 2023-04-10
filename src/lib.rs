@@ -35,7 +35,7 @@ const CURATION_CONTRACT: [u8; 20] = hex!("8FE00a685Bcb3B2cc296ff6FfEaB10acA4CE15
 substreams_ethereum::init!();
 
 // -------------------- INITIAL MAPS --------------------
-fn find_key(address: &Vec<u8>, slot: u64) -> Vec<u8> {
+fn find_key(address: &Vec<u8>, slot: u64) -> [u8; 32]{
     // Pad the address with leading zeros to make it 32 bytes
     let padded_address = add_padding(address);
 
@@ -46,7 +46,7 @@ fn find_key(address: &Vec<u8>, slot: u64) -> Vec<u8> {
     let mut result = Vec::new();
     result.extend_from_slice(&padded_address);
     result.extend_from_slice(&padded_slot);
-    result
+    keccak256(&result)
 }
 
 pub fn keccak256(data: &Vec<u8>) -> [u8; 32] {
@@ -87,8 +87,7 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
                     }
                     for storage_change in &call.storage_changes {
                         if storage_change.address.eq(&STAKING_CONTRACT) {
-                            let key = find_key(&event.indexer, 14);
-                            if storage_change.key == keccak256(&key) {
+                            if storage_change.key == find_key(&event.indexer, 14) {
                                 indexer_stakes.push(IndexerStake {
                                     id: Hex(&trx.hash).to_string(),
                                     indexer: event.indexer.clone(),
@@ -110,8 +109,7 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
                     }
                     for storage_change in &call.storage_changes {
                         if storage_change.address.eq(&STAKING_CONTRACT) {
-                            let key = find_key(&event.indexer, 14);
-                            if storage_change.key == keccak256(&key) {
+                            if storage_change.key == find_key(&event.indexer, 14) {
                                 indexer_stakes.push(IndexerStake {
                                     id: Hex(&trx.hash).to_string(),
                                     indexer: event.indexer.clone(),
