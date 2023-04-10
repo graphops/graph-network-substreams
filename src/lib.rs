@@ -2,11 +2,11 @@ mod abi;
 mod db;
 mod pb;
 use pb::erc20::{
-    Burned, BurnedEvents, StorageChanges, DelegationParametersUpdated, DelegationParametersUpdatedEvents,
-    Events, IndexerStake, IndexerStakes, RebateClaimed, RebateClaimedEvents, RewardsAssigned,
+    Burned, BurnedEvents, DelegationParametersUpdated, DelegationParametersUpdatedEvents, Events,
+    IndexerStake, IndexerStakes, RebateClaimed, RebateClaimedEvents, RewardsAssigned,
     RewardsAssignedEvents, Signalled, SignalledEvents, StakeDelegated, StakeDelegatedEvents,
     StakeDelegatedLocked, StakeDelegatedLockedEvents, StakeDeposited, StakeDepositedEvents,
-    StakeWithdrawn, StakeWithdrawnEvents, Transfer, Transfers,
+    StakeWithdrawn, StakeWithdrawnEvents, StorageChanges, Transfer, Transfers,
 };
 use std::ops::{Div, Mul, Sub};
 use std::str::FromStr;
@@ -35,7 +35,7 @@ const CURATION_CONTRACT: [u8; 20] = hex!("8FE00a685Bcb3B2cc296ff6FfEaB10acA4CE15
 substreams_ethereum::init!();
 
 // -------------------- INITIAL MAPS --------------------
-fn find_key(address: &Vec<u8>, slot: u64) -> [u8; 32]{
+fn find_key(address: &Vec<u8>, slot: u64) -> [u8; 32] {
     // Pad the address with leading zeros to make it 32 bytes
     let padded_address = add_padding(address);
 
@@ -95,7 +95,9 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
                                         &storage_change.new_value,
                                     )
                                     .into(),
-                                    old_stake: BigInt::from_unsigned_bytes_be(&storage_change.old_value)
+                                    old_stake: BigInt::from_unsigned_bytes_be(
+                                        &storage_change.old_value,
+                                    )
                                     .into(),
                                     ordinal: log.ordinal,
                                 })
@@ -117,7 +119,9 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
                                         &storage_change.new_value,
                                     )
                                     .into(),
-                                    old_stake: BigInt::from_unsigned_bytes_be(&storage_change.old_value)
+                                    old_stake: BigInt::from_unsigned_bytes_be(
+                                        &storage_change.old_value,
+                                    )
                                     .into(),
                                     ordinal: log.ordinal,
                                 })
@@ -128,7 +132,7 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
             }
         }
     }
-    
+
     indexer_stakes.sort_by(|x, y| x.ordinal.cmp(&y.ordinal));
     storage_changes.indexer_stakes = Some(IndexerStakes {
         indexer_stakes: indexer_stakes,
@@ -349,7 +353,9 @@ fn store_staked_tokens(storage_changes: StorageChanges, s: StoreAddBigInt) {
         s.add(
             indexer_stake.ordinal,
             "totalTokensStaked",
-            BigInt::from_str(&indexer_stake.new_stake).unwrap().sub(BigInt::from_str(&indexer_stake.old_stake).unwrap())
+            BigInt::from_str(&indexer_stake.new_stake)
+                .unwrap()
+                .sub(BigInt::from_str(&indexer_stake.old_stake).unwrap()),
         );
     }
 }
@@ -514,7 +520,7 @@ fn store_total_signalled(events: Events, s: StoreAddBigInt) {
 #[substreams::handlers::store]
 fn store_graph_account_indexer(storage_changes: StorageChanges, s: StoreSetIfNotExistsString) {
     let indexer_stakes = storage_changes.indexer_stakes.unwrap();
-    for indexer_stake in indexer_stakes.indexer_stakes{
+    for indexer_stake in indexer_stakes.indexer_stakes {
         s.set_if_not_exists(
             indexer_stake.ordinal,
             generate_key(&indexer_stake.indexer),

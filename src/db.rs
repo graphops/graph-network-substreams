@@ -58,12 +58,7 @@ pub fn indexer_stake_change(
 ) {
     for delta in staked_token_deltas.deltas {
         entity_changes
-            .push_change(
-                "GraphNetwork",
-                "1",
-                delta.ordinal,
-                Operation::Update,
-            )
+            .push_change("GraphNetwork", "1", delta.ordinal, Operation::Update)
             .change("totalTokensStaked", delta);
     }
     for indexer_stake in indexer_stakes.indexer_stakes {
