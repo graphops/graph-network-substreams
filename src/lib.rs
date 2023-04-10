@@ -342,6 +342,20 @@ fn store_grt_global(events: Events, s: StoreAddBigInt) {
 
 // DelegatedStake and Delegator entities track the cumulative delegated stake, not the total amount
 #[substreams::handlers::store]
+fn store_staked_tokens(storage_changes: StorageChanges, s: StoreAddBigInt) {
+    let indexer_stakes = storage_changes.indexer_stakes.unwrap();
+
+    for indexer_stake in indexer_stakes.indexer_stakes {
+        s.add(
+            indexer_stake.ordinal,
+            "totalTokensStaked",
+            BigInt::from_str(&indexer_stake.new_stake).unwrap().sub(BigInt::from_str(&indexer_stake.old_stake).unwrap())
+        );
+    }
+}
+
+// DelegatedStake and Delegator entities track the cumulative delegated stake, not the total amount
+#[substreams::handlers::store]
 fn store_cumulative_delegated_stakes(events: Events, s: StoreAddBigInt) {
     let stake_delegated_events = events.stake_delegated_events.unwrap();
 
@@ -578,10 +592,11 @@ pub fn map_graph_account_entities(
 #[substreams::handlers::map]
 pub fn map_indexer_entities(
     storage_changes: StorageChanges,
+    staked_token_deltas: Deltas<DeltaBigInt>,
 ) -> Result<EntityChanges, Error> {
     let mut entity_changes: EntityChanges = Default::default();
     let indexer_stakes = storage_changes.indexer_stakes.unwrap();
-    db::indexer_stake_change(indexer_stakes, &mut entity_changes);
+    db::indexer_stake_change(indexer_stakes, staked_token_deltas, &mut entity_changes);
     Ok(entity_changes)
 }
 

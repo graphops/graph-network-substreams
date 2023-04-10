@@ -1,5 +1,4 @@
 use crate::pb::erc20::IndexerStakes;
-use std::ops::Sub;
 use std::str::FromStr;
 use substreams::scalar::BigInt;
 use substreams::store::{DeltaBigInt, DeltaString, Deltas};
@@ -52,35 +51,32 @@ pub fn grt_global_change(
 // --------------------
 //  Map Indexer Stake Entity Changes
 // --------------------
-pub fn indexer_stake_change(indexer_stakes: IndexerStakes, entity_changes: &mut EntityChanges) {
-    let num_messages = indexer_stakes.indexer_stakes.len();
-    if num_messages > 0 {
-        let first_message = &indexer_stakes.indexer_stakes[0];
-        let last_message = &indexer_stakes.indexer_stakes[num_messages - 1];
+pub fn indexer_stake_change(
+    indexer_stakes: IndexerStakes,
+    staked_token_deltas: Deltas<DeltaBigInt>,
+    entity_changes: &mut EntityChanges,
+) {
+    for delta in staked_token_deltas.deltas {
         entity_changes
             .push_change(
                 "GraphNetwork",
                 "1",
-                last_message.ordinal,
-                Operation::Update, // Update will create the entity if it does not exist
+                delta.ordinal,
+                Operation::Update,
             )
-            .change(
-                "totalTokensStaked",
-                BigInt::from_str(&last_message.new_stake)
-                    .unwrap()
-                    .sub(BigInt::from_str(&first_message.old_stake).unwrap()),
-            );
-
+            .change("totalTokensStaked", delta);
+    }
+    for indexer_stake in indexer_stakes.indexer_stakes {
         entity_changes
             .push_change(
                 "Indexer",
-                &generate_key(&last_message.indexer),
-                last_message.ordinal,
+                &generate_key(&indexer_stake.indexer),
+                indexer_stake.ordinal,
                 Operation::Update, // Update will create the entity if it does not exist
             )
             .change(
                 "stakedTokens",
-                BigInt::from_str(&last_message.new_stake).unwrap(),
+                BigInt::from_str(&indexer_stake.new_stake).unwrap(),
             );
     }
 }

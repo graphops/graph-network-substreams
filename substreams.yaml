@@ -50,6 +50,14 @@ modules:
     inputs:
       - map: map_events
 
+  - name: store_staked_tokens
+    kind: store
+    initialBlock: 11446769
+    updatePolicy: add
+    valueType: bigint
+    inputs:
+      - map: map_storage_changes
+
   - name: store_graph_account_indexer
     kind: store
     initialBlock: 11446769
@@ -160,6 +168,8 @@ modules:
     initialBlock: 11446769
     inputs:
       - map: map_storage_changes
+      - store: store_staked_tokens
+        mode: deltas
     output:
       type: proto:substreams.entity.v1.EntityChange
 
