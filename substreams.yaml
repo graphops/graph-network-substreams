@@ -24,7 +24,7 @@ modules:
     inputs:
       - source: sf.ethereum.type.v2.Block
     output:
-      type: proto:eth.erc20.v1.Changes
+      type: proto:eth.erc20.v1.StorageChanges
 
   - name: map_events
     kind: map
