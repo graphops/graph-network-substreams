@@ -2,13 +2,14 @@ mod abi;
 mod db;
 mod pb;
 use pb::erc20::{
-    Burned, BurnedEvents, DelegationPool, DelegationPools, DelegationParametersUpdated, DelegationParametersUpdatedEvents, Events,
-    IndexerStake, IndexerStakes, RebateClaimed, RebateClaimedEvents, RewardsAssigned,
-    RewardsAssignedEvents, Signalled, SignalledEvents, StakeDelegated, StakeDelegatedEvents,
-    StakeDelegatedLocked, StakeDelegatedLockedEvents, StakeDeposited, StakeDepositedEvents,
-    StakeWithdrawn, StakeWithdrawnEvents, StorageChanges, Transfer, Transfers,
+    Burned, BurnedEvents, DelegationParametersUpdated, DelegationParametersUpdatedEvents,
+    DelegationPool, DelegationPools, Events, IndexerStake, IndexerStakes, RebateClaimed,
+    RebateClaimedEvents, RewardsAssigned, RewardsAssignedEvents, Signalled, SignalledEvents,
+    StakeDelegated, StakeDelegatedEvents, StakeDelegatedLocked, StakeDelegatedLockedEvents,
+    StakeDeposited, StakeDepositedEvents, StakeWithdrawn, StakeWithdrawnEvents, StorageChanges,
+    Transfer, Transfers,
 };
-use std::ops::{Sub};
+use std::ops::Sub;
 use std::str::FromStr;
 use substreams::errors::Error;
 use substreams::prelude::*;
@@ -51,7 +52,7 @@ fn find_key(address: &Vec<u8>, slot: u64, order: u32) -> [u8; 32] {
     key
 }
 
-fn increment_key(mut keccak:[u8; 32], order: u32) -> [u8; 32] {
+fn increment_key(mut keccak: [u8; 32], order: u32) -> [u8; 32] {
     let mut carry = order;
     for i in (0..32).rev() {
         let (result, new_carry) = keccak[i].overflowing_add(carry as u8);
@@ -170,7 +171,9 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
                         }
                     }
                 }
-                if let Some(event) = abi::staking::events::StakeDelegatedLocked::match_and_decode(&log) {
+                if let Some(event) =
+                    abi::staking::events::StakeDelegatedLocked::match_and_decode(&log)
+                {
                     for keccak_preimage in &call.keccak_preimages {
                         log::info!("keccakdelegated{:?}", &keccak_preimage);
                     }
@@ -220,7 +223,9 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
                         }
                     }
                 }
-                if let Some(event) = abi::rewards_manager::events::RewardsAssigned::match_and_decode(&log) {
+                if let Some(event) =
+                    abi::rewards_manager::events::RewardsAssigned::match_and_decode(&log)
+                {
                     for keccak_preimage in &call.keccak_preimages {
                         log::info!("keccakdelegated{:?}", &keccak_preimage);
                     }
@@ -253,7 +258,7 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
     storage_changes.indexer_stakes = Some(IndexerStakes {
         indexer_stakes: indexer_stakes,
     });
-    storage_changes.delegation_pools = Some(DelegationPools{
+    storage_changes.delegation_pools = Some(DelegationPools {
         delegation_pools: delegation_pools,
     });
 
@@ -539,10 +544,7 @@ fn store_cumulative_curator_burned(events: Events, s: StoreAddBigInt) {
 
 // Indexer and GraphNetwork entities track the total delegated stake, not the cumulative amount
 #[substreams::handlers::store]
-fn store_total_delegated_stakes(
-    storage_changes: StorageChanges,
-    s: StoreAddBigInt,
-) {
+fn store_total_delegated_stakes(storage_changes: StorageChanges, s: StoreAddBigInt) {
     let delegation_pools = storage_changes.delegation_pools.unwrap();
 
     for delegation_pool in delegation_pools.delegation_pools {
@@ -554,7 +556,6 @@ fn store_total_delegated_stakes(
                 .sub(BigInt::from_str(&delegation_pool.old_stake).unwrap()),
         );
     }
-    
 }
 
 // GraphNetwork entity tracks the total signalled, not the cumulative amount separately

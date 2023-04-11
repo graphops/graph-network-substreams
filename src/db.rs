@@ -121,13 +121,16 @@ pub fn delegated_stake_change(
 
     for delegation_pool in delegation_pools.delegation_pools {
         entity_changes
-        .push_change(
-            "Indexer",
-            &generate_key(&delegation_pool.indexer),
-            delegation_pool.ordinal,
-            Operation::Update, // Update will create the entity if it does not exist
-        )
-        .change("delegatedTokens", BigInt::from_str(&delegation_pool.new_stake).unwrap());
+            .push_change(
+                "Indexer",
+                &generate_key(&delegation_pool.indexer),
+                delegation_pool.ordinal,
+                Operation::Update, // Update will create the entity if it does not exist
+            )
+            .change(
+                "delegatedTokens",
+                BigInt::from_str(&delegation_pool.new_stake).unwrap(),
+            );
     }
 }
 
