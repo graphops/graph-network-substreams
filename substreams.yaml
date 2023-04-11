@@ -104,8 +104,7 @@ modules:
     updatePolicy: add
     valueType: bigint
     inputs:
-      - map: map_events
-      - store: store_delegation_parameters
+      - map: map_storage_changes
 
   - name: store_delegation_parameters
     kind: store
@@ -183,6 +182,7 @@ modules:
         mode: deltas
       - store: store_total_delegated_stakes
         mode: deltas
+      - map: map_storage_changes
     output:
       type: proto:substreams.entity.v1.EntityChange
 
