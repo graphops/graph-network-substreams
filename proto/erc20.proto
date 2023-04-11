@@ -50,7 +50,7 @@ message IndexerStakes {
   repeated IndexerStake indexer_stakes = 1;
 }
 
-message Changes {
+message StorageChanges {
   IndexerStakes indexer_stakes = 1;
 }
 
@@ -157,7 +157,9 @@ message Burned {
 }
 
 message IndexerStake {
-  bytes indexer = 1;
-  string stake = 2;
-  uint64 ordinal = 3;
+  string id = 1;
+  bytes indexer = 2;
+  string new_stake = 3;
+  string old_stake = 4;
+  uint64 ordinal = 5;
 }

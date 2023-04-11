@@ -1,4 +1,8 @@
+use crate::pb::erc20::IndexerStakes;
+use std::str::FromStr;
+use substreams::scalar::BigInt;
 use substreams::store::{DeltaBigInt, DeltaString, Deltas};
+use substreams::Hex;
 use substreams_entity_change::pb::entity::{entity_change::Operation, EntityChanges};
 
 // --------------------
@@ -48,29 +52,27 @@ pub fn grt_global_change(
 //  Map Indexer Stake Entity Changes
 // --------------------
 pub fn indexer_stake_change(
-    indexer_stake_deltas: Deltas<DeltaBigInt>,
+    indexer_stakes: IndexerStakes,
+    staked_token_deltas: Deltas<DeltaBigInt>,
     entity_changes: &mut EntityChanges,
 ) {
-    for delta in indexer_stake_deltas.deltas {
-        if delta.key == "totalTokensStaked" {
-            entity_changes
-                .push_change(
-                    "GraphNetwork",
-                    "1",
-                    delta.ordinal,
-                    Operation::Update, // Update will create the entity if it does not exist
-                )
-                .change("totalTokensStaked", delta);
-        } else {
-            entity_changes
-                .push_change(
-                    "Indexer",
-                    &delta.key,
-                    delta.ordinal,
-                    Operation::Update, // Update will create the entity if it does not exist
-                )
-                .change("stakedTokens", delta);
-        }
+    for delta in staked_token_deltas.deltas {
+        entity_changes
+            .push_change("GraphNetwork", "1", delta.ordinal, Operation::Update)
+            .change("totalTokensStaked", delta);
+    }
+    for indexer_stake in indexer_stakes.indexer_stakes {
+        entity_changes
+            .push_change(
+                "Indexer",
+                &generate_key(&indexer_stake.indexer),
+                indexer_stake.ordinal,
+                Operation::Update, // Update will create the entity if it does not exist
+            )
+            .change(
+                "stakedTokens",
+                BigInt::from_str(&indexer_stake.new_stake).unwrap(),
+            );
     }
 }
 
@@ -138,37 +140,37 @@ pub fn curation_signal_change(
     entity_changes: &mut EntityChanges,
 ) {
     for delta in cumulative_curator_signalled_deltas.deltas {
-            entity_changes
-                .push_change(
-                    "Curator",
-                    &delta.key,
-                    delta.ordinal,
-                    Operation::Update, // Update will create the entity if it does not exist
-                )
-                .change("totalSignalledTokens", &delta);
+        entity_changes
+            .push_change(
+                "Curator",
+                &delta.key,
+                delta.ordinal,
+                Operation::Update, // Update will create the entity if it does not exist
+            )
+            .change("totalSignalledTokens", &delta);
     }
 
     for delta in cumulative_curator_burned_deltas.deltas {
-            entity_changes
-                .push_change(
-                    "Curator",
-                    &delta.key,
-                    delta.ordinal,
-                    Operation::Update, // Update will create the entity if it does not exist
-                ).change("totalUnsignalledTokens", &delta);
+        entity_changes
+            .push_change(
+                "Curator",
+                &delta.key,
+                delta.ordinal,
+                Operation::Update, // Update will create the entity if it does not exist
+            )
+            .change("totalUnsignalledTokens", &delta);
     }
 
     for delta in total_signalled_deltas.deltas {
-            entity_changes
-                .push_change(
-                    "GraphNetwork",
-                    "1",
-                    delta.ordinal,
-                    Operation::Update, // Update will create the entity if it does not exist
-                )
-                .change("totalTokensSignalled", &delta);
+        entity_changes
+            .push_change(
+                "GraphNetwork",
+                "1",
+                delta.ordinal,
+                Operation::Update, // Update will create the entity if it does not exist
+            )
+            .change("totalTokensSignalled", &delta);
     }
-
 }
 
 // --------------------
@@ -273,3 +275,7 @@ pub fn graph_account_curator_change(
     }
 }
 
+// -------------------- KEY GENERATORS --------------------
+fn generate_key(account: &Vec<u8>) -> String {
+    return Hex(account).to_string();
+}

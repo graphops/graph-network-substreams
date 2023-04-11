@@ -18,13 +18,13 @@ binaries:
     file: ./target/wasm32-unknown-unknown/release/substreams.wasm
 
 modules:
-  - name: map_sc
+  - name: map_storage_changes
     kind: map
     initialBlock: 11446769
     inputs:
       - source: sf.ethereum.type.v2.Block
     output:
-      type: proto:eth.erc20.v1.Changes
+      type: proto:eth.erc20.v1.StorageChanges
 
   - name: map_events
     kind: map
@@ -50,13 +50,13 @@ modules:
     inputs:
       - map: map_events
 
-  - name: store_indexer_stakes
+  - name: store_staked_tokens
     kind: store
     initialBlock: 11446769
     updatePolicy: add
     valueType: bigint
     inputs:
-      - map: map_events
+      - map: map_storage_changes
 
   - name: store_graph_account_indexer
     kind: store
@@ -64,7 +64,7 @@ modules:
     updatePolicy: set_if_not_exists
     valueType: string
     inputs:
-      - map: map_events
+      - map: map_storage_changes
 
   - name: store_graph_account_delegator
     kind: store
@@ -167,7 +167,8 @@ modules:
     kind: map
     initialBlock: 11446769
     inputs:
-      - store: store_indexer_stakes
+      - map: map_storage_changes
+      - store: store_staked_tokens
         mode: deltas
     output:
       type: proto:substreams.entity.v1.EntityChange
