@@ -72,6 +72,7 @@ fn add_padding<T: AsRef<[u8]>>(input: T) -> [u8; 32] {
 fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
     let mut storage_changes = StorageChanges::default();
     let mut indexer_stakes = vec![];
+    let mut delegator_stakes = vec![];
 
     for trx in blk.transactions() {
         for call in trx.calls.iter() {
@@ -129,13 +130,40 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
                         }
                     }
                 }
+                if let Some(event) = abi::staking::events::StakeDelegated::match_and_decode(&log) {
+                    for keccak_preimage in &call.keccak_preimages {
+                        log::info!("{:?}", &keccak_preimage);
+                    }
+                    for storage_change in &call.storage_changes {
+                        if storage_change.address.eq(&STAKING_CONTRACT) {
+                            if storage_change.key == find_key(&event.indexer, 20) {
+                                delegator_stakes.push(DelegatorStake {
+                                    id: Hex(&trx.hash).to_string(),
+                                    delegator: event.delegator.clone(),
+                                    new_stake: BigInt::from_unsigned_bytes_be(
+                                        &storage_change.new_value,
+                                    )
+                                    .into(),
+                                    old_stake: BigInt::from_unsigned_bytes_be(
+                                        &storage_change.old_value,
+                                    )
+                                    .into(),
+                                    ordinal: log.ordinal,
+                                })
+                            }
+                        }
+                    }
+                }
             }
         }
     }
 
-    indexer_stakes.sort_by(|x, y| x.ordinal.cmp(&y.ordinal));
+    //indexer_stakes.sort_by(|x, y| x.ordinal.cmp(&y.ordinal));
     storage_changes.indexer_stakes = Some(IndexerStakes {
         indexer_stakes: indexer_stakes,
+    });
+    storage_changes.delegator_stakes = Some(DelegatorStakes {
+        delegator_stakes: delegator_stakes,
     });
 
     Ok(storage_changes)
