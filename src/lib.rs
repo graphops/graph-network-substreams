@@ -2,7 +2,7 @@ mod abi;
 mod db;
 mod pb;
 use pb::erc20::{
-    Burned, BurnedEvents, DelegationParametersUpdated, DelegationParametersUpdatedEvents, Events,
+    Burned, BurnedEvents, DelegatorStake, DelegatorStakes, DelegationParametersUpdated, DelegationParametersUpdatedEvents, Events,
     IndexerStake, IndexerStakes, RebateClaimed, RebateClaimedEvents, RewardsAssigned,
     RewardsAssignedEvents, Signalled, SignalledEvents, StakeDelegated, StakeDelegatedEvents,
     StakeDelegatedLocked, StakeDelegatedLockedEvents, StakeDeposited, StakeDepositedEvents,

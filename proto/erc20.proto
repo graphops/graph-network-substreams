@@ -50,8 +50,13 @@ message IndexerStakes {
   repeated IndexerStake indexer_stakes = 1;
 }
 
+message DelegatorStakes {
+  repeated DelegatorStake delegator_stakes = 1;
+}
+
 message StorageChanges {
   IndexerStakes indexer_stakes = 1;
+  DelegatorStakes delegator_stakes = 2;
 }
 
 message Events {
@@ -159,6 +164,14 @@ message Burned {
 message IndexerStake {
   string id = 1;
   bytes indexer = 2;
+  string new_stake = 3;
+  string old_stake = 4;
+  uint64 ordinal = 5;
+}
+
+message DelegatorStake {
+  string id = 1;
+  bytes delegator = 2;
   string new_stake = 3;
   string old_stake = 4;
   uint64 ordinal = 5;
