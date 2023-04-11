@@ -35,7 +35,7 @@ const CURATION_CONTRACT: [u8; 20] = hex!("8FE00a685Bcb3B2cc296ff6FfEaB10acA4CE15
 substreams_ethereum::init!();
 
 // -------------------- INITIAL MAPS --------------------
-fn find_key(address: &Vec<u8>, slot: u64) -> [u8; 32] {
+fn find_key(address: &Vec<u8>, slot: u64, order: u32) -> [u8; 32] {
     // Pad the address with leading zeros to make it 32 bytes
     let padded_address = add_padding(address);
 
@@ -43,10 +43,25 @@ fn find_key(address: &Vec<u8>, slot: u64) -> [u8; 32] {
     let padded_slot = add_padding(slot.to_be_bytes());
 
     // Concatenate the padded address and padded number
-    let mut result = Vec::new();
-    result.extend_from_slice(&padded_address);
-    result.extend_from_slice(&padded_slot);
-    keccak256(&result)
+    let mut concat = Vec::new();
+    concat.extend_from_slice(&padded_address);
+    concat.extend_from_slice(&padded_slot);
+    let keccak = keccak256(&concat);
+    let key = increment_key(keccak, order);
+    key
+}
+
+fn increment_key(mut keccak:[u8; 32], order: u32) -> [u8; 32] {
+    let mut carry = order;
+    for i in (0..32).rev() {
+        let (result, new_carry) = keccak[i].overflowing_add(carry as u8);
+        keccak[i] = result;
+        carry = new_carry as u32;
+        if carry == 0 {
+            break;
+        }
+    }
+    keccak
 }
 
 pub fn keccak256(data: &Vec<u8>) -> [u8; 32] {
@@ -88,7 +103,7 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
                     }
                     for storage_change in &call.storage_changes {
                         if storage_change.address.eq(&STAKING_CONTRACT) {
-                            if storage_change.key == find_key(&event.indexer, 14) {
+                            if storage_change.key == find_key(&event.indexer, 14, 0) {
                                 indexer_stakes.push(IndexerStake {
                                     id: Hex(&trx.hash).to_string(),
                                     indexer: event.indexer.clone(),
@@ -112,7 +127,7 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
                     }
                     for storage_change in &call.storage_changes {
                         if storage_change.address.eq(&STAKING_CONTRACT) {
-                            if storage_change.key == find_key(&event.indexer, 14) {
+                            if storage_change.key == find_key(&event.indexer, 14, 0) {
                                 indexer_stakes.push(IndexerStake {
                                     id: Hex(&trx.hash).to_string(),
                                     indexer: event.indexer.clone(),
@@ -132,11 +147,12 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
                 }
                 if let Some(event) = abi::staking::events::StakeDelegated::match_and_decode(&log) {
                     for keccak_preimage in &call.keccak_preimages {
-                        log::info!("{:?}", &keccak_preimage);
+                        log::info!("keccakdelegated{:?}", &keccak_preimage);
                     }
+                    log::info!("transaction: {} ", Hex(&trx.hash));
                     for storage_change in &call.storage_changes {
                         if storage_change.address.eq(&STAKING_CONTRACT) {
-                            if storage_change.key == find_key(&event.indexer, 20) {
+                            if storage_change.key == find_key(&event.indexer, 20, 2) {
                                 delegator_stakes.push(DelegatorStake {
                                     id: Hex(&trx.hash).to_string(),
                                     delegator: event.delegator.clone(),
