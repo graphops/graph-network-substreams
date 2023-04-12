@@ -2,13 +2,14 @@ mod abi;
 mod db;
 mod pb;
 use pb::erc20::{
-    Burned, BurnedEvents, DelegationParametersUpdated, DelegationParametersUpdatedEvents, Events,
-    IndexerStake, IndexerStakes, RebateClaimed, RebateClaimedEvents, RewardsAssigned,
-    RewardsAssignedEvents, Signalled, SignalledEvents, StakeDelegated, StakeDelegatedEvents,
-    StakeDelegatedLocked, StakeDelegatedLockedEvents, StakeDeposited, StakeDepositedEvents,
-    StakeWithdrawn, StakeWithdrawnEvents, StorageChanges, Transfer, Transfers,
+    Burned, BurnedEvents, DelegationParametersUpdated, DelegationParametersUpdatedEvents,
+    DelegationPool, DelegationPools, Events, IndexerStake, IndexerStakes, RebateClaimed,
+    RebateClaimedEvents, RewardsAssigned, RewardsAssignedEvents, Signalled, SignalledEvents,
+    StakeDelegated, StakeDelegatedEvents, StakeDelegatedLocked, StakeDelegatedLockedEvents,
+    StakeDeposited, StakeDepositedEvents, StakeWithdrawn, StakeWithdrawnEvents, StorageChanges,
+    Transfer, Transfers,
 };
-use std::ops::{Div, Mul, Sub};
+use std::ops::Sub;
 use std::str::FromStr;
 use substreams::errors::Error;
 use substreams::prelude::*;
@@ -35,7 +36,7 @@ const CURATION_CONTRACT: [u8; 20] = hex!("8FE00a685Bcb3B2cc296ff6FfEaB10acA4CE15
 substreams_ethereum::init!();
 
 // -------------------- INITIAL MAPS --------------------
-fn find_key(address: &Vec<u8>, slot: u64) -> [u8; 32] {
+fn find_key(address: &Vec<u8>, slot: u64, order: u32) -> [u8; 32] {
     // Pad the address with leading zeros to make it 32 bytes
     let padded_address = add_padding(address);
 
@@ -43,10 +44,25 @@ fn find_key(address: &Vec<u8>, slot: u64) -> [u8; 32] {
     let padded_slot = add_padding(slot.to_be_bytes());
 
     // Concatenate the padded address and padded number
-    let mut result = Vec::new();
-    result.extend_from_slice(&padded_address);
-    result.extend_from_slice(&padded_slot);
-    keccak256(&result)
+    let mut concat = Vec::new();
+    concat.extend_from_slice(&padded_address);
+    concat.extend_from_slice(&padded_slot);
+    let keccak = keccak256(&concat);
+    let key = increment_key(keccak, order);
+    key
+}
+
+fn increment_key(mut keccak: [u8; 32], order: u32) -> [u8; 32] {
+    let mut carry = order;
+    for i in (0..32).rev() {
+        let (result, new_carry) = keccak[i].overflowing_add(carry as u8);
+        keccak[i] = result;
+        carry = new_carry as u32;
+        if carry == 0 {
+            break;
+        }
+    }
+    keccak
 }
 
 pub fn keccak256(data: &Vec<u8>) -> [u8; 32] {
@@ -72,6 +88,7 @@ fn add_padding<T: AsRef<[u8]>>(input: T) -> [u8; 32] {
 fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
     let mut storage_changes = StorageChanges::default();
     let mut indexer_stakes = vec![];
+    let mut delegation_pools = vec![];
 
     for trx in blk.transactions() {
         for call in trx.calls.iter() {
@@ -87,7 +104,7 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
                     }
                     for storage_change in &call.storage_changes {
                         if storage_change.address.eq(&STAKING_CONTRACT) {
-                            if storage_change.key == find_key(&event.indexer, 14) {
+                            if storage_change.key == find_key(&event.indexer, 14, 0) {
                                 indexer_stakes.push(IndexerStake {
                                     id: Hex(&trx.hash).to_string(),
                                     indexer: event.indexer.clone(),
@@ -111,8 +128,112 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
                     }
                     for storage_change in &call.storage_changes {
                         if storage_change.address.eq(&STAKING_CONTRACT) {
-                            if storage_change.key == find_key(&event.indexer, 14) {
+                            if storage_change.key == find_key(&event.indexer, 14, 0) {
                                 indexer_stakes.push(IndexerStake {
+                                    id: Hex(&trx.hash).to_string(),
+                                    indexer: event.indexer.clone(),
+                                    new_stake: BigInt::from_unsigned_bytes_be(
+                                        &storage_change.new_value,
+                                    )
+                                    .into(),
+                                    old_stake: BigInt::from_unsigned_bytes_be(
+                                        &storage_change.old_value,
+                                    )
+                                    .into(),
+                                    ordinal: log.ordinal,
+                                })
+                            }
+                        }
+                    }
+                }
+                if let Some(event) = abi::staking::events::StakeDelegated::match_and_decode(&log) {
+                    for keccak_preimage in &call.keccak_preimages {
+                        log::info!("keccakdelegated{:?}", &keccak_preimage);
+                    }
+                    log::info!("transaction: {} ", Hex(&trx.hash));
+                    for storage_change in &call.storage_changes {
+                        if storage_change.address.eq(&STAKING_CONTRACT) {
+                            if storage_change.key == find_key(&event.indexer, 20, 2) {
+                                delegation_pools.push(DelegationPool {
+                                    id: Hex(&trx.hash).to_string(),
+                                    indexer: event.indexer.clone(),
+                                    new_stake: BigInt::from_unsigned_bytes_be(
+                                        &storage_change.new_value,
+                                    )
+                                    .into(),
+                                    old_stake: BigInt::from_unsigned_bytes_be(
+                                        &storage_change.old_value,
+                                    )
+                                    .into(),
+                                    ordinal: log.ordinal,
+                                })
+                            }
+                        }
+                    }
+                }
+                if let Some(event) =
+                    abi::staking::events::StakeDelegatedLocked::match_and_decode(&log)
+                {
+                    for keccak_preimage in &call.keccak_preimages {
+                        log::info!("keccakdelegated{:?}", &keccak_preimage);
+                    }
+                    log::info!("transaction: {} ", Hex(&trx.hash));
+                    for storage_change in &call.storage_changes {
+                        if storage_change.address.eq(&STAKING_CONTRACT) {
+                            if storage_change.key == find_key(&event.indexer, 20, 2) {
+                                delegation_pools.push(DelegationPool {
+                                    id: Hex(&trx.hash).to_string(),
+                                    indexer: event.indexer.clone(),
+                                    new_stake: BigInt::from_unsigned_bytes_be(
+                                        &storage_change.new_value,
+                                    )
+                                    .into(),
+                                    old_stake: BigInt::from_unsigned_bytes_be(
+                                        &storage_change.old_value,
+                                    )
+                                    .into(),
+                                    ordinal: log.ordinal,
+                                })
+                            }
+                        }
+                    }
+                }
+                if let Some(event) = abi::staking::events::RebateClaimed::match_and_decode(&log) {
+                    for keccak_preimage in &call.keccak_preimages {
+                        log::info!("keccakdelegated{:?}", &keccak_preimage);
+                    }
+                    log::info!("transaction: {} ", Hex(&trx.hash));
+                    for storage_change in &call.storage_changes {
+                        if storage_change.address.eq(&STAKING_CONTRACT) {
+                            if storage_change.key == find_key(&event.indexer, 20, 2) {
+                                delegation_pools.push(DelegationPool {
+                                    id: Hex(&trx.hash).to_string(),
+                                    indexer: event.indexer.clone(),
+                                    new_stake: BigInt::from_unsigned_bytes_be(
+                                        &storage_change.new_value,
+                                    )
+                                    .into(),
+                                    old_stake: BigInt::from_unsigned_bytes_be(
+                                        &storage_change.old_value,
+                                    )
+                                    .into(),
+                                    ordinal: log.ordinal,
+                                })
+                            }
+                        }
+                    }
+                }
+                if let Some(event) =
+                    abi::rewards_manager::events::RewardsAssigned::match_and_decode(&log)
+                {
+                    for keccak_preimage in &call.keccak_preimages {
+                        log::info!("keccakdelegated{:?}", &keccak_preimage);
+                    }
+                    log::info!("transaction: {} ", Hex(&trx.hash));
+                    for storage_change in &call.storage_changes {
+                        if storage_change.address.eq(&STAKING_CONTRACT) {
+                            if storage_change.key == find_key(&event.indexer, 20, 2) {
+                                delegation_pools.push(DelegationPool {
                                     id: Hex(&trx.hash).to_string(),
                                     indexer: event.indexer.clone(),
                                     new_stake: BigInt::from_unsigned_bytes_be(
@@ -133,9 +254,12 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
         }
     }
 
-    indexer_stakes.sort_by(|x, y| x.ordinal.cmp(&y.ordinal));
+    //indexer_stakes.sort_by(|x, y| x.ordinal.cmp(&y.ordinal));
     storage_changes.indexer_stakes = Some(IndexerStakes {
         indexer_stakes: indexer_stakes,
+    });
+    storage_changes.delegation_pools = Some(DelegationPools {
+        delegation_pools: delegation_pools,
     });
 
     Ok(storage_changes)
@@ -420,74 +544,16 @@ fn store_cumulative_curator_burned(events: Events, s: StoreAddBigInt) {
 
 // Indexer and GraphNetwork entities track the total delegated stake, not the cumulative amount
 #[substreams::handlers::store]
-fn store_total_delegated_stakes(
-    events: Events,
-    store_delegation_parameters: StoreGetProto<DelegationParametersUpdated>,
-    s: StoreAddBigInt,
-) {
-    let stake_delegated_events = events.stake_delegated_events.unwrap();
-    let stake_delegated_locked_events = events.stake_delegated_locked_events.unwrap();
-    let rebate_claimed_events = events.rebate_claimed_events.unwrap();
-    let rewards_assigned_events = events.rewards_assigned_events.unwrap();
+fn store_total_delegated_stakes(storage_changes: StorageChanges, s: StoreAddBigInt) {
+    let delegation_pools = storage_changes.delegation_pools.unwrap();
 
-    for stake_delegated in stake_delegated_events.stake_delegated_events {
+    for delegation_pool in delegation_pools.delegation_pools {
         s.add(
-            1,
-            generate_key(&stake_delegated.indexer),
-            BigInt::from_str(&stake_delegated.tokens).unwrap(),
-        );
-        s.add(
-            1,
+            delegation_pool.ordinal,
             "totalTokensDelegated",
-            BigInt::from_str(&stake_delegated.tokens).unwrap(),
-        );
-    }
-
-    for stake_delegated_locked in stake_delegated_locked_events.stake_delegated_locked_events {
-        s.add(
-            1,
-            generate_key(&stake_delegated_locked.indexer),
-            BigInt::from_str(&stake_delegated_locked.tokens)
+            BigInt::from_str(&delegation_pool.new_stake)
                 .unwrap()
-                .neg(),
-        );
-        s.add(
-            1,
-            "totalTokensDelegated",
-            BigInt::from_str(&stake_delegated_locked.tokens)
-                .unwrap()
-                .neg(),
-        );
-    }
-
-    for rebate_claimed in rebate_claimed_events.rebate_claimed_events {
-        s.add(
-            1,
-            generate_key(&rebate_claimed.indexer),
-            BigInt::from_str(&rebate_claimed.delegated_tokens).unwrap(),
-        );
-    }
-
-    for rewards_assigned in rewards_assigned_events.rewards_assigned_events {
-        // This code assumes indexer.delegatedTokens are non-zero when rewardsAssigned event is emitted.
-        // It will give wrong results indexer.delegatedTokens is zero. Needs to be updated to handle zero case
-        // See the original subgraph implementation of rewardsAssigned event for more details
-        let indexing_reward_cut = store_delegation_parameters
-            .get_last(generate_key(&rewards_assigned.indexer))
-            .unwrap()
-            .indexing_reward_cut;
-        let indexer_indexing_rewards = BigInt::from_str(&rewards_assigned.amount)
-            .unwrap()
-            .mul(BigInt::from_str(&indexing_reward_cut).unwrap())
-            .div(1000000);
-        let delegator_indexing_rewards = BigInt::from_str(&rewards_assigned.amount)
-            .unwrap()
-            .sub(indexer_indexing_rewards);
-
-        s.add(
-            1,
-            generate_key(&rewards_assigned.indexer),
-            delegator_indexing_rewards,
+                .sub(BigInt::from_str(&delegation_pool.old_stake).unwrap()),
         );
     }
 }
@@ -611,12 +677,15 @@ pub fn map_delegated_stake_entities(
     cumulative_delegated_stake_deltas: Deltas<DeltaBigInt>,
     cumulative_delegator_stake_deltas: Deltas<DeltaBigInt>,
     total_delegated_stake_deltas: Deltas<DeltaBigInt>,
+    storage_changes: StorageChanges,
 ) -> Result<EntityChanges, Error> {
     let mut entity_changes: EntityChanges = Default::default();
+    let delegation_pools = storage_changes.delegation_pools.unwrap();
     db::delegated_stake_change(
         cumulative_delegated_stake_deltas,
         cumulative_delegator_stake_deltas,
         total_delegated_stake_deltas,
+        delegation_pools,
         &mut entity_changes,
     );
     Ok(entity_changes)

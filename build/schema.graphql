@@ -5,8 +5,15 @@ type GraphNetwork @entity {
     # Staking global aggregate values
     "The total amount of GRT staked in the staking contract"
     totalTokensStaked: BigInt
-    "Total delegated tokens in the protocol, is totalDelegatedTokens in the original subgraph"
+    "Total delegated tokens in the protocol. totalDelegatedTokens in the original subgraph"
     totalTokensDelegated: BigInt
+    # Curation global aggregate values
+    "The total amount of GRT signalled in the Curation contract"
+    totalTokensSignalled: BigInt
+    "NOT IMPLEMENTED - Total GRT currently curating via the Auto-Migrate function"
+    totalTokensSignalledAutoMigrate: BigDecimal
+    "NOT IMPLEMENTED - Total GRT currently curating to a specific version"
+    totalTokensSignalledDirectly: BigDecimal
 
     # Graph Token global variables
     "Graph Token supply"
@@ -32,6 +39,8 @@ type GraphAccount @entity {
     indexer: Indexer
     "Delegator fields for this GraphAccount. Null if never delegated"
     delegator: Delegator
+    "Curator fields for this GraphAccount. Null if never delegated"
+    curator: Curator
 }
 
 type Indexer @entity {
@@ -41,7 +50,7 @@ type Indexer @entity {
     account: GraphAccount
 
     # Staking data
-    "CURRENT tokens staked in the protocol. Decreases on withdraw, not on lock"
+    "CURRENT tokens staked in the protocol. Decreases on withdraw rather than on lock"
     stakedTokens: BigInt
 
     # Delegation Pool
@@ -71,4 +80,20 @@ type DelegatedStake @entity {
     delegator: Delegator
     "CUMULATIVE tokens delegated"
     stakedTokens: BigInt
+}
+
+type Curator @entity {
+    "Curator address"
+    id: ID!
+    "Graph account of the curator"
+    account: GraphAccount
+    "CUMULATIVE tokens signalled on all the subgraphs"
+    totalSignalledTokens: BigInt
+    "CUMULATIVE tokens unsignalled on all the subgraphs"
+    totalUnsignalledTokens: BigInt
+
+    "CUMULATIVE tokens signalled on all names"
+    totalNameSignalledTokens: BigInt
+    "CUMULATIVE tokens unsignalled on all names"
+    totalNameUnsignalledTokens: BigInt
 }

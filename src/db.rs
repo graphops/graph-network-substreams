@@ -1,4 +1,4 @@
-use crate::pb::erc20::IndexerStakes;
+use crate::pb::erc20::{DelegationPools, IndexerStakes};
 use std::str::FromStr;
 use substreams::scalar::BigInt;
 use substreams::store::{DeltaBigInt, DeltaString, Deltas};
@@ -83,6 +83,7 @@ pub fn delegated_stake_change(
     cumulative_delegated_stake_deltas: Deltas<DeltaBigInt>,
     cumulative_delegator_stake_deltas: Deltas<DeltaBigInt>,
     total_delegated_stake_deltas: Deltas<DeltaBigInt>,
+    delegation_pools: DelegationPools,
     entity_changes: &mut EntityChanges,
 ) {
     for delta in cumulative_delegated_stake_deltas.deltas {
@@ -108,25 +109,28 @@ pub fn delegated_stake_change(
     }
 
     for delta in total_delegated_stake_deltas.deltas {
-        if delta.key == "totalTokensDelegated" {
-            entity_changes
-                .push_change(
-                    "GraphNetwork",
-                    "1",
-                    delta.ordinal,
-                    Operation::Update, // Update will create the entity if it does not exist
-                )
-                .change("totalTokensDelegated", &delta);
-        } else {
-            entity_changes
-                .push_change(
-                    "Indexer",
-                    &delta.key,
-                    delta.ordinal,
-                    Operation::Update, // Update will create the entity if it does not exist
-                )
-                .change("delegatedTokens", &delta);
-        }
+        entity_changes
+            .push_change(
+                "GraphNetwork",
+                "1",
+                delta.ordinal,
+                Operation::Update, // Update will create the entity if it does not exist
+            )
+            .change("totalTokensDelegated", &delta);
+    }
+
+    for delegation_pool in delegation_pools.delegation_pools {
+        entity_changes
+            .push_change(
+                "Indexer",
+                &generate_key(&delegation_pool.indexer),
+                delegation_pool.ordinal,
+                Operation::Update, // Update will create the entity if it does not exist
+            )
+            .change(
+                "delegatedTokens",
+                BigInt::from_str(&delegation_pool.new_stake).unwrap(),
+            );
     }
 }
 
