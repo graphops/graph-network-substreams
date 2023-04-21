@@ -54,9 +54,14 @@ message DelegationPools {
   repeated DelegationPool delegation_pools = 1;
 }
 
+message CurationPools {
+  repeated CurationPool curation_pools = 1;
+}
+
 message StorageChanges {
   IndexerStakes indexer_stakes = 1;
   DelegationPools delegation_pools = 2;
+  CurationPools curation_pools = 3;
 }
 
 message Events {
@@ -174,5 +179,13 @@ message DelegationPool {
   bytes indexer = 2;
   string new_stake = 3;
   string old_stake = 4;
+  uint64 ordinal = 5;
+}
+
+message CurationPool {
+  string id = 1;
+  string subgraph_deployment_id = 2;
+  string new_signal = 3;
+  string old_signal = 4;
   uint64 ordinal = 5;
 }
