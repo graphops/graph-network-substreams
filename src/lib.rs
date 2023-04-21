@@ -2,12 +2,12 @@ mod abi;
 mod db;
 mod pb;
 use pb::erc20::{
-    Burned, BurnedEvents,CurationPool, CurationPools, DelegationParametersUpdated, DelegationParametersUpdatedEvents,
-    DelegationPool, DelegationPools, Events, IndexerStake, IndexerStakes, RebateClaimed,
-    RebateClaimedEvents, RewardsAssigned, RewardsAssignedEvents, Signalled, SignalledEvents,
-    StakeDelegated, StakeDelegatedEvents, StakeDelegatedLocked, StakeDelegatedLockedEvents,
-    StakeDeposited, StakeDepositedEvents, StakeWithdrawn, StakeWithdrawnEvents, StorageChanges,
-    Transfer, Transfers,
+    Burned, BurnedEvents, CurationPool, CurationPools, DelegationParametersUpdated,
+    DelegationParametersUpdatedEvents, DelegationPool, DelegationPools, Events, IndexerStake,
+    IndexerStakes, RebateClaimed, RebateClaimedEvents, RewardsAssigned, RewardsAssignedEvents,
+    Signalled, SignalledEvents, StakeDelegated, StakeDelegatedEvents, StakeDelegatedLocked,
+    StakeDelegatedLockedEvents, StakeDeposited, StakeDepositedEvents, StakeWithdrawn,
+    StakeWithdrawnEvents, StorageChanges, Transfer, Transfers,
 };
 use std::ops::Sub;
 use std::str::FromStr;
@@ -251,19 +251,19 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
                         }
                     }
                 }
-                if let Some(event) =
-                    abi::curation::events::Signalled::match_and_decode(&log)
-                {
+                if let Some(event) = abi::curation::events::Signalled::match_and_decode(&log) {
                     for keccak_preimage in &call.keccak_preimages {
                         log::info!("keccakdelegated{:?}", &keccak_preimage);
                     }
                     log::info!("transaction: {} ", Hex(&trx.hash));
                     for storage_change in &call.storage_changes {
                         if storage_change.address.eq(&CURATION_CONTRACT) {
-                            if storage_change.key == find_key(&event.subgraph_deployment_id, 15, 0) {
+                            if storage_change.key == find_key(&event.subgraph_deployment_id, 15, 0)
+                            {
                                 curation_pools.push(CurationPool {
                                     id: Hex(&trx.hash).to_string(),
-                                    subgraph_deployment_id: Hex(&event.subgraph_deployment_id).to_string(),
+                                    subgraph_deployment_id: Hex(&event.subgraph_deployment_id)
+                                        .to_string(),
                                     new_signal: BigInt::from_unsigned_bytes_be(
                                         &storage_change.new_value,
                                     )
@@ -278,19 +278,19 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
                         }
                     }
                 }
-                if let Some(event) =
-                    abi::curation::events::Burned::match_and_decode(&log)
-                {
+                if let Some(event) = abi::curation::events::Burned::match_and_decode(&log) {
                     for keccak_preimage in &call.keccak_preimages {
                         log::info!("keccakdelegated{:?}", &keccak_preimage);
                     }
                     log::info!("transaction: {} ", Hex(&trx.hash));
                     for storage_change in &call.storage_changes {
                         if storage_change.address.eq(&CURATION_CONTRACT) {
-                            if storage_change.key == find_key(&event.subgraph_deployment_id, 15, 0) {
+                            if storage_change.key == find_key(&event.subgraph_deployment_id, 15, 0)
+                            {
                                 curation_pools.push(CurationPool {
                                     id: Hex(&trx.hash).to_string(),
-                                    subgraph_deployment_id: Hex(&event.subgraph_deployment_id).to_string(),
+                                    subgraph_deployment_id: Hex(&event.subgraph_deployment_id)
+                                        .to_string(),
                                     new_signal: BigInt::from_unsigned_bytes_be(
                                         &storage_change.new_value,
                                     )
