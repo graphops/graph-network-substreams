@@ -2,12 +2,12 @@ mod abi;
 mod db;
 mod pb;
 use pb::erc20::{
-    Burned, BurnedEvents, DelegationParametersUpdated, DelegationParametersUpdatedEvents,
-    DelegationPool, DelegationPools, Events, IndexerStake, IndexerStakes, RebateClaimed,
-    RebateClaimedEvents, RewardsAssigned, RewardsAssignedEvents, Signalled, SignalledEvents,
-    StakeDelegated, StakeDelegatedEvents, StakeDelegatedLocked, StakeDelegatedLockedEvents,
-    StakeDeposited, StakeDepositedEvents, StakeWithdrawn, StakeWithdrawnEvents, StorageChanges,
-    Transfer, Transfers,
+    Burned, BurnedEvents, CurationPool, CurationPools, DelegationParametersUpdated,
+    DelegationParametersUpdatedEvents, DelegationPool, DelegationPools, Events, IndexerStake,
+    IndexerStakes, RebateClaimed, RebateClaimedEvents, RewardsAssigned, RewardsAssignedEvents,
+    Signalled, SignalledEvents, StakeDelegated, StakeDelegatedEvents, StakeDelegatedLocked,
+    StakeDelegatedLockedEvents, StakeDeposited, StakeDepositedEvents, StakeWithdrawn,
+    StakeWithdrawnEvents, StorageChanges, Transfer, Transfers,
 };
 use std::ops::Sub;
 use std::str::FromStr;
@@ -36,7 +36,7 @@ const CURATION_CONTRACT: [u8; 20] = hex!("8FE00a685Bcb3B2cc296ff6FfEaB10acA4CE15
 substreams_ethereum::init!();
 
 // -------------------- INITIAL MAPS --------------------
-fn find_key(address: &Vec<u8>, slot: u64, order: u32) -> [u8; 32] {
+fn find_key<T: AsRef<[u8]>>(address: T, slot: u64, order: u32) -> [u8; 32] {
     // Pad the address with leading zeros to make it 32 bytes
     let padded_address = add_padding(address);
 
@@ -89,6 +89,7 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
     let mut storage_changes = StorageChanges::default();
     let mut indexer_stakes = vec![];
     let mut delegation_pools = vec![];
+    let mut curation_pools = vec![];
 
     for trx in blk.transactions() {
         for call in trx.calls.iter() {
@@ -250,6 +251,60 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
                         }
                     }
                 }
+                if let Some(event) = abi::curation::events::Signalled::match_and_decode(&log) {
+                    for keccak_preimage in &call.keccak_preimages {
+                        log::info!("keccakdelegated{:?}", &keccak_preimage);
+                    }
+                    log::info!("transaction: {} ", Hex(&trx.hash));
+                    for storage_change in &call.storage_changes {
+                        if storage_change.address.eq(&CURATION_CONTRACT) {
+                            if storage_change.key == find_key(&event.subgraph_deployment_id, 15, 0)
+                            {
+                                curation_pools.push(CurationPool {
+                                    id: Hex(&trx.hash).to_string(),
+                                    subgraph_deployment_id: Hex(&event.subgraph_deployment_id)
+                                        .to_string(),
+                                    new_signal: BigInt::from_unsigned_bytes_be(
+                                        &storage_change.new_value,
+                                    )
+                                    .into(),
+                                    old_signal: BigInt::from_unsigned_bytes_be(
+                                        &storage_change.old_value,
+                                    )
+                                    .into(),
+                                    ordinal: log.ordinal,
+                                })
+                            }
+                        }
+                    }
+                }
+                if let Some(event) = abi::curation::events::Burned::match_and_decode(&log) {
+                    for keccak_preimage in &call.keccak_preimages {
+                        log::info!("keccakdelegated{:?}", &keccak_preimage);
+                    }
+                    log::info!("transaction: {} ", Hex(&trx.hash));
+                    for storage_change in &call.storage_changes {
+                        if storage_change.address.eq(&CURATION_CONTRACT) {
+                            if storage_change.key == find_key(&event.subgraph_deployment_id, 15, 0)
+                            {
+                                curation_pools.push(CurationPool {
+                                    id: Hex(&trx.hash).to_string(),
+                                    subgraph_deployment_id: Hex(&event.subgraph_deployment_id)
+                                        .to_string(),
+                                    new_signal: BigInt::from_unsigned_bytes_be(
+                                        &storage_change.new_value,
+                                    )
+                                    .into(),
+                                    old_signal: BigInt::from_unsigned_bytes_be(
+                                        &storage_change.old_value,
+                                    )
+                                    .into(),
+                                    ordinal: log.ordinal,
+                                })
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -260,6 +315,9 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
     });
     storage_changes.delegation_pools = Some(DelegationPools {
         delegation_pools: delegation_pools,
+    });
+    storage_changes.curation_pools = Some(CurationPools {
+        curation_pools: curation_pools,
     });
 
     Ok(storage_changes)
@@ -560,25 +618,16 @@ fn store_total_delegated_stakes(storage_changes: StorageChanges, s: StoreAddBigI
 
 // GraphNetwork entity tracks the total signalled, not the cumulative amount separately
 #[substreams::handlers::store]
-fn store_total_signalled(events: Events, s: StoreAddBigInt) {
-    let signalled_events = events.signalled_events.unwrap();
-    let burned_events = events.burned_events.unwrap();
+fn store_total_signalled(store_changes: StorageChanges, s: StoreAddBigInt) {
+    let curation_pools = store_changes.curation_pools.unwrap();
 
-    for signalled in signalled_events.signalled_events {
+    for curation_pool in curation_pools.curation_pools {
         s.add(
-            1,
+            curation_pool.ordinal,
             "totalTokensSignalled",
-            BigInt::from_str(&signalled.tokens)
+            BigInt::from_str(&curation_pool.new_signal)
                 .unwrap()
-                .sub(BigInt::from_str(&signalled.curation_tax).unwrap()),
-        );
-    }
-
-    for burned in burned_events.burned_events {
-        s.add(
-            1,
-            "totalTokensSignalled",
-            BigInt::from_str(&burned.tokens).unwrap().neg(),
+                .sub(BigInt::from_str(&curation_pool.old_signal).unwrap()),
         );
     }
 }

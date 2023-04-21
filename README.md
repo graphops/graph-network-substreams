@@ -23,16 +23,18 @@ Here is the graph of the modules of the substreams:
 
 ```mermaid
 graph LR;
+  map_storage_changes[map: map_storage_changes]
+  sf.ethereum.type.v2.Block[source: sf.ethereum.type.v2.Block] --> map_storage_changes
   map_events[map: map_events]
   sf.ethereum.type.v2.Block[source: sf.ethereum.type.v2.Block] --> map_events
   store_grt_balances[store: store_grt_balances]
   map_events --> store_grt_balances
   store_grt_global[store: store_grt_global]
   map_events --> store_grt_global
-  store_indexer_stakes[store: store_indexer_stakes]
-  map_events --> store_indexer_stakes
+  store_staked_tokens[store: store_staked_tokens]
+  map_storage_changes --> store_staked_tokens
   store_graph_account_indexer[store: store_graph_account_indexer]
-  map_events --> store_graph_account_indexer
+  map_storage_changes --> store_graph_account_indexer
   store_graph_account_delegator[store: store_graph_account_delegator]
   map_events --> store_graph_account_delegator
   store_graph_account_curator[store: store_graph_account_curator]
@@ -42,12 +44,11 @@ graph LR;
   store_cumulative_delegator_stakes[store: store_cumulative_delegator_stakes]
   map_events --> store_cumulative_delegator_stakes
   store_total_delegated_stakes[store: store_total_delegated_stakes]
-  map_events --> store_total_delegated_stakes
-  store_delegation_parameters --> store_total_delegated_stakes
+  map_storage_changes --> store_total_delegated_stakes
   store_delegation_parameters[store: store_delegation_parameters]
   map_events --> store_delegation_parameters
   store_total_signalled[store: store_total_signalled]
-  map_events --> store_total_signalled
+  map_storage_changes --> store_total_signalled
   store_cumulative_curator_signalled[store: store_cumulative_curator_signalled]
   map_events --> store_cumulative_curator_signalled
   store_cumulative_curator_burned[store: store_cumulative_curator_burned]
@@ -60,11 +61,13 @@ graph LR;
   store_graph_account_delegator -- deltas --> map_graph_account_entities
   store_graph_account_curator -- deltas --> map_graph_account_entities
   map_indexer_entities[map: map_indexer_entities]
-  store_indexer_stakes -- deltas --> map_indexer_entities
+  map_storage_changes --> map_indexer_entities
+  store_staked_tokens -- deltas --> map_indexer_entities
   map_delegated_stake_entities[map: map_delegated_stake_entities]
   store_cumulative_delegated_stakes -- deltas --> map_delegated_stake_entities
   store_cumulative_delegator_stakes -- deltas --> map_delegated_stake_entities
   store_total_delegated_stakes -- deltas --> map_delegated_stake_entities
+  map_storage_changes --> map_delegated_stake_entities
   map_curator_entities[map: map_curator_entities]
   store_cumulative_curator_signalled -- deltas --> map_curator_entities
   store_cumulative_curator_burned -- deltas --> map_curator_entities
