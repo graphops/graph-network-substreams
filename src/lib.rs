@@ -629,101 +629,64 @@ fn store_graph_account_curator(events: Events, s: StoreSetIfNotExistsString) {
     }
 }
 
-// -------------------- MAPS FOR ENTITY CHANGES --------------------
-// We have an entity change map for each entity in our subgraph schema.graphql
-// These maps take necessary stores or maps as inputs and create/update corresponding entitites in the subgraph using entity changes
-
-#[substreams::handlers::map]
-pub fn map_graph_network_entities(
-    grt_global_deltas: Deltas<DeltaBigInt>,
-) -> Result<EntityChanges, Error> {
-    let mut entity_changes: EntityChanges = Default::default();
-    db::grt_global_change(grt_global_deltas, &mut entity_changes);
-    Ok(entity_changes)
-}
-
-#[substreams::handlers::map]
-pub fn map_graph_account_entities(
-    grt_balance_deltas: Deltas<DeltaBigInt>,
-    graph_account_indexer_deltas: Deltas<DeltaString>,
-    graph_account_delegator_deltas: Deltas<DeltaString>,
-    graph_account_curator_deltas: Deltas<DeltaString>,
-) -> Result<EntityChanges, Error> {
-    let mut entity_changes: EntityChanges = Default::default();
-    db::grt_balance_change(grt_balance_deltas, &mut entity_changes);
-    db::graph_account_indexer_change(graph_account_indexer_deltas, &mut entity_changes);
-    db::graph_account_delegator_change(graph_account_delegator_deltas, &mut entity_changes);
-    db::graph_account_curator_change(graph_account_curator_deltas, &mut entity_changes);
-    Ok(entity_changes)
-}
-
-#[substreams::handlers::map]
-pub fn map_indexer_entities(
-    storage_changes: StorageChanges,
-    staked_token_deltas: Deltas<DeltaBigInt>,
-) -> Result<EntityChanges, Error> {
-    let mut entity_changes: EntityChanges = Default::default();
-    let indexer_stakes = storage_changes.indexer_stakes.unwrap();
-    db::indexer_stake_change(indexer_stakes, staked_token_deltas, &mut entity_changes);
-    Ok(entity_changes)
-}
-
-#[substreams::handlers::map]
-pub fn map_delegated_stake_entities(
-    cumulative_delegated_stake_deltas: Deltas<DeltaBigInt>,
-    cumulative_delegator_stake_deltas: Deltas<DeltaBigInt>,
-    total_delegated_stake_deltas: Deltas<DeltaBigInt>,
-    storage_changes: StorageChanges,
-) -> Result<EntityChanges, Error> {
-    let mut entity_changes: EntityChanges = Default::default();
-    let delegation_pools = storage_changes.delegation_pools.unwrap();
-    db::delegated_stake_change(
-        cumulative_delegated_stake_deltas,
-        cumulative_delegator_stake_deltas,
-        total_delegated_stake_deltas,
-        delegation_pools,
-        &mut entity_changes,
-    );
-    Ok(entity_changes)
-}
-
-#[substreams::handlers::map]
-pub fn map_curator_entities(
-    cumulative_curator_signalled_deltas: Deltas<DeltaBigInt>,
-    cumulative_curator_burned_deltas: Deltas<DeltaBigInt>,
-    total_signalled_deltas: Deltas<DeltaBigInt>,
-) -> Result<EntityChanges, Error> {
-    let mut entity_changes: EntityChanges = Default::default();
-    db::curation_signal_change(
-        cumulative_curator_signalled_deltas,
-        cumulative_curator_burned_deltas,
-        total_signalled_deltas,
-        &mut entity_changes,
-    );
-    Ok(entity_changes)
-}
-
 // -------------------- GRAPH_OUT --------------------
 // Final map for executing all entity change maps together
 // Run this map to check the health of the entire substream
 
 #[substreams::handlers::map]
 pub fn graph_out(
-    graph_network_entities: EntityChanges,
-    graph_account_entities: EntityChanges,
-    indexer_entities: EntityChanges,
-    delegated_stake_entities: EntityChanges,
-    curator_entities: EntityChanges,
+    grt_global_deltas: Deltas<DeltaBigInt>,
+    grt_balance_deltas: Deltas<DeltaBigInt>,
+    graph_account_indexer_deltas: Deltas<DeltaString>,
+    graph_account_delegator_deltas: Deltas<DeltaString>,
+    graph_account_curator_deltas: Deltas<DeltaString>,
+    storage_changes: StorageChanges,
+    staked_token_deltas: Deltas<DeltaBigInt>,
+    cumulative_delegated_stake_deltas: Deltas<DeltaBigInt>,
+    cumulative_delegator_stake_deltas: Deltas<DeltaBigInt>,
+    total_delegated_stake_deltas: Deltas<DeltaBigInt>,
+    cumulative_curator_signalled_deltas: Deltas<DeltaBigInt>,
+    cumulative_curator_burned_deltas: Deltas<DeltaBigInt>,
+    total_signalled_deltas: Deltas<DeltaBigInt>,
 ) -> Result<EntityChanges, substreams::errors::Error> {
+    let mut graph_network_entity_changes: EntityChanges = Default::default();
+    db::grt_global_change(grt_global_deltas, &mut graph_network_entity_changes);
+
+    let mut graph_account_entity_changes: EntityChanges = Default::default();
+    db::grt_balance_change(grt_balance_deltas, &mut  graph_account_entity_changes);
+    db::graph_account_indexer_change(graph_account_indexer_deltas, &mut  graph_account_entity_changes);
+    db::graph_account_delegator_change(graph_account_delegator_deltas, &mut  graph_account_entity_changes);
+    db::graph_account_curator_change(graph_account_curator_deltas, &mut  graph_account_entity_changes);
+
+    let mut indexer_entity_changes: EntityChanges = Default::default();
+    let indexer_stakes = storage_changes.indexer_stakes.unwrap();
+    db::indexer_stake_change(indexer_stakes, staked_token_deltas, &mut indexer_entity_changes);
+
+    let mut delegated_stake_entity_changes: EntityChanges = Default::default();
+    let delegation_pools = storage_changes.delegation_pools.unwrap();
+    db::delegated_stake_change(
+        cumulative_delegated_stake_deltas,
+        cumulative_delegator_stake_deltas,
+        total_delegated_stake_deltas,
+        delegation_pools,
+        &mut delegated_stake_entity_changes,
+    );
+
+    let mut curator_entity_changes: EntityChanges = Default::default();
+    db::curation_signal_change(
+        cumulative_curator_signalled_deltas,
+        cumulative_curator_burned_deltas,
+        total_signalled_deltas,
+        &mut curator_entity_changes,
+    );
     Ok(EntityChanges {
         entity_changes: [
-            graph_network_entities.entity_changes,
-            graph_account_entities.entity_changes,
-            indexer_entities.entity_changes,
-            delegated_stake_entities.entity_changes,
-            curator_entities.entity_changes,
+            graph_network_entity_changes.entity_changes,
+            graph_account_entity_changes.entity_changes,
+            indexer_entity_changes.entity_changes,
+            delegated_stake_entity_changes.entity_changes,
+            curator_entity_changes.entity_changes,
         ]
         .concat(),
     })
 }
-

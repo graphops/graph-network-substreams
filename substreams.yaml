@@ -138,19 +138,12 @@ modules:
     inputs:
       - map: map_events
 
-  - name: map_graph_network_entities
+  - name: graph_out
     kind: map
     initialBlock: 11446769
     inputs:
       - store: store_grt_global
         mode: deltas
-    output:
-      type: proto:substreams.entity.v1.EntityChange
-
-  - name: map_graph_account_entities
-    kind: map
-    initialBlock: 11446769
-    inputs:
       - store: store_grt_balances
         mode: deltas
       - store: store_graph_account_indexer
@@ -159,54 +152,20 @@ modules:
         mode: deltas
       - store: store_graph_account_curator
         mode: deltas
-    output:
-      type: proto:substreams.entity.v1.EntityChange
-
-  - name: map_indexer_entities
-    kind: map
-    initialBlock: 11446769
-    inputs:
       - map: map_storage_changes
       - store: store_staked_tokens
         mode: deltas
-    output:
-      type: proto:substreams.entity.v1.EntityChange
-
-  - name: map_delegated_stake_entities
-    kind: map
-    initialBlock: 11446769
-    inputs:
       - store: store_cumulative_delegated_stakes
         mode: deltas
       - store: store_cumulative_delegator_stakes
         mode: deltas
       - store: store_total_delegated_stakes
         mode: deltas
-      - map: map_storage_changes
-    output:
-      type: proto:substreams.entity.v1.EntityChange
-
-  - name: map_curator_entities
-    kind: map
-    initialBlock: 11446769
-    inputs:
       - store: store_cumulative_curator_signalled
         mode: deltas
       - store: store_cumulative_curator_burned
         mode: deltas
       - store: store_total_signalled
         mode: deltas
-    output:
-      type: proto:substreams.entity.v1.EntityChange
-
-  - name: graph_out
-    kind: map
-    initialBlock: 11446769
-    inputs:
-      - map: map_graph_network_entities
-      - map: map_graph_account_entities
-      - map: map_indexer_entities
-      - map: map_delegated_stake_entities
-      - map: map_curator_entities
     output:
       type: proto:substreams.entity.v1.EntityChanges
