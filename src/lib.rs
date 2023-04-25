@@ -17,7 +17,6 @@ use substreams_entity_change::pb::entity::EntityChanges;
 use substreams_ethereum::Event;
 use substreams_ethereum::{pb::eth::v2 as eth, NULL_ADDRESS};
 
-
 // Contract Addresses
 const GRAPH_TOKEN_ADDRESS: [u8; 20] = hex!("c944E90C64B2c07662A292be6244BDf05Cda44a7");
 const STAKING_CONTRACT: [u8; 20] = hex!("F55041E37E12cD407ad00CE2910B8269B01263b9");
@@ -205,7 +204,8 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
                     log::info!("transaction: {} ", Hex(&trx.hash));
                     for storage_change in &call.storage_changes {
                         if storage_change.address.eq(&CURATION_CONTRACT) {
-                            if storage_change.key == utils::find_key(&event.subgraph_deployment_id, 15, 0)
+                            if storage_change.key
+                                == utils::find_key(&event.subgraph_deployment_id, 15, 0)
                             {
                                 curation_pools.push(CurationPool {
                                     id: Hex(&trx.hash).to_string(),
@@ -232,7 +232,8 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
                     log::info!("transaction: {} ", Hex(&trx.hash));
                     for storage_change in &call.storage_changes {
                         if storage_change.address.eq(&CURATION_CONTRACT) {
-                            if storage_change.key == utils::find_key(&event.subgraph_deployment_id, 15, 0)
+                            if storage_change.key
+                                == utils::find_key(&event.subgraph_deployment_id, 15, 0)
                             {
                                 curation_pools.push(CurationPool {
                                     id: Hex(&trx.hash).to_string(),
@@ -497,7 +498,10 @@ fn store_cumulative_delegated_stakes(events: Events, s: StoreAddBigInt) {
     for stake_delegated in stake_delegated_events.stake_delegated_events {
         s.add(
             stake_delegated.ordinal,
-            utils::generate_key_delegated_stake(&stake_delegated.delegator, &stake_delegated.indexer),
+            utils::generate_key_delegated_stake(
+                &stake_delegated.delegator,
+                &stake_delegated.indexer,
+            ),
             BigInt::from_str(&stake_delegated.tokens).unwrap(),
         );
     }
@@ -597,7 +601,10 @@ fn store_graph_account_delegator(events: Events, s: StoreSetIfNotExistsString) {
     for stake_delegated in stake_delegated_events.stake_delegated_events {
         s.set_if_not_exists(
             stake_delegated.ordinal,
-            utils::generate_key_delegated_stake(&stake_delegated.delegator, &stake_delegated.indexer),
+            utils::generate_key_delegated_stake(
+                &stake_delegated.delegator,
+                &stake_delegated.indexer,
+            ),
             &utils::generate_key(&stake_delegated.delegator),
         );
     }
@@ -653,14 +660,21 @@ pub fn graph_out(
     db::grt_global_change(grt_global_deltas, &mut graph_network_entity_changes);
 
     let mut graph_account_entity_changes: EntityChanges = Default::default();
-    db::grt_balance_change(grt_balance_deltas, &mut  graph_account_entity_changes);
-    db::graph_account_indexer_change(graph_account_indexer_deltas, &mut  graph_account_entity_changes);
-    db::graph_account_delegator_change(graph_account_delegator_deltas, &mut  graph_account_entity_changes);
-    db::graph_account_curator_change(graph_account_curator_deltas, &mut  graph_account_entity_changes);
+    db::graph_account_change(
+        grt_balance_deltas,
+        graph_account_indexer_deltas,
+        graph_account_delegator_deltas,
+        graph_account_curator_deltas,
+        &mut graph_account_entity_changes,
+    );
 
     let mut indexer_entity_changes: EntityChanges = Default::default();
     let indexer_stakes = storage_changes.indexer_stakes.unwrap();
-    db::indexer_stake_change(indexer_stakes, staked_token_deltas, &mut indexer_entity_changes);
+    db::indexer_stake_change(
+        indexer_stakes,
+        staked_token_deltas,
+        &mut indexer_entity_changes,
+    );
 
     let mut delegated_stake_entity_changes: EntityChanges = Default::default();
     let delegation_pools = storage_changes.delegation_pools.unwrap();
@@ -679,6 +693,7 @@ pub fn graph_out(
         total_signalled_deltas,
         &mut curator_entity_changes,
     );
+
     Ok(EntityChanges {
         entity_changes: [
             graph_network_entity_changes.entity_changes,

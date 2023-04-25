@@ -1,5 +1,5 @@
+use substreams::Hex;
 use tiny_keccak::{Hasher, Keccak};
-use substreams::{Hex};
 
 pub fn find_key<T: AsRef<[u8]>>(address: T, slot: u64, order: u32) -> [u8; 32] {
     // Pad the address with leading zeros to make it 32 bytes
