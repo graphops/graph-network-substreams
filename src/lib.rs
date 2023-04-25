@@ -1,14 +1,8 @@
 mod abi;
 mod db;
 mod pb;
-use pb::erc20::{
-    Burned, BurnedEvents, CurationPool, CurationPools, DelegationParametersUpdated,
-    DelegationParametersUpdatedEvents, DelegationPool, DelegationPools, Events, IndexerStake,
-    IndexerStakes, RebateClaimed, RebateClaimedEvents, RewardsAssigned, RewardsAssignedEvents,
-    Signalled, SignalledEvents, StakeDelegated, StakeDelegatedEvents, StakeDelegatedLocked,
-    StakeDelegatedLockedEvents, StakeDeposited, StakeDepositedEvents, StakeWithdrawn,
-    StakeWithdrawnEvents, StorageChanges, Transfer, Transfers,
-};
+mod utils;
+use pb::erc20::*;
 use std::ops::Sub;
 use std::str::FromStr;
 use substreams::errors::Error;
@@ -22,7 +16,7 @@ use substreams::{
 use substreams_entity_change::pb::entity::EntityChanges;
 use substreams_ethereum::Event;
 use substreams_ethereum::{pb::eth::v2 as eth, NULL_ADDRESS};
-use tiny_keccak::{Hasher, Keccak};
+
 
 // Contract Addresses
 const GRAPH_TOKEN_ADDRESS: [u8; 20] = hex!("c944E90C64B2c07662A292be6244BDf05Cda44a7");
@@ -36,53 +30,6 @@ const CURATION_CONTRACT: [u8; 20] = hex!("8FE00a685Bcb3B2cc296ff6FfEaB10acA4CE15
 substreams_ethereum::init!();
 
 // -------------------- INITIAL MAPS --------------------
-fn find_key<T: AsRef<[u8]>>(address: T, slot: u64, order: u32) -> [u8; 32] {
-    // Pad the address with leading zeros to make it 32 bytes
-    let padded_address = add_padding(address);
-
-    // Convert the number to a byte array
-    let padded_slot = add_padding(slot.to_be_bytes());
-
-    // Concatenate the padded address and padded number
-    let mut concat = Vec::new();
-    concat.extend_from_slice(&padded_address);
-    concat.extend_from_slice(&padded_slot);
-    let keccak = keccak256(&concat);
-    let key = increment_key(keccak, order);
-    key
-}
-
-fn increment_key(mut keccak: [u8; 32], order: u32) -> [u8; 32] {
-    let mut carry = order;
-    for i in (0..32).rev() {
-        let (result, new_carry) = keccak[i].overflowing_add(carry as u8);
-        keccak[i] = result;
-        carry = new_carry as u32;
-        if carry == 0 {
-            break;
-        }
-    }
-    keccak
-}
-
-pub fn keccak256(data: &Vec<u8>) -> [u8; 32] {
-    let mut hasher = Keccak::v256();
-    let mut out: [u8; 32] = [0; 32];
-    hasher.update(data);
-    hasher.finalize(&mut out);
-    out
-}
-
-fn add_padding<T: AsRef<[u8]>>(input: T) -> [u8; 32] {
-    let mut padded_input = [0; 32];
-    let input_bytes = input.as_ref();
-
-    let input_len = input_bytes.len();
-    let pad_len = padded_input.len() - input_len;
-
-    padded_input[pad_len..].copy_from_slice(input_bytes);
-    padded_input
-}
 
 #[substreams::handlers::map]
 fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
@@ -105,7 +52,7 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
                     }
                     for storage_change in &call.storage_changes {
                         if storage_change.address.eq(&STAKING_CONTRACT) {
-                            if storage_change.key == find_key(&event.indexer, 14, 0) {
+                            if storage_change.key == utils::find_key(&event.indexer, 14, 0) {
                                 indexer_stakes.push(IndexerStake {
                                     id: Hex(&trx.hash).to_string(),
                                     indexer: event.indexer.clone(),
@@ -129,7 +76,7 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
                     }
                     for storage_change in &call.storage_changes {
                         if storage_change.address.eq(&STAKING_CONTRACT) {
-                            if storage_change.key == find_key(&event.indexer, 14, 0) {
+                            if storage_change.key == utils::find_key(&event.indexer, 14, 0) {
                                 indexer_stakes.push(IndexerStake {
                                     id: Hex(&trx.hash).to_string(),
                                     indexer: event.indexer.clone(),
@@ -154,7 +101,7 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
                     log::info!("transaction: {} ", Hex(&trx.hash));
                     for storage_change in &call.storage_changes {
                         if storage_change.address.eq(&STAKING_CONTRACT) {
-                            if storage_change.key == find_key(&event.indexer, 20, 2) {
+                            if storage_change.key == utils::find_key(&event.indexer, 20, 2) {
                                 delegation_pools.push(DelegationPool {
                                     id: Hex(&trx.hash).to_string(),
                                     indexer: event.indexer.clone(),
@@ -181,7 +128,7 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
                     log::info!("transaction: {} ", Hex(&trx.hash));
                     for storage_change in &call.storage_changes {
                         if storage_change.address.eq(&STAKING_CONTRACT) {
-                            if storage_change.key == find_key(&event.indexer, 20, 2) {
+                            if storage_change.key == utils::find_key(&event.indexer, 20, 2) {
                                 delegation_pools.push(DelegationPool {
                                     id: Hex(&trx.hash).to_string(),
                                     indexer: event.indexer.clone(),
@@ -206,7 +153,7 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
                     log::info!("transaction: {} ", Hex(&trx.hash));
                     for storage_change in &call.storage_changes {
                         if storage_change.address.eq(&STAKING_CONTRACT) {
-                            if storage_change.key == find_key(&event.indexer, 20, 2) {
+                            if storage_change.key == utils::find_key(&event.indexer, 20, 2) {
                                 delegation_pools.push(DelegationPool {
                                     id: Hex(&trx.hash).to_string(),
                                     indexer: event.indexer.clone(),
@@ -233,7 +180,7 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
                     log::info!("transaction: {} ", Hex(&trx.hash));
                     for storage_change in &call.storage_changes {
                         if storage_change.address.eq(&STAKING_CONTRACT) {
-                            if storage_change.key == find_key(&event.indexer, 20, 2) {
+                            if storage_change.key == utils::find_key(&event.indexer, 20, 2) {
                                 delegation_pools.push(DelegationPool {
                                     id: Hex(&trx.hash).to_string(),
                                     indexer: event.indexer.clone(),
@@ -258,7 +205,7 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
                     log::info!("transaction: {} ", Hex(&trx.hash));
                     for storage_change in &call.storage_changes {
                         if storage_change.address.eq(&CURATION_CONTRACT) {
-                            if storage_change.key == find_key(&event.subgraph_deployment_id, 15, 0)
+                            if storage_change.key == utils::find_key(&event.subgraph_deployment_id, 15, 0)
                             {
                                 curation_pools.push(CurationPool {
                                     id: Hex(&trx.hash).to_string(),
@@ -285,7 +232,7 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
                     log::info!("transaction: {} ", Hex(&trx.hash));
                     for storage_change in &call.storage_changes {
                         if storage_change.address.eq(&CURATION_CONTRACT) {
-                            if storage_change.key == find_key(&event.subgraph_deployment_id, 15, 0)
+                            if storage_change.key == utils::find_key(&event.subgraph_deployment_id, 15, 0)
                             {
                                 curation_pools.push(CurationPool {
                                     id: Hex(&trx.hash).to_string(),
@@ -484,12 +431,12 @@ fn store_grt_balances(events: Events, s: StoreAddBigInt) {
     for transfer in transfers.transfers {
         s.add(
             transfer.ordinal,
-            generate_key(&transfer.from),
+            utils::generate_key(&transfer.from),
             BigInt::from_str(&transfer.value).unwrap().neg(),
         );
         s.add(
             transfer.ordinal,
-            generate_key(&transfer.to),
+            utils::generate_key(&transfer.to),
             BigInt::from_str(&transfer.value).unwrap(),
         );
     }
@@ -550,7 +497,7 @@ fn store_cumulative_delegated_stakes(events: Events, s: StoreAddBigInt) {
     for stake_delegated in stake_delegated_events.stake_delegated_events {
         s.add(
             stake_delegated.ordinal,
-            generate_key_delegated_stake(&stake_delegated.delegator, &stake_delegated.indexer),
+            utils::generate_key_delegated_stake(&stake_delegated.delegator, &stake_delegated.indexer),
             BigInt::from_str(&stake_delegated.tokens).unwrap(),
         );
     }
@@ -564,7 +511,7 @@ fn store_cumulative_delegator_stakes(events: Events, s: StoreAddBigInt) {
     for stake_delegated in stake_delegated_events.stake_delegated_events {
         s.add(
             stake_delegated.ordinal,
-            generate_key(&stake_delegated.delegator),
+            utils::generate_key(&stake_delegated.delegator),
             BigInt::from_str(&stake_delegated.tokens).unwrap(),
         );
     }
@@ -578,7 +525,7 @@ fn store_cumulative_curator_signalled(events: Events, s: StoreAddBigInt) {
     for signalled in signalled_events.signalled_events {
         s.add(
             signalled.ordinal,
-            generate_key(&signalled.curator),
+            utils::generate_key(&signalled.curator),
             BigInt::from_str(&signalled.tokens)
                 .unwrap()
                 .sub(BigInt::from_str(&signalled.curation_tax).unwrap()),
@@ -594,7 +541,7 @@ fn store_cumulative_curator_burned(events: Events, s: StoreAddBigInt) {
     for burned in burned_events.burned_events {
         s.add(
             burned.ordinal,
-            generate_key(&burned.curator),
+            utils::generate_key(&burned.curator),
             BigInt::from_str(&burned.tokens).unwrap(),
         );
     }
@@ -638,8 +585,8 @@ fn store_graph_account_indexer(storage_changes: StorageChanges, s: StoreSetIfNot
     for indexer_stake in indexer_stakes.indexer_stakes {
         s.set_if_not_exists(
             indexer_stake.ordinal,
-            generate_key(&indexer_stake.indexer),
-            &generate_key(&indexer_stake.indexer),
+            utils::generate_key(&indexer_stake.indexer),
+            &utils::generate_key(&indexer_stake.indexer),
         );
     }
 }
@@ -650,8 +597,8 @@ fn store_graph_account_delegator(events: Events, s: StoreSetIfNotExistsString) {
     for stake_delegated in stake_delegated_events.stake_delegated_events {
         s.set_if_not_exists(
             stake_delegated.ordinal,
-            generate_key_delegated_stake(&stake_delegated.delegator, &stake_delegated.indexer),
-            &generate_key(&stake_delegated.delegator),
+            utils::generate_key_delegated_stake(&stake_delegated.delegator, &stake_delegated.indexer),
+            &utils::generate_key(&stake_delegated.delegator),
         );
     }
 }
@@ -664,7 +611,7 @@ fn store_delegation_parameters(events: Events, s: StoreSetProto<DelegationParame
     {
         s.set(
             delegation_parameters_updated.ordinal,
-            generate_key(&delegation_parameters_updated.indexer),
+            utils::generate_key(&delegation_parameters_updated.indexer),
             &delegation_parameters_updated,
         );
     }
@@ -676,8 +623,8 @@ fn store_graph_account_curator(events: Events, s: StoreSetIfNotExistsString) {
     for signalled in signalled_events.signalled_events {
         s.set_if_not_exists(
             signalled.ordinal,
-            generate_key(&signalled.curator),
-            &generate_key(&signalled.curator),
+            utils::generate_key(&signalled.curator),
+            &utils::generate_key(&signalled.curator),
         );
     }
 }
@@ -780,15 +727,3 @@ pub fn graph_out(
     })
 }
 
-// -------------------- KEY GENERATORS --------------------
-fn generate_key(account: &Vec<u8>) -> String {
-    return Hex(account).to_string();
-}
-
-fn generate_key_delegated_stake(delegator: &Vec<u8>, indexer: &Vec<u8>) -> String {
-    return format!(
-        "{}:{}",
-        Hex(delegator).to_string(),
-        Hex(indexer).to_string()
-    );
-}
