@@ -1,25 +1,9 @@
+use crate::utils;
 use crate::pb::erc20::{DelegationPools, IndexerStakes};
 use std::str::FromStr;
 use substreams::scalar::BigInt;
 use substreams::store::{DeltaBigInt, DeltaString, Deltas};
-use substreams::Hex;
 use substreams_entity_change::pb::entity::{entity_change::Operation, EntityChanges};
-
-// --------------------
-//  Map GRT Balances Entity Changes
-// --------------------
-pub fn grt_balance_change(grt_deltas: Deltas<DeltaBigInt>, entity_changes: &mut EntityChanges) {
-    for delta in grt_deltas.deltas {
-        entity_changes
-            .push_change(
-                "GraphAccount",
-                &delta.key,
-                delta.ordinal,
-                Operation::Update, // Update will create the entity if it does not exist
-            )
-            .change("balance", delta);
-    }
-}
 
 // --------------------
 //  Map GRT Mint, Burn and Total Supply Entity Changes
@@ -65,7 +49,7 @@ pub fn indexer_stake_change(
         entity_changes
             .push_change(
                 "Indexer",
-                &generate_key(&indexer_stake.indexer),
+                &utils::generate_key(&indexer_stake.indexer),
                 indexer_stake.ordinal,
                 Operation::Update, // Update will create the entity if it does not exist
             )
@@ -123,7 +107,7 @@ pub fn delegated_stake_change(
         entity_changes
             .push_change(
                 "Indexer",
-                &generate_key(&delegation_pool.indexer),
+                &utils::generate_key(&delegation_pool.indexer),
                 delegation_pool.ordinal,
                 Operation::Update, // Update will create the entity if it does not exist
             )
@@ -178,12 +162,25 @@ pub fn curation_signal_change(
 }
 
 // --------------------
-//  Map Indexer Stake Entity Changes
+//  Map Curator Entity Changes
 // --------------------
-pub fn graph_account_indexer_change(
+pub fn graph_account_change(
+    grt_balance_deltas: Deltas<DeltaBigInt>,
     graph_account_indexer_deltas: Deltas<DeltaString>,
+    graph_account_delegator_deltas: Deltas<DeltaString>,
+    graph_account_curator_deltas: Deltas<DeltaString>,
     entity_changes: &mut EntityChanges,
 ) {
+    for delta in grt_balance_deltas.deltas {
+        entity_changes
+            .push_change(
+                "GraphAccount",
+                &delta.key,
+                delta.ordinal,
+                Operation::Update, // Update will create the entity if it does not exist
+            )
+            .change("balance", delta);
+    }
     for delta in graph_account_indexer_deltas.deltas {
         entity_changes
             .push_change(
@@ -202,15 +199,6 @@ pub fn graph_account_indexer_change(
             )
             .change("account", &delta.key);
     }
-}
-
-// --------------------
-//  Map Delegator Stake Entity Changes
-// --------------------
-pub fn graph_account_delegator_change(
-    graph_account_delegator_deltas: Deltas<DeltaString>,
-    entity_changes: &mut EntityChanges,
-) {
     for delta in graph_account_delegator_deltas.deltas {
         entity_changes
             .push_change(
@@ -250,15 +238,6 @@ pub fn graph_account_delegator_change(
                 &delta.key.as_str().split(":").nth(0).unwrap().to_string(),
             );
     }
-}
-
-// --------------------
-//  Map Curator Entity Changes
-// --------------------
-pub fn graph_account_curator_change(
-    graph_account_curator_deltas: Deltas<DeltaString>,
-    entity_changes: &mut EntityChanges,
-) {
     for delta in graph_account_curator_deltas.deltas {
         entity_changes
             .push_change(
@@ -279,7 +258,4 @@ pub fn graph_account_curator_change(
     }
 }
 
-// -------------------- KEY GENERATORS --------------------
-fn generate_key(account: &Vec<u8>) -> String {
-    return Hex(account).to_string();
-}
+
