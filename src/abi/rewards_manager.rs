@@ -1800,7 +1800,7 @@
                         ethabi::Token::FixedBytes(
                             self.subgraph_deployment_id.as_ref().to_vec(),
                         ),
-                        ethabi::Token::Bool(self.deny),
+                        ethabi::Token::Bool(self.deny.clone()),
                     ],
                 );
                 let mut encoded = Vec::with_capacity(4 + data.len());
@@ -1888,7 +1888,7 @@
                                 .collect();
                             ethabi::Token::Array(v)
                         },
-                        ethabi::Token::Bool(self.deny),
+                        ethabi::Token::Bool(self.deny.clone()),
                     ],
                 );
                 let mut encoded = Vec::with_capacity(4 + data.len());
@@ -1954,7 +1954,14 @@
                     &[
                         ethabi::Token::Uint(
                             ethabi::Uint::from_big_endian(
-                                self.issuance_rate.clone().to_signed_bytes_be().as_slice(),
+                                match self.issuance_rate.clone().to_bytes_be() {
+                                    (num_bigint::Sign::Plus, bytes) => bytes,
+                                    (num_bigint::Sign::NoSign, bytes) => bytes,
+                                    (num_bigint::Sign::Minus, _) => {
+                                        panic!("negative numbers are not supported")
+                                    }
+                                }
+                                    .as_slice(),
                             ),
                         ),
                     ],
@@ -2022,10 +2029,13 @@
                     &[
                         ethabi::Token::Uint(
                             ethabi::Uint::from_big_endian(
-                                self
-                                    .minimum_subgraph_signal
-                                    .clone()
-                                    .to_signed_bytes_be()
+                                match self.minimum_subgraph_signal.clone().to_bytes_be() {
+                                    (num_bigint::Sign::Plus, bytes) => bytes,
+                                    (num_bigint::Sign::NoSign, bytes) => bytes,
+                                    (num_bigint::Sign::Minus, _) => {
+                                        panic!("negative numbers are not supported")
+                                    }
+                                }
                                     .as_slice(),
                             ),
                         ),
