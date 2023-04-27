@@ -25,18 +25,9 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
     let mut curation_pools = vec![];
 
     for trx in blk.transactions() {
-        for call in trx.calls.iter() {
-            let _call_index = call.index;
-            if call.state_reverted {
-                continue;
-            }
-
-            for log in call.logs.iter() {
+        for (log, call_view) in trx.logs_with_calls() {
                 if let Some(event) = abi::staking::events::StakeDeposited::match_and_decode(&log) {
-                    for keccak_preimage in &call.keccak_preimages {
-                        log::info!("{:?}", &keccak_preimage);
-                    }
-                    for storage_change in &call.storage_changes {
+                    for storage_change in &call_view.call.storage_changes {
                         if storage_change.address.eq(&STAKING_CONTRACT) {
                             if storage_change.key == utils::find_key(&event.indexer, 14, 0) {
                                 indexer_stakes.push(IndexerStake {
@@ -57,10 +48,7 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
                     }
                 }
                 if let Some(event) = abi::staking::events::StakeWithdrawn::match_and_decode(&log) {
-                    for keccak_preimage in &call.keccak_preimages {
-                        log::info!("{:?}", &keccak_preimage);
-                    }
-                    for storage_change in &call.storage_changes {
+                    for storage_change in &call_view.call.storage_changes {
                         if storage_change.address.eq(&STAKING_CONTRACT) {
                             if storage_change.key == utils::find_key(&event.indexer, 14, 0) {
                                 indexer_stakes.push(IndexerStake {
@@ -81,11 +69,7 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
                     }
                 }
                 if let Some(event) = abi::staking::events::StakeDelegated::match_and_decode(&log) {
-                    for keccak_preimage in &call.keccak_preimages {
-                        log::info!("keccakdelegated{:?}", &keccak_preimage);
-                    }
-                    log::info!("transaction: {} ", Hex(&trx.hash));
-                    for storage_change in &call.storage_changes {
+                    for storage_change in &call_view.call.storage_changes {
                         if storage_change.address.eq(&STAKING_CONTRACT) {
                             if storage_change.key == utils::find_key(&event.indexer, 20, 2) {
                                 delegation_pools.push(DelegationPool {
@@ -108,11 +92,7 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
                 if let Some(event) =
                     abi::staking::events::StakeDelegatedLocked::match_and_decode(&log)
                 {
-                    for keccak_preimage in &call.keccak_preimages {
-                        log::info!("keccakdelegated{:?}", &keccak_preimage);
-                    }
-                    log::info!("transaction: {} ", Hex(&trx.hash));
-                    for storage_change in &call.storage_changes {
+                    for storage_change in &call_view.call.storage_changes {
                         if storage_change.address.eq(&STAKING_CONTRACT) {
                             if storage_change.key == utils::find_key(&event.indexer, 20, 2) {
                                 delegation_pools.push(DelegationPool {
@@ -133,11 +113,7 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
                     }
                 }
                 if let Some(event) = abi::staking::events::RebateClaimed::match_and_decode(&log) {
-                    for keccak_preimage in &call.keccak_preimages {
-                        log::info!("keccakdelegated{:?}", &keccak_preimage);
-                    }
-                    log::info!("transaction: {} ", Hex(&trx.hash));
-                    for storage_change in &call.storage_changes {
+                    for storage_change in &call_view.call.storage_changes {
                         if storage_change.address.eq(&STAKING_CONTRACT) {
                             if storage_change.key == utils::find_key(&event.indexer, 20, 2) {
                                 delegation_pools.push(DelegationPool {
@@ -160,11 +136,7 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
                 if let Some(event) =
                     abi::rewards_manager::events::RewardsAssigned::match_and_decode(&log)
                 {
-                    for keccak_preimage in &call.keccak_preimages {
-                        log::info!("keccakdelegated{:?}", &keccak_preimage);
-                    }
-                    log::info!("transaction: {} ", Hex(&trx.hash));
-                    for storage_change in &call.storage_changes {
+                    for storage_change in &call_view.call.storage_changes {
                         if storage_change.address.eq(&STAKING_CONTRACT) {
                             if storage_change.key == utils::find_key(&event.indexer, 20, 2) {
                                 delegation_pools.push(DelegationPool {
@@ -185,11 +157,7 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
                     }
                 }
                 if let Some(event) = abi::curation::events::Signalled::match_and_decode(&log) {
-                    for keccak_preimage in &call.keccak_preimages {
-                        log::info!("keccakdelegated{:?}", &keccak_preimage);
-                    }
-                    log::info!("transaction: {} ", Hex(&trx.hash));
-                    for storage_change in &call.storage_changes {
+                    for storage_change in &call_view.call.storage_changes {
                         if storage_change.address.eq(&CURATION_CONTRACT) {
                             if storage_change.key
                                 == utils::find_key(&event.subgraph_deployment_id, 15, 0)
@@ -213,11 +181,7 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
                     }
                 }
                 if let Some(event) = abi::curation::events::Burned::match_and_decode(&log) {
-                    for keccak_preimage in &call.keccak_preimages {
-                        log::info!("keccakdelegated{:?}", &keccak_preimage);
-                    }
-                    log::info!("transaction: {} ", Hex(&trx.hash));
-                    for storage_change in &call.storage_changes {
+                    for storage_change in &call_view.call.storage_changes {
                         if storage_change.address.eq(&CURATION_CONTRACT) {
                             if storage_change.key
                                 == utils::find_key(&event.subgraph_deployment_id, 15, 0)
@@ -242,7 +206,7 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
                 }
             }
         }
-    }
+    
 
     //indexer_stakes.sort_by(|x, y| x.ordinal.cmp(&y.ordinal));
     storage_changes.indexer_stakes = Some(IndexerStakes {

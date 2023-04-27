@@ -285,12 +285,26 @@
                         ),
                         ethabi::Token::Uint(
                             ethabi::Uint::from_big_endian(
-                                self.signal_in.clone().to_signed_bytes_be().as_slice(),
+                                match self.signal_in.clone().to_bytes_be() {
+                                    (num_bigint::Sign::Plus, bytes) => bytes,
+                                    (num_bigint::Sign::NoSign, bytes) => bytes,
+                                    (num_bigint::Sign::Minus, _) => {
+                                        panic!("negative numbers are not supported")
+                                    }
+                                }
+                                    .as_slice(),
                             ),
                         ),
                         ethabi::Token::Uint(
                             ethabi::Uint::from_big_endian(
-                                self.tokens_out_min.clone().to_signed_bytes_be().as_slice(),
+                                match self.tokens_out_min.clone().to_bytes_be() {
+                                    (num_bigint::Sign::Plus, bytes) => bytes,
+                                    (num_bigint::Sign::NoSign, bytes) => bytes,
+                                    (num_bigint::Sign::Minus, _) => {
+                                        panic!("negative numbers are not supported")
+                                    }
+                                }
+                                    .as_slice(),
                             ),
                         ),
                     ],
@@ -429,7 +443,14 @@
                         ),
                         ethabi::Token::Uint(
                             ethabi::Uint::from_big_endian(
-                                self.tokens.clone().to_signed_bytes_be().as_slice(),
+                                match self.tokens.clone().to_bytes_be() {
+                                    (num_bigint::Sign::Plus, bytes) => bytes,
+                                    (num_bigint::Sign::NoSign, bytes) => bytes,
+                                    (num_bigint::Sign::Minus, _) => {
+                                        panic!("negative numbers are not supported")
+                                    }
+                                }
+                                    .as_slice(),
                             ),
                         ),
                     ],
@@ -1293,28 +1314,37 @@
                         ),
                         ethabi::Token::Uint(
                             ethabi::Uint::from_big_endian(
-                                self
-                                    .default_reserve_ratio
-                                    .clone()
-                                    .to_signed_bytes_be()
+                                match self.default_reserve_ratio.clone().to_bytes_be() {
+                                    (num_bigint::Sign::Plus, bytes) => bytes,
+                                    (num_bigint::Sign::NoSign, bytes) => bytes,
+                                    (num_bigint::Sign::Minus, _) => {
+                                        panic!("negative numbers are not supported")
+                                    }
+                                }
                                     .as_slice(),
                             ),
                         ),
                         ethabi::Token::Uint(
                             ethabi::Uint::from_big_endian(
-                                self
-                                    .curation_tax_percentage
-                                    .clone()
-                                    .to_signed_bytes_be()
+                                match self.curation_tax_percentage.clone().to_bytes_be() {
+                                    (num_bigint::Sign::Plus, bytes) => bytes,
+                                    (num_bigint::Sign::NoSign, bytes) => bytes,
+                                    (num_bigint::Sign::Minus, _) => {
+                                        panic!("negative numbers are not supported")
+                                    }
+                                }
                                     .as_slice(),
                             ),
                         ),
                         ethabi::Token::Uint(
                             ethabi::Uint::from_big_endian(
-                                self
-                                    .minimum_curation_deposit
-                                    .clone()
-                                    .to_signed_bytes_be()
+                                match self.minimum_curation_deposit.clone().to_bytes_be() {
+                                    (num_bigint::Sign::Plus, bytes) => bytes,
+                                    (num_bigint::Sign::NoSign, bytes) => bytes,
+                                    (num_bigint::Sign::Minus, _) => {
+                                        panic!("negative numbers are not supported")
+                                    }
+                                }
                                     .as_slice(),
                             ),
                         ),
@@ -1619,12 +1649,26 @@
                         ),
                         ethabi::Token::Uint(
                             ethabi::Uint::from_big_endian(
-                                self.tokens_in.clone().to_signed_bytes_be().as_slice(),
+                                match self.tokens_in.clone().to_bytes_be() {
+                                    (num_bigint::Sign::Plus, bytes) => bytes,
+                                    (num_bigint::Sign::NoSign, bytes) => bytes,
+                                    (num_bigint::Sign::Minus, _) => {
+                                        panic!("negative numbers are not supported")
+                                    }
+                                }
+                                    .as_slice(),
                             ),
                         ),
                         ethabi::Token::Uint(
                             ethabi::Uint::from_big_endian(
-                                self.signal_out_min.clone().to_signed_bytes_be().as_slice(),
+                                match self.signal_out_min.clone().to_bytes_be() {
+                                    (num_bigint::Sign::Plus, bytes) => bytes,
+                                    (num_bigint::Sign::NoSign, bytes) => bytes,
+                                    (num_bigint::Sign::Minus, _) => {
+                                        panic!("negative numbers are not supported")
+                                    }
+                                }
+                                    .as_slice(),
                             ),
                         ),
                     ],
@@ -2001,7 +2045,14 @@
                     &[
                         ethabi::Token::Uint(
                             ethabi::Uint::from_big_endian(
-                                self.percentage.clone().to_signed_bytes_be().as_slice(),
+                                match self.percentage.clone().to_bytes_be() {
+                                    (num_bigint::Sign::Plus, bytes) => bytes,
+                                    (num_bigint::Sign::NoSign, bytes) => bytes,
+                                    (num_bigint::Sign::Minus, _) => {
+                                        panic!("negative numbers are not supported")
+                                    }
+                                }
+                                    .as_slice(),
                             ),
                         ),
                     ],
@@ -2132,10 +2183,13 @@
                     &[
                         ethabi::Token::Uint(
                             ethabi::Uint::from_big_endian(
-                                self
-                                    .default_reserve_ratio
-                                    .clone()
-                                    .to_signed_bytes_be()
+                                match self.default_reserve_ratio.clone().to_bytes_be() {
+                                    (num_bigint::Sign::Plus, bytes) => bytes,
+                                    (num_bigint::Sign::NoSign, bytes) => bytes,
+                                    (num_bigint::Sign::Minus, _) => {
+                                        panic!("negative numbers are not supported")
+                                    }
+                                }
                                     .as_slice(),
                             ),
                         ),
@@ -2204,10 +2258,13 @@
                     &[
                         ethabi::Token::Uint(
                             ethabi::Uint::from_big_endian(
-                                self
-                                    .minimum_curation_deposit
-                                    .clone()
-                                    .to_signed_bytes_be()
+                                match self.minimum_curation_deposit.clone().to_bytes_be() {
+                                    (num_bigint::Sign::Plus, bytes) => bytes,
+                                    (num_bigint::Sign::NoSign, bytes) => bytes,
+                                    (num_bigint::Sign::Minus, _) => {
+                                        panic!("negative numbers are not supported")
+                                    }
+                                }
                                     .as_slice(),
                             ),
                         ),
@@ -2293,7 +2350,14 @@
                         ),
                         ethabi::Token::Uint(
                             ethabi::Uint::from_big_endian(
-                                self.signal_in.clone().to_signed_bytes_be().as_slice(),
+                                match self.signal_in.clone().to_bytes_be() {
+                                    (num_bigint::Sign::Plus, bytes) => bytes,
+                                    (num_bigint::Sign::NoSign, bytes) => bytes,
+                                    (num_bigint::Sign::Minus, _) => {
+                                        panic!("negative numbers are not supported")
+                                    }
+                                }
+                                    .as_slice(),
                             ),
                         ),
                     ],
@@ -2469,7 +2533,14 @@
                         ),
                         ethabi::Token::Uint(
                             ethabi::Uint::from_big_endian(
-                                self.tokens_in.clone().to_signed_bytes_be().as_slice(),
+                                match self.tokens_in.clone().to_bytes_be() {
+                                    (num_bigint::Sign::Plus, bytes) => bytes,
+                                    (num_bigint::Sign::NoSign, bytes) => bytes,
+                                    (num_bigint::Sign::Minus, _) => {
+                                        panic!("negative numbers are not supported")
+                                    }
+                                }
+                                    .as_slice(),
                             ),
                         ),
                     ],
