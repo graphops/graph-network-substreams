@@ -23,6 +23,7 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
     let mut indexer_stakes = vec![];
     let mut delegation_pools = vec![];
     let mut curation_pools = vec![];
+    let mut subgraph_deployments = vec![];
 
     for trx in blk.transactions() {
         for (log, call_view) in trx.logs_with_calls() {
@@ -187,6 +188,54 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
                                 == utils::find_key(&event.subgraph_deployment_id, 15, 0)
                             {
                                 curation_pools.push(CurationPool {
+                                    id: Hex(&trx.hash).to_string(),
+                                    subgraph_deployment_id: Hex(&event.subgraph_deployment_id)
+                                        .to_string(),
+                                    new_signal: BigInt::from_unsigned_bytes_be(
+                                        &storage_change.new_value,
+                                    )
+                                    .into(),
+                                    old_signal: BigInt::from_unsigned_bytes_be(
+                                        &storage_change.old_value,
+                                    )
+                                    .into(),
+                                    ordinal: log.ordinal,
+                                })
+                            }
+                        }
+                    }
+                }
+                if let Some(event) = abi::gns::events::SubgraphPublished::match_and_decode(&log) {
+                    for storage_change in &call_view.call.storage_changes {
+                        if storage_change.address.eq(&STAKING_CONTRACT) {
+                            if storage_change.key
+                                == utils::find_key(&event.subgraph_deployment_id, 16, 0)
+                            {
+                                subgraph_deployments.push(CurationPool {
+                                    id: Hex(&trx.hash).to_string(),
+                                    subgraph_deployment_id: Hex(&event.subgraph_deployment_id)
+                                        .to_string(),
+                                    new_signal: BigInt::from_unsigned_bytes_be(
+                                        &storage_change.new_value,
+                                    )
+                                    .into(),
+                                    old_signal: BigInt::from_unsigned_bytes_be(
+                                        &storage_change.old_value,
+                                    )
+                                    .into(),
+                                    ordinal: log.ordinal,
+                                })
+                            }
+                        }
+                    }
+                }
+                if let Some(event) = abi::staking::events::AllocationCreated::match_and_decode(&log) {
+                    for storage_change in &call_view.call.storage_changes {
+                        if storage_change.address.eq(&STAKING_CONTRACT) {
+                            if storage_change.key
+                                == utils::find_key(&event.subgraph_deployment_id, 16, 0)
+                            {
+                                subgraph_deployments.push(CurationPool {
                                     id: Hex(&trx.hash).to_string(),
                                     subgraph_deployment_id: Hex(&event.subgraph_deployment_id)
                                         .to_string(),
