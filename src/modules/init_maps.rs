@@ -23,7 +23,7 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
     let mut indexer_stakes = vec![];
     let mut delegation_pools = vec![];
     let mut curation_pools = vec![];
-    let mut subgraph_deployments = vec![];
+    let mut subgraph_allocations = vec![];
 
     for trx in blk.transactions() {
         for (log, call_view) in trx.logs_with_calls() {
@@ -211,15 +211,15 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
                             if storage_change.key
                                 == utils::find_key(&event.subgraph_deployment_id, 16, 0)
                             {
-                                subgraph_deployments.push(CurationPool {
+                                subgraph_allocations.push(SubgraphAllocation {
                                     id: Hex(&trx.hash).to_string(),
                                     subgraph_deployment_id: Hex(&event.subgraph_deployment_id)
                                         .to_string(),
-                                    new_signal: BigInt::from_unsigned_bytes_be(
+                                    new_tokens: BigInt::from_unsigned_bytes_be(
                                         &storage_change.new_value,
                                     )
                                     .into(),
-                                    old_signal: BigInt::from_unsigned_bytes_be(
+                                    old_tokens: BigInt::from_unsigned_bytes_be(
                                         &storage_change.old_value,
                                     )
                                     .into(),
@@ -235,15 +235,15 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
                             if storage_change.key
                                 == utils::find_key(&event.subgraph_deployment_id, 16, 0)
                             {
-                                subgraph_deployments.push(CurationPool {
+                                subgraph_allocations.push(SubgraphAllocation {
                                     id: Hex(&trx.hash).to_string(),
                                     subgraph_deployment_id: Hex(&event.subgraph_deployment_id)
                                         .to_string(),
-                                    new_signal: BigInt::from_unsigned_bytes_be(
+                                    new_tokens: BigInt::from_unsigned_bytes_be(
                                         &storage_change.new_value,
                                     )
                                     .into(),
-                                    old_signal: BigInt::from_unsigned_bytes_be(
+                                    old_tokens: BigInt::from_unsigned_bytes_be(
                                         &storage_change.old_value,
                                     )
                                     .into(),
@@ -266,6 +266,9 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
     });
     storage_changes.curation_pools = Some(CurationPools {
         curation_pools: curation_pools,
+    });
+    storage_changes.subgraph_allocations = Some(SubgraphAllocations {
+        subgraph_allocations: subgraph_allocations,
     });
 
     Ok(storage_changes)
