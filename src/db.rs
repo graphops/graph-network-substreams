@@ -285,7 +285,7 @@ pub fn subgraph_deployment_change(
                 Operation::Update, // Update will create the entity if it does not exist
             )
             .change(
-                "signalAmount",
+                "signalledTokens",
                 BigInt::from_str(&curation_pool.new_signal).unwrap(),
             );
     }

@@ -104,5 +104,5 @@ type SubgrapDeployment @entity {
   "CURRENT total stake of all indexers on this Subgraph Deployment"
   stakedTokens: BigInt!
   "CURRENT curation signal for this subgraph deployment"
-  signalAmount: BigInt!
+  signalledTokens: BigInt!
 }
