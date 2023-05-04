@@ -1,99 +1,108 @@
 type GraphNetwork @entity {
-    "ID is set to 1"
-    id: ID!
+  "ID is set to 1"
+  id: ID!
 
-    # Staking global aggregate values
-    "The total amount of GRT staked in the staking contract"
-    totalTokensStaked: BigInt
-    "Total delegated tokens in the protocol. totalDelegatedTokens in the original subgraph"
-    totalTokensDelegated: BigInt
-    # Curation global aggregate values
-    "The total amount of GRT signalled in the Curation contract"
-    totalTokensSignalled: BigInt
-    "NOT IMPLEMENTED - Total GRT currently curating via the Auto-Migrate function"
-    totalTokensSignalledAutoMigrate: BigDecimal
-    "NOT IMPLEMENTED - Total GRT currently curating to a specific version"
-    totalTokensSignalledDirectly: BigDecimal
+  # Staking global aggregate values
+  "The total amount of GRT staked in the staking contract"
+  totalTokensStaked: BigInt
+  "Total delegated tokens in the protocol. totalDelegatedTokens in the original subgraph"
+  totalTokensDelegated: BigInt
+  # Curation global aggregate values
+  "The total amount of GRT signalled in the Curation contract"
+  totalTokensSignalled: BigInt
+  "NOT IMPLEMENTED - Total GRT currently curating via the Auto-Migrate function"
+  totalTokensSignalledAutoMigrate: BigDecimal
+  "NOT IMPLEMENTED - Total GRT currently curating to a specific version"
+  totalTokensSignalledDirectly: BigDecimal
 
-    # Graph Token global variables
-    "Graph Token supply"
-    totalSupply: BigInt
+  # Graph Token global variables
+  "Graph Token supply"
+  totalSupply: BigInt
 
-    # Graph Token mint burn totals
-    "Total amount of GRT minted"
-    totalGRTMinted: BigInt
-    "Total amount of GRT burned"
-    totalGRTBurned: BigInt
+  # Graph Token mint burn totals
+  "Total amount of GRT minted"
+  totalGRTMinted: BigInt
+  "Total amount of GRT burned"
+  totalGRTBurned: BigInt
 }
 
 type GraphAccount @entity {
-    "Graph account ID"
-    id: ID!
+  "Graph account ID"
+  id: ID!
 
-    # GRT info
-    "Graph token balance"
-    balance: BigInt
+  # GRT info
+  "Graph token balance"
+  balance: BigInt
 
-    # Staking and Curating and Delegating
-    "Indexer fields for this GraphAccount. Null if never indexed"
-    indexer: Indexer
-    "Delegator fields for this GraphAccount. Null if never delegated"
-    delegator: Delegator
-    "Curator fields for this GraphAccount. Null if never delegated"
-    curator: Curator
+  # Staking and Curating and Delegating
+  "Indexer fields for this GraphAccount. Null if never indexed"
+  indexer: Indexer
+  "Delegator fields for this GraphAccount. Null if never delegated"
+  delegator: Delegator
+  "Curator fields for this GraphAccount. Null if never delegated"
+  curator: Curator
 }
 
 type Indexer @entity {
-    "Eth address of Indexer"
-    id: ID!
-    "Graph account of this indexer"
-    account: GraphAccount
+  "Eth address of Indexer"
+  id: ID!
+  "Graph account of this indexer"
+  account: GraphAccount
 
-    # Staking data
-    "CURRENT tokens staked in the protocol. Decreases on withdraw rather than on lock"
-    stakedTokens: BigInt
+  # Staking data
+  "CURRENT tokens staked in the protocol. Decreases on withdraw rather than on lock"
+  stakedTokens: BigInt
 
-    # Delegation Pool
-    "Delegators to this Indexer"
-    delegators: [DelegatedStake!]! @derivedFrom(field: "indexer")
-    "CURRENT tokens delegated to the indexer"
-    delegatedTokens: BigInt
+  # Delegation Pool
+  "Delegators to this Indexer"
+  delegators: [DelegatedStake!]! @derivedFrom(field: "indexer")
+  "CURRENT tokens delegated to the indexer"
+  delegatedTokens: BigInt
 }
 
 type Delegator @entity {
-    "Delegator address"
-    id: ID!
-    "Graph account of the delegator"
-    account: GraphAccount
-    "Stakes of this delegator"
-    stakes: [DelegatedStake!]! @derivedFrom(field: "delegator")
-    "CUMULATIVE staked tokens in DelegatorStakes of this Delegator"
-    totalStakedTokens: BigInt
+  "Delegator address"
+  id: ID!
+  "Graph account of the delegator"
+  account: GraphAccount
+  "Stakes of this delegator"
+  stakes: [DelegatedStake!]! @derivedFrom(field: "delegator")
+  "CUMULATIVE staked tokens in DelegatorStakes of this Delegator"
+  totalStakedTokens: BigInt
 }
 
 type DelegatedStake @entity {
-    "Concatenation of Delegator address and Indexer address"
-    id: ID!
-    "Index the stake is delegated to"
-    indexer: Indexer
-    "Delegator"
-    delegator: Delegator
-    "CUMULATIVE tokens delegated"
-    stakedTokens: BigInt
+  "Concatenation of Delegator address and Indexer address"
+  id: ID!
+  "Index the stake is delegated to"
+  indexer: Indexer
+  "Delegator"
+  delegator: Delegator
+  "CUMULATIVE tokens delegated"
+  stakedTokens: BigInt
 }
 
 type Curator @entity {
-    "Curator address"
-    id: ID!
-    "Graph account of the curator"
-    account: GraphAccount
-    "CUMULATIVE tokens signalled on all the subgraphs"
-    totalSignalledTokens: BigInt
-    "CUMULATIVE tokens unsignalled on all the subgraphs"
-    totalUnsignalledTokens: BigInt
+  "Curator address"
+  id: ID!
+  "Graph account of the curator"
+  account: GraphAccount
+  "CUMULATIVE tokens signalled on all the subgraphs"
+  totalSignalledTokens: BigInt
+  "CUMULATIVE tokens unsignalled on all the subgraphs"
+  totalUnsignalledTokens: BigInt
 
-    "CUMULATIVE tokens signalled on all names"
-    totalNameSignalledTokens: BigInt
-    "CUMULATIVE tokens unsignalled on all names"
-    totalNameUnsignalledTokens: BigInt
+  "CUMULATIVE tokens signalled on all names"
+  totalNameSignalledTokens: BigInt
+  "CUMULATIVE tokens unsignalled on all names"
+  totalNameUnsignalledTokens: BigInt
+}
+
+type SubgrapDeployment @entity {
+  "Subgraph Deployment ID. The IPFS hash with Qm removed to fit into 32 bytes"
+  id: ID!
+  "CURRENT total stake of all indexers on this Subgraph Deployment"
+  stakedTokens: BigInt!
+  "CURRENT curation signal for this subgraph deployment"
+  signalAmount: BigInt!
 }

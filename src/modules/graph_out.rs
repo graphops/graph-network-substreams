@@ -63,6 +63,15 @@ pub fn graph_out(
         &mut curator_entity_changes,
     );
 
+    let mut subgraph_deployment_entity_changes: EntityChanges = Default::default();
+    let subgraph_allocations = storage_changes.subgraph_allocations.unwrap();
+    let curation_pools = storage_changes.curation_pools.unwrap();
+    db::subgraph_deployment_change(
+        subgraph_allocations,
+        curation_pools,
+        &mut subgraph_deployment_entity_changes,
+    );
+
     Ok(EntityChanges {
         entity_changes: [
             graph_network_entity_changes.entity_changes,
@@ -70,6 +79,7 @@ pub fn graph_out(
             indexer_entity_changes.entity_changes,
             delegated_stake_entity_changes.entity_changes,
             curator_entity_changes.entity_changes,
+            subgraph_deployment_entity_changes.entity_changes,
         ]
         .concat(),
     })
