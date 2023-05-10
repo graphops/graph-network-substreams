@@ -58,10 +58,15 @@ message CurationPools {
   repeated CurationPool curation_pools = 1;
 }
 
+message SubgraphAllocations {
+  repeated SubgraphAllocation subgraph_allocations = 1;
+}
+
 message StorageChanges {
   IndexerStakes indexer_stakes = 1;
   DelegationPools delegation_pools = 2;
   CurationPools curation_pools = 3;
+  SubgraphAllocations subgraph_allocations = 4; 
 }
 
 message Events {
@@ -187,5 +192,13 @@ message CurationPool {
   string subgraph_deployment_id = 2;
   string new_signal = 3;
   string old_signal = 4;
+  uint64 ordinal = 5;
+}
+
+message SubgraphAllocation {
+  string id = 1;
+  string subgraph_deployment_id = 2;
+  string new_tokens= 3;
+  string old_tokens = 4;
   uint64 ordinal = 5;
 }

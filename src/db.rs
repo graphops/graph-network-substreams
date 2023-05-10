@@ -1,5 +1,5 @@
+use crate::pb::erc20::{CurationPools, DelegationPools, IndexerStakes, SubgraphAllocations};
 use crate::utils;
-use crate::pb::erc20::{DelegationPools, IndexerStakes};
 use std::str::FromStr;
 use substreams::scalar::BigInt;
 use substreams::store::{DeltaBigInt, DeltaString, Deltas};
@@ -258,4 +258,35 @@ pub fn graph_account_change(
     }
 }
 
-
+pub fn subgraph_deployment_change(
+    subgraph_allocations: SubgraphAllocations,
+    curation_pools: CurationPools,
+    entity_changes: &mut EntityChanges,
+) {
+    for subgraph_allocation in subgraph_allocations.subgraph_allocations {
+        entity_changes
+            .push_change(
+                "SubgraphDeployment",
+                &subgraph_allocation.subgraph_deployment_id,
+                subgraph_allocation.ordinal,
+                Operation::Update,
+            )
+            .change(
+                "stakedTokens",
+                BigInt::from_str(&subgraph_allocation.new_tokens).unwrap(),
+            );
+    }
+    for curation_pool in curation_pools.curation_pools {
+        entity_changes
+            .push_change(
+                "SubgraphDeployment",
+                &curation_pool.subgraph_deployment_id,
+                curation_pool.ordinal,
+                Operation::Update, // Update will create the entity if it does not exist
+            )
+            .change(
+                "signalledTokens",
+                BigInt::from_str(&curation_pool.new_signal).unwrap(),
+            );
+    }
+}

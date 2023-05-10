@@ -23,190 +23,237 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
     let mut indexer_stakes = vec![];
     let mut delegation_pools = vec![];
     let mut curation_pools = vec![];
+    let mut subgraph_allocations = vec![];
 
     for trx in blk.transactions() {
         for (log, call_view) in trx.logs_with_calls() {
-                if let Some(event) = abi::staking::events::StakeDeposited::match_and_decode(&log) {
-                    for storage_change in &call_view.call.storage_changes {
-                        if storage_change.address.eq(&STAKING_CONTRACT) {
-                            if storage_change.key == utils::find_key(&event.indexer, 14, 0) {
-                                indexer_stakes.push(IndexerStake {
-                                    id: Hex(&trx.hash).to_string(),
-                                    indexer: event.indexer.clone(),
-                                    new_stake: BigInt::from_unsigned_bytes_be(
-                                        &storage_change.new_value,
-                                    )
-                                    .into(),
-                                    old_stake: BigInt::from_unsigned_bytes_be(
-                                        &storage_change.old_value,
-                                    )
-                                    .into(),
-                                    ordinal: log.ordinal,
-                                })
-                            }
+            if let Some(event) = abi::staking::events::StakeDeposited::match_and_decode(&log) {
+                for storage_change in &call_view.call.storage_changes {
+                    if storage_change.address.eq(&STAKING_CONTRACT) {
+                        if storage_change.key == utils::find_key(&event.indexer, 14, 0) {
+                            indexer_stakes.push(IndexerStake {
+                                id: Hex(&trx.hash).to_string(),
+                                indexer: event.indexer.clone(),
+                                new_stake: BigInt::from_unsigned_bytes_be(
+                                    &storage_change.new_value,
+                                )
+                                .into(),
+                                old_stake: BigInt::from_unsigned_bytes_be(
+                                    &storage_change.old_value,
+                                )
+                                .into(),
+                                ordinal: log.ordinal,
+                            })
                         }
                     }
                 }
-                if let Some(event) = abi::staking::events::StakeWithdrawn::match_and_decode(&log) {
-                    for storage_change in &call_view.call.storage_changes {
-                        if storage_change.address.eq(&STAKING_CONTRACT) {
-                            if storage_change.key == utils::find_key(&event.indexer, 14, 0) {
-                                indexer_stakes.push(IndexerStake {
-                                    id: Hex(&trx.hash).to_string(),
-                                    indexer: event.indexer.clone(),
-                                    new_stake: BigInt::from_unsigned_bytes_be(
-                                        &storage_change.new_value,
-                                    )
-                                    .into(),
-                                    old_stake: BigInt::from_unsigned_bytes_be(
-                                        &storage_change.old_value,
-                                    )
-                                    .into(),
-                                    ordinal: log.ordinal,
-                                })
-                            }
+            }
+            if let Some(event) = abi::staking::events::StakeWithdrawn::match_and_decode(&log) {
+                for storage_change in &call_view.call.storage_changes {
+                    if storage_change.address.eq(&STAKING_CONTRACT) {
+                        if storage_change.key == utils::find_key(&event.indexer, 14, 0) {
+                            indexer_stakes.push(IndexerStake {
+                                id: Hex(&trx.hash).to_string(),
+                                indexer: event.indexer.clone(),
+                                new_stake: BigInt::from_unsigned_bytes_be(
+                                    &storage_change.new_value,
+                                )
+                                .into(),
+                                old_stake: BigInt::from_unsigned_bytes_be(
+                                    &storage_change.old_value,
+                                )
+                                .into(),
+                                ordinal: log.ordinal,
+                            })
                         }
                     }
                 }
-                if let Some(event) = abi::staking::events::StakeDelegated::match_and_decode(&log) {
-                    for storage_change in &call_view.call.storage_changes {
-                        if storage_change.address.eq(&STAKING_CONTRACT) {
-                            if storage_change.key == utils::find_key(&event.indexer, 20, 2) {
-                                delegation_pools.push(DelegationPool {
-                                    id: Hex(&trx.hash).to_string(),
-                                    indexer: event.indexer.clone(),
-                                    new_stake: BigInt::from_unsigned_bytes_be(
-                                        &storage_change.new_value,
-                                    )
-                                    .into(),
-                                    old_stake: BigInt::from_unsigned_bytes_be(
-                                        &storage_change.old_value,
-                                    )
-                                    .into(),
-                                    ordinal: log.ordinal,
-                                })
-                            }
+            }
+            if let Some(event) = abi::staking::events::StakeDelegated::match_and_decode(&log) {
+                for storage_change in &call_view.call.storage_changes {
+                    if storage_change.address.eq(&STAKING_CONTRACT) {
+                        if storage_change.key == utils::find_key(&event.indexer, 20, 2) {
+                            delegation_pools.push(DelegationPool {
+                                id: Hex(&trx.hash).to_string(),
+                                indexer: event.indexer.clone(),
+                                new_stake: BigInt::from_unsigned_bytes_be(
+                                    &storage_change.new_value,
+                                )
+                                .into(),
+                                old_stake: BigInt::from_unsigned_bytes_be(
+                                    &storage_change.old_value,
+                                )
+                                .into(),
+                                ordinal: log.ordinal,
+                            })
                         }
                     }
                 }
-                if let Some(event) =
-                    abi::staking::events::StakeDelegatedLocked::match_and_decode(&log)
-                {
-                    for storage_change in &call_view.call.storage_changes {
-                        if storage_change.address.eq(&STAKING_CONTRACT) {
-                            if storage_change.key == utils::find_key(&event.indexer, 20, 2) {
-                                delegation_pools.push(DelegationPool {
-                                    id: Hex(&trx.hash).to_string(),
-                                    indexer: event.indexer.clone(),
-                                    new_stake: BigInt::from_unsigned_bytes_be(
-                                        &storage_change.new_value,
-                                    )
-                                    .into(),
-                                    old_stake: BigInt::from_unsigned_bytes_be(
-                                        &storage_change.old_value,
-                                    )
-                                    .into(),
-                                    ordinal: log.ordinal,
-                                })
-                            }
+            }
+            if let Some(event) = abi::staking::events::StakeDelegatedLocked::match_and_decode(&log)
+            {
+                for storage_change in &call_view.call.storage_changes {
+                    if storage_change.address.eq(&STAKING_CONTRACT) {
+                        if storage_change.key == utils::find_key(&event.indexer, 20, 2) {
+                            delegation_pools.push(DelegationPool {
+                                id: Hex(&trx.hash).to_string(),
+                                indexer: event.indexer.clone(),
+                                new_stake: BigInt::from_unsigned_bytes_be(
+                                    &storage_change.new_value,
+                                )
+                                .into(),
+                                old_stake: BigInt::from_unsigned_bytes_be(
+                                    &storage_change.old_value,
+                                )
+                                .into(),
+                                ordinal: log.ordinal,
+                            })
                         }
                     }
                 }
-                if let Some(event) = abi::staking::events::RebateClaimed::match_and_decode(&log) {
-                    for storage_change in &call_view.call.storage_changes {
-                        if storage_change.address.eq(&STAKING_CONTRACT) {
-                            if storage_change.key == utils::find_key(&event.indexer, 20, 2) {
-                                delegation_pools.push(DelegationPool {
-                                    id: Hex(&trx.hash).to_string(),
-                                    indexer: event.indexer.clone(),
-                                    new_stake: BigInt::from_unsigned_bytes_be(
-                                        &storage_change.new_value,
-                                    )
-                                    .into(),
-                                    old_stake: BigInt::from_unsigned_bytes_be(
-                                        &storage_change.old_value,
-                                    )
-                                    .into(),
-                                    ordinal: log.ordinal,
-                                })
-                            }
+            }
+            if let Some(event) = abi::staking::events::RebateClaimed::match_and_decode(&log) {
+                for storage_change in &call_view.call.storage_changes {
+                    if storage_change.address.eq(&STAKING_CONTRACT) {
+                        if storage_change.key == utils::find_key(&event.indexer, 20, 2) {
+                            delegation_pools.push(DelegationPool {
+                                id: Hex(&trx.hash).to_string(),
+                                indexer: event.indexer.clone(),
+                                new_stake: BigInt::from_unsigned_bytes_be(
+                                    &storage_change.new_value,
+                                )
+                                .into(),
+                                old_stake: BigInt::from_unsigned_bytes_be(
+                                    &storage_change.old_value,
+                                )
+                                .into(),
+                                ordinal: log.ordinal,
+                            })
                         }
                     }
                 }
-                if let Some(event) =
-                    abi::rewards_manager::events::RewardsAssigned::match_and_decode(&log)
-                {
-                    for storage_change in &call_view.call.storage_changes {
-                        if storage_change.address.eq(&STAKING_CONTRACT) {
-                            if storage_change.key == utils::find_key(&event.indexer, 20, 2) {
-                                delegation_pools.push(DelegationPool {
-                                    id: Hex(&trx.hash).to_string(),
-                                    indexer: event.indexer.clone(),
-                                    new_stake: BigInt::from_unsigned_bytes_be(
-                                        &storage_change.new_value,
-                                    )
-                                    .into(),
-                                    old_stake: BigInt::from_unsigned_bytes_be(
-                                        &storage_change.old_value,
-                                    )
-                                    .into(),
-                                    ordinal: log.ordinal,
-                                })
-                            }
+            }
+            if let Some(event) =
+                abi::rewards_manager::events::RewardsAssigned::match_and_decode(&log)
+            {
+                for storage_change in &call_view.call.storage_changes {
+                    if storage_change.address.eq(&STAKING_CONTRACT) {
+                        if storage_change.key == utils::find_key(&event.indexer, 20, 2) {
+                            delegation_pools.push(DelegationPool {
+                                id: Hex(&trx.hash).to_string(),
+                                indexer: event.indexer.clone(),
+                                new_stake: BigInt::from_unsigned_bytes_be(
+                                    &storage_change.new_value,
+                                )
+                                .into(),
+                                old_stake: BigInt::from_unsigned_bytes_be(
+                                    &storage_change.old_value,
+                                )
+                                .into(),
+                                ordinal: log.ordinal,
+                            })
                         }
                     }
                 }
-                if let Some(event) = abi::curation::events::Signalled::match_and_decode(&log) {
-                    for storage_change in &call_view.call.storage_changes {
-                        if storage_change.address.eq(&CURATION_CONTRACT) {
-                            if storage_change.key
-                                == utils::find_key(&event.subgraph_deployment_id, 15, 0)
-                            {
-                                curation_pools.push(CurationPool {
-                                    id: Hex(&trx.hash).to_string(),
-                                    subgraph_deployment_id: Hex(&event.subgraph_deployment_id)
-                                        .to_string(),
-                                    new_signal: BigInt::from_unsigned_bytes_be(
-                                        &storage_change.new_value,
-                                    )
-                                    .into(),
-                                    old_signal: BigInt::from_unsigned_bytes_be(
-                                        &storage_change.old_value,
-                                    )
-                                    .into(),
-                                    ordinal: log.ordinal,
-                                })
-                            }
+            }
+            if let Some(event) = abi::curation::events::Signalled::match_and_decode(&log) {
+                for storage_change in &call_view.call.storage_changes {
+                    if storage_change.address.eq(&CURATION_CONTRACT) {
+                        if storage_change.key
+                            == utils::find_key(&event.subgraph_deployment_id, 15, 0)
+                        {
+                            curation_pools.push(CurationPool {
+                                id: Hex(&trx.hash).to_string(),
+                                subgraph_deployment_id: Hex(&event.subgraph_deployment_id)
+                                    .to_string(),
+                                new_signal: BigInt::from_unsigned_bytes_be(
+                                    &storage_change.new_value,
+                                )
+                                .into(),
+                                old_signal: BigInt::from_unsigned_bytes_be(
+                                    &storage_change.old_value,
+                                )
+                                .into(),
+                                ordinal: log.ordinal,
+                            })
                         }
                     }
                 }
-                if let Some(event) = abi::curation::events::Burned::match_and_decode(&log) {
-                    for storage_change in &call_view.call.storage_changes {
-                        if storage_change.address.eq(&CURATION_CONTRACT) {
-                            if storage_change.key
-                                == utils::find_key(&event.subgraph_deployment_id, 15, 0)
-                            {
-                                curation_pools.push(CurationPool {
-                                    id: Hex(&trx.hash).to_string(),
-                                    subgraph_deployment_id: Hex(&event.subgraph_deployment_id)
-                                        .to_string(),
-                                    new_signal: BigInt::from_unsigned_bytes_be(
-                                        &storage_change.new_value,
-                                    )
-                                    .into(),
-                                    old_signal: BigInt::from_unsigned_bytes_be(
-                                        &storage_change.old_value,
-                                    )
-                                    .into(),
-                                    ordinal: log.ordinal,
-                                })
-                            }
+            }
+            if let Some(event) = abi::curation::events::Burned::match_and_decode(&log) {
+                for storage_change in &call_view.call.storage_changes {
+                    if storage_change.address.eq(&CURATION_CONTRACT) {
+                        if storage_change.key
+                            == utils::find_key(&event.subgraph_deployment_id, 15, 0)
+                        {
+                            curation_pools.push(CurationPool {
+                                id: Hex(&trx.hash).to_string(),
+                                subgraph_deployment_id: Hex(&event.subgraph_deployment_id)
+                                    .to_string(),
+                                new_signal: BigInt::from_unsigned_bytes_be(
+                                    &storage_change.new_value,
+                                )
+                                .into(),
+                                old_signal: BigInt::from_unsigned_bytes_be(
+                                    &storage_change.old_value,
+                                )
+                                .into(),
+                                ordinal: log.ordinal,
+                            })
+                        }
+                    }
+                }
+            }
+            if let Some(event) = abi::gns::events::SubgraphPublished::match_and_decode(&log) {
+                for storage_change in &call_view.call.storage_changes {
+                    if storage_change.address.eq(&STAKING_CONTRACT) {
+                        if storage_change.key
+                            == utils::find_key(&event.subgraph_deployment_id, 16, 0)
+                        {
+                            subgraph_allocations.push(SubgraphAllocation {
+                                id: Hex(&trx.hash).to_string(),
+                                subgraph_deployment_id: Hex(&event.subgraph_deployment_id)
+                                    .to_string(),
+                                new_tokens: BigInt::from_unsigned_bytes_be(
+                                    &storage_change.new_value,
+                                )
+                                .into(),
+                                old_tokens: BigInt::from_unsigned_bytes_be(
+                                    &storage_change.old_value,
+                                )
+                                .into(),
+                                ordinal: log.ordinal,
+                            })
+                        }
+                    }
+                }
+            }
+            if let Some(event) = abi::staking::events::AllocationCreated::match_and_decode(&log) {
+                for storage_change in &call_view.call.storage_changes {
+                    if storage_change.address.eq(&STAKING_CONTRACT) {
+                        if storage_change.key
+                            == utils::find_key(&event.subgraph_deployment_id, 16, 0)
+                        {
+                            subgraph_allocations.push(SubgraphAllocation {
+                                id: Hex(&trx.hash).to_string(),
+                                subgraph_deployment_id: Hex(&event.subgraph_deployment_id)
+                                    .to_string(),
+                                new_tokens: BigInt::from_unsigned_bytes_be(
+                                    &storage_change.new_value,
+                                )
+                                .into(),
+                                old_tokens: BigInt::from_unsigned_bytes_be(
+                                    &storage_change.old_value,
+                                )
+                                .into(),
+                                ordinal: log.ordinal,
+                            })
                         }
                     }
                 }
             }
         }
-    
+    }
 
     //indexer_stakes.sort_by(|x, y| x.ordinal.cmp(&y.ordinal));
     storage_changes.indexer_stakes = Some(IndexerStakes {
@@ -217,6 +264,9 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
     });
     storage_changes.curation_pools = Some(CurationPools {
         curation_pools: curation_pools,
+    });
+    storage_changes.subgraph_allocations = Some(SubgraphAllocations {
+        subgraph_allocations: subgraph_allocations,
     });
 
     Ok(storage_changes)
