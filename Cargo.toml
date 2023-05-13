@@ -1,9 +1,9 @@
 [package]
-name = "substreams-template"
+name = "graph_network_substreams"
 version = "0.1.0"
-description = "Substream template demo project"
+description = "Graph Protocol Substreams backed Subgraph"
 edition = "2021"
-repository = "https://github.com/streamingfast/substreams-template"
+repository = "https://github.com/graphops/graph-network-substreams"
 
 [lib]
 name = "substreams"
@@ -17,7 +17,7 @@ prost-types = "0.11.0"
 hex = "0.4.3"
 substreams = "^0.5.6"
 substreams-ethereum = { git = "https://github.com/streamingfast/substreams-ethereum" }
-substreams-entity-change = "0.3.0"
+substreams-entity-change = "1.1.0"
 num-bigint = "0.4"
 bigdecimal = "0.3"
 tiny-keccak = "2.0.2"

@@ -249,6 +249,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "graph_network_substreams"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "bigdecimal",
+ "ethabi",
+ "hex",
+ "num-bigint",
+ "prost",
+ "prost-types",
+ "substreams",
+ "substreams-entity-change",
+ "substreams-ethereum",
+ "tiny-keccak",
+ "wasm-bindgen",
+]
+
+[[package]]
 name = "hashbrown"
 version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -749,9 +767,9 @@ dependencies = [
 
 [[package]]
 name = "substreams-entity-change"
-version = "0.3.0"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c81fb0794efb438c5743c821ec76528c38878010c30d4a79d70799eac68837f6"
+checksum = "d5fae0dac9eaf0a2d5b626a8afe039f87eb3a353bd91a419aa56f6bcf8a05302"
 dependencies = [
  "base64",
  "prost",
@@ -828,24 +846,6 @@ dependencies = [
  "quote",
  "syn",
  "thiserror",
-]
-
-[[package]]
-name = "substreams-template"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "bigdecimal",
- "ethabi",
- "hex",
- "num-bigint",
- "prost",
- "prost-types",
- "substreams",
- "substreams-entity-change",
- "substreams-ethereum",
- "tiny-keccak",
- "wasm-bindgen",
 ]
 
 [[package]]
