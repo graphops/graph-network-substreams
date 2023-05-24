@@ -35,7 +35,11 @@ export class GraphNetwork extends Entity {
 
   get id(): string {
     let value = this.get("id");
-    return value!.toString();
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error("Cannot return null for a required field.");
+    } else {
+      return value.toString();
+    }
   }
 
   set id(value: string) {
@@ -209,7 +213,11 @@ export class GraphAccount extends Entity {
 
   get id(): string {
     let value = this.get("id");
-    return value!.toString();
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error("Cannot return null for a required field.");
+    } else {
+      return value.toString();
+    }
   }
 
   set id(value: string) {
@@ -309,7 +317,11 @@ export class Indexer extends Entity {
 
   get id(): string {
     let value = this.get("id");
-    return value!.toString();
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error("Cannot return null for a required field.");
+    } else {
+      return value.toString();
+    }
   }
 
   set id(value: string) {
@@ -352,11 +364,11 @@ export class Indexer extends Entity {
 
   get delegators(): Array<string> {
     let value = this.get("delegators");
-    return value!.toStringArray();
-  }
-
-  set delegators(value: Array<string>) {
-    this.set("delegators", Value.fromStringArray(value));
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error("Cannot return null for a required field.");
+    } else {
+      return value.toStringArray();
+    }
   }
 
   get delegatedTokens(): BigInt | null {
@@ -401,7 +413,11 @@ export class Delegator extends Entity {
 
   get id(): string {
     let value = this.get("id");
-    return value!.toString();
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error("Cannot return null for a required field.");
+    } else {
+      return value.toString();
+    }
   }
 
   set id(value: string) {
@@ -427,11 +443,11 @@ export class Delegator extends Entity {
 
   get stakes(): Array<string> {
     let value = this.get("stakes");
-    return value!.toStringArray();
-  }
-
-  set stakes(value: Array<string>) {
-    this.set("stakes", Value.fromStringArray(value));
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error("Cannot return null for a required field.");
+    } else {
+      return value.toStringArray();
+    }
   }
 
   get totalStakedTokens(): BigInt | null {
@@ -476,7 +492,11 @@ export class DelegatedStake extends Entity {
 
   get id(): string {
     let value = this.get("id");
-    return value!.toString();
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error("Cannot return null for a required field.");
+    } else {
+      return value.toString();
+    }
   }
 
   set id(value: string) {
@@ -559,7 +579,11 @@ export class Curator extends Entity {
 
   get id(): string {
     let value = this.get("id");
-    return value!.toString();
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error("Cannot return null for a required field.");
+    } else {
+      return value.toString();
+    }
   }
 
   set id(value: string) {
@@ -649,5 +673,69 @@ export class Curator extends Entity {
     } else {
       this.set("totalNameUnsignalledTokens", Value.fromBigInt(<BigInt>value));
     }
+  }
+}
+
+export class SubgrapDeployment extends Entity {
+  constructor(id: string) {
+    super();
+    this.set("id", Value.fromString(id));
+  }
+
+  save(): void {
+    let id = this.get("id");
+    assert(id != null, "Cannot save SubgrapDeployment entity without an ID");
+    if (id) {
+      assert(
+        id.kind == ValueKind.STRING,
+        `Entities of type SubgrapDeployment must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
+      );
+      store.set("SubgrapDeployment", id.toString(), this);
+    }
+  }
+
+  static load(id: string): SubgrapDeployment | null {
+    return changetype<SubgrapDeployment | null>(
+      store.get("SubgrapDeployment", id)
+    );
+  }
+
+  get id(): string {
+    let value = this.get("id");
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error("Cannot return null for a required field.");
+    } else {
+      return value.toString();
+    }
+  }
+
+  set id(value: string) {
+    this.set("id", Value.fromString(value));
+  }
+
+  get stakedTokens(): BigInt {
+    let value = this.get("stakedTokens");
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error("Cannot return null for a required field.");
+    } else {
+      return value.toBigInt();
+    }
+  }
+
+  set stakedTokens(value: BigInt) {
+    this.set("stakedTokens", Value.fromBigInt(value));
+  }
+
+  get signalledTokens(): BigInt {
+    let value = this.get("signalledTokens");
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error("Cannot return null for a required field.");
+    } else {
+      return value.toBigInt();
+    }
+  }
+
+  set signalledTokens(value: BigInt) {
+    this.set("signalledTokens", Value.fromBigInt(value));
   }
 }
