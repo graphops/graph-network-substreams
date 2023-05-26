@@ -3,10 +3,11 @@ use crate::pb::erc20::*;
 use crate::utils;
 use substreams::errors::Error;
 use substreams::scalar::BigInt;
+use std::ops::Sub;
 use substreams::{hex, log, Hex};
 use substreams_ethereum::pb::eth::v2 as eth;
 use substreams_ethereum::Event;
-
+use std::str::FromStr;
 substreams_ethereum::init!();
 
 // Contract Addresses
@@ -84,6 +85,7 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
                                     &storage_change.old_value,
                                 )
                                 .into(),
+                                rewards: "false".to_string(),
                                 ordinal: log.ordinal,
                             })
                         }
@@ -106,6 +108,7 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
                                     &storage_change.old_value,
                                 )
                                 .into(),
+                                rewards: "false".to_string(),
                                 ordinal: log.ordinal,
                             })
                         }
@@ -127,6 +130,7 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
                                     &storage_change.old_value,
                                 )
                                 .into(),
+                                rewards: "false".to_string(),
                                 ordinal: log.ordinal,
                             })
                         }
@@ -150,6 +154,7 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
                                     &storage_change.old_value,
                                 )
                                 .into(),
+                                rewards: "true".to_string(),
                                 ordinal: log.ordinal,
                             })
                         }
@@ -424,4 +429,43 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
     });
 
     Ok(events)
+}
+
+#[substreams::handlers::map]
+fn map_indexing_rewards(storage_changes: StorageChanges, events: Events) -> Result<IndexingRewards, Error> {
+    let mut indexing_rewards = IndexingRewards::default(); 
+    let mut indexing_rewards_vec = vec![];
+    let delegation_pools = storage_changes.delegation_pools.unwrap();
+    let rewards_assigned_events = events.rewards_assigned_events.unwrap();
+    for rewards_assigned in rewards_assigned_events.rewards_assigned_events {
+        indexing_rewards_vec.push(IndexingReward {
+            id: rewards_assigned.id.clone(), // Each event needs a unique id
+            indexer: rewards_assigned.clone().indexer,
+            amount: rewards_assigned.clone().amount, // Tokens is origanally BigInt but proto does not have BigInt so we use string
+            indexer_rewards: rewards_assigned.amount.to_string(),
+            delegator_rewards: "0".to_string(),
+            ordinal: rewards_assigned.ordinal,
+        });
+        for delegation_pool in &delegation_pools.delegation_pools {
+            if delegation_pool.rewards == "true" {
+            log::info!("sth{:?}{:?}", rewards_assigned.indexer,delegation_pool.indexer );
+            if rewards_assigned.clone().indexer == delegation_pool.indexer && rewards_assigned.ordinal == delegation_pool.ordinal {
+                log::info!("stj", );
+                let delegator_rewards = BigInt::from_str(&delegation_pool.new_stake).unwrap().sub(BigInt::from_str(&delegation_pool.old_stake).unwrap());
+                let indexer_rewards = BigInt::from_str(&rewards_assigned.clone().amount).unwrap().sub(delegator_rewards.clone());
+                indexing_rewards_vec.push(IndexingReward {
+                    id: rewards_assigned.id.clone(), // Each event needs a unique id
+                    indexer: rewards_assigned.clone().indexer,
+                    amount: rewards_assigned.clone().amount, // Tokens is origanally BigInt but proto does not have BigInt so we use string
+                    indexer_rewards: indexer_rewards.to_string(),
+                    delegator_rewards: delegator_rewards.clone().to_string(),
+                    ordinal: rewards_assigned.ordinal,
+                });
+            }
+        } 
+        }
+
+    }
+    indexing_rewards.indexing_rewards = indexing_rewards_vec;
+    Ok(indexing_rewards)
 }

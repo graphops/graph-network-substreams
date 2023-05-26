@@ -3,11 +3,13 @@ use crate::utils;
 use std::ops::Sub;
 use std::str::FromStr;
 use substreams::prelude::*;
+use substreams::{hex, log, Hex};
 use substreams::scalar::BigInt;
 use substreams::{
     store::StoreAddBigInt, store::StoreSetIfNotExists, store::StoreSetIfNotExistsString,
     store::StoreSetProto,
 };
+use substreams::errors::Error;
 
 // DelegatedStake and Delegator entities track the cumulative delegated stake, not the total amount
 #[substreams::handlers::store]
@@ -112,3 +114,5 @@ fn store_total_delegated_stakes(storage_changes: StorageChanges, s: StoreAddBigI
         );
     }
 }
+
+

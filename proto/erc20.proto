@@ -62,6 +62,10 @@ message SubgraphAllocations {
   repeated SubgraphAllocation subgraph_allocations = 1;
 }
 
+message IndexingRewards {
+  repeated IndexingReward indexing_rewards = 1;
+}
+
 message StorageChanges {
   IndexerStakes indexer_stakes = 1;
   DelegationPools delegation_pools = 2;
@@ -184,7 +188,8 @@ message DelegationPool {
   bytes indexer = 2;
   string new_stake = 3;
   string old_stake = 4;
-  uint64 ordinal = 5;
+  string rewards = 5;
+  uint64 ordinal = 6;
 }
 
 message CurationPool {
@@ -201,4 +206,13 @@ message SubgraphAllocation {
   string new_tokens= 3;
   string old_tokens = 4;
   uint64 ordinal = 5;
+}
+
+message IndexingReward {
+  string id = 1;
+  bytes indexer = 2;
+  string amount = 3; 
+  string indexer_rewards = 4;
+  string delegator_rewards = 5; 
+  uint64 ordinal = 6;
 }

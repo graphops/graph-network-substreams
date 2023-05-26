@@ -34,6 +34,15 @@ modules:
     output:
       type: proto:eth.erc20.v1.Events
 
+  - name: map_indexing_rewards
+    kind: map
+    initialBlock: 11446769
+    inputs:
+      - map: map_storage_changes
+      - map: map_events
+    output:
+      type: proto:eth.erc20.v1.IndexingRewards
+
   - name: store_grt_balances
     kind: store
     initialBlock: 11446769
