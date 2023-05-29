@@ -105,4 +105,10 @@ type SubgrapDeployment @entity {
   stakedTokens: BigInt!
   "CURRENT curation signal for this subgraph deployment"
   signalledTokens: BigInt!
+  "Total rewards accrued all time by this Subgraph Deployment. Includes delegator and indexer rewards"
+  indexingRewardAmount: BigInt!
+  "Total rewards accrued all time by indexers"
+  indexingIndexerRewardAmount: BigInt!
+  "Total rewards accrued all time by delegators"
+  indexingDelegatorRewardAmount: BigInt!
 }

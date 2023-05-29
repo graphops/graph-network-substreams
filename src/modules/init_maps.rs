@@ -6,6 +6,7 @@ use substreams::scalar::BigInt;
 use substreams::{hex, log, Hex};
 use substreams_ethereum::pb::eth::v2 as eth;
 use substreams_ethereum::Event;
+use std::ops::Sub;
 
 
 // Contract Addresses
@@ -23,6 +24,7 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
     let mut delegation_pools = vec![];
     let mut curation_pools = vec![];
     let mut subgraph_allocations = vec![];
+    let mut indexing_delegator_rewards = vec![];
 
     for trx in blk.transactions() {
         for (log, call_view) in trx.logs_with_calls() {
@@ -153,8 +155,22 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
                                     &storage_change.old_value,
                                 )
                                 .into(),
-                                ordinal: log.ordinal as u64,
-                            })
+                                ordinal: log.ordinal,
+                            });
+                            indexing_delegator_rewards.push(IndexingDelegatorReward{
+                                id: Hex(&trx.hash).to_string(),
+                                indexer: event.indexer.clone(),
+                                subgraph_deployment_id: Hex(&event.subgraph_deployment_id)
+                                .to_string(),
+                                allocation_id: Hex(&event.allocation_id)
+                                .to_string(),
+                                reward: BigInt::from_unsigned_bytes_be(
+                                    &storage_change.new_value,
+                                ).sub(BigInt::from_unsigned_bytes_be(
+                                    &storage_change.old_value,
+                                )).to_string(), 
+                                ordinal: log.ordinal,
+                            });
                         }
                     }
                 }
@@ -270,6 +286,9 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
     });
     storage_changes.subgraph_allocations = Some(SubgraphAllocations {
         subgraph_allocations: subgraph_allocations,
+    });
+    storage_changes.indexing_delegator_rewards = Some(IndexingDelegatorRewards {
+        indexing_delegator_rewards: indexing_delegator_rewards,
     });
 
     Ok(storage_changes)

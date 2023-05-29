@@ -176,5 +176,6 @@ modules:
         mode: deltas
       - store: store_total_signalled
         mode: deltas
+      - map: map_indexing_rewards
     output:
       type: proto:sf.substreams.entity.v1.EntityChanges
