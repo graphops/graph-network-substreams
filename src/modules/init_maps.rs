@@ -6,8 +6,6 @@ use substreams::scalar::BigInt;
 use substreams::{hex, log, Hex};
 use substreams_ethereum::pb::eth::v2 as eth;
 use substreams_ethereum::Event;
-use std::ops::Sub;
-
 
 // Contract Addresses
 const GRAPH_TOKEN_ADDRESS: [u8; 20] = hex!("c944E90C64B2c07662A292be6244BDf05Cda44a7");
@@ -24,7 +22,6 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
     let mut delegation_pools = vec![];
     let mut curation_pools = vec![];
     let mut subgraph_allocations = vec![];
-    let mut indexing_delegator_rewards = vec![];
 
     for trx in blk.transactions() {
         for (log, call_view) in trx.logs_with_calls() {
@@ -134,16 +131,14 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
                     }
                 }
             }
-            if let Some(event) =
-                abi::staking::events::AllocationClosed::match_and_decode(&log)
-            {
+            if let Some(event) = abi::staking::events::AllocationClosed::match_and_decode(&log) {
                 // We track the AllocationClosed event instead of RewardsAssigned here. I think it is because their calls are different
                 // when their transaction is the same. And we have the call data here, so we need to use the event that shares the same call
-                // with the storage_change 
+                // with the storage_change
                 for storage_change in &call_view.call.storage_changes {
                     if storage_change.address.eq(&STAKING_CONTRACT) {
                         if storage_change.key == utils::find_key(&event.indexer, 20, 2) {
-                            //trx.hash is not a great id since multiple allocations might be closed in one transaction. Should be updated 
+                            //trx.hash is not a great id since multiple allocations might be closed in one transaction. Should be updated
                             delegation_pools.push(DelegationPool {
                                 id: Hex(&trx.hash).to_string(),
                                 indexer: event.indexer.clone(),
@@ -155,20 +150,6 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
                                     &storage_change.old_value,
                                 )
                                 .into(),
-                                ordinal: log.ordinal,
-                            });
-                            indexing_delegator_rewards.push(IndexingDelegatorReward{
-                                id: Hex(&trx.hash).to_string(),
-                                indexer: event.indexer.clone(),
-                                subgraph_deployment_id: Hex(&event.subgraph_deployment_id)
-                                .to_string(),
-                                allocation_id: Hex(&event.allocation_id)
-                                .to_string(),
-                                reward: BigInt::from_unsigned_bytes_be(
-                                    &storage_change.new_value,
-                                ).sub(BigInt::from_unsigned_bytes_be(
-                                    &storage_change.old_value,
-                                )).to_string(), 
                                 ordinal: log.ordinal,
                             });
                         }
@@ -287,9 +268,6 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
     storage_changes.subgraph_allocations = Some(SubgraphAllocations {
         subgraph_allocations: subgraph_allocations,
     });
-    storage_changes.indexing_delegator_rewards = Some(IndexingDelegatorRewards {
-        indexing_delegator_rewards: indexing_delegator_rewards,
-    });
 
     Ok(storage_changes)
 }
@@ -307,6 +285,7 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
     let mut rewards_assigned_events = vec![];
     let mut signalled_events = vec![];
     let mut burned_events = vec![];
+    let mut allocation_created_events = vec![];
 
     // Potentially consider adding log.index() to the IDs, to have them be truly unique in
     // transactions with potentially more than 1 of these messages
@@ -379,12 +358,24 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
                 block_number: blk.number,
                 ordinal: log.ordinal() as u64,
             });
+        } else if let Some(event) = abi::staking::events::AllocationCreated::match_and_decode(log) {
+            allocation_created_events.push(AllocationCreated {
+                id: Hex(&log.receipt.transaction.hash).to_string(), // Each event needs a unique id
+                indexer: event.indexer,
+                subgraph_deployment_id: event.subgraph_deployment_id.to_vec(),
+                epoch: event.epoch.to_string(),
+                tokens: event.tokens.to_string(),
+                allocation_id: event.allocation_id.to_vec(),
+                ordinal: log.ordinal() as u64,
+            });
         } else if let Some(event) =
             abi::rewards_manager::events::RewardsAssigned::match_and_decode(log)
         {
             rewards_assigned_events.push(RewardsAssigned {
                 id: Hex(&log.receipt.transaction.hash).to_string(), // Each event needs a unique id
                 indexer: event.indexer,
+                allocation_id: event.allocation_id.to_vec(),
+                epoch: event.epoch.to_string(),
                 amount: event.amount.to_string(), // Tokens is origanally BigInt but proto does not have BigInt so we use string
                 ordinal: log.ordinal() as u64,
             });
@@ -444,7 +435,9 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
     events.burned_events = Some(BurnedEvents {
         burned_events: burned_events,
     });
+    events.allocation_created_events = Some(AllocationCreatedEvents {
+        allocation_created_events: allocation_created_events,
+    });
 
     Ok(events)
 }
-

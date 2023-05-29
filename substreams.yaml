@@ -40,6 +40,7 @@ modules:
     inputs:
       - map: map_storage_changes
       - map: map_events
+      - store: store_subgraph_deployment_id
     output:
       type: proto:eth.erc20.v1.IndexingRewards
 
@@ -136,6 +137,14 @@ modules:
     initialBlock: 11446769
     updatePolicy: add
     valueType: bigint
+    inputs:
+      - map: map_events
+
+  - name: store_subgraph_deployment_id
+    kind: store
+    initialBlock: 11446769
+    updatePolicy: set
+    valueType: string
     inputs:
       - map: map_events
 

@@ -46,6 +46,10 @@ message BurnedEvents {
   repeated Burned burned_events = 1;
 }
 
+message AllocationCreatedEvents {
+  repeated AllocationCreated allocation_created_events = 1;
+}
+
 message IndexerStakes {
   repeated IndexerStake indexer_stakes = 1;
 }
@@ -62,10 +66,6 @@ message SubgraphAllocations {
   repeated SubgraphAllocation subgraph_allocations = 1;
 }
 
-message IndexingDelegatorRewards {
-  repeated IndexingDelegatorReward indexing_delegator_rewards = 1;
-}
-
 message IndexingRewards {
   repeated IndexingReward indexing_rewards = 1;
 }
@@ -75,7 +75,6 @@ message StorageChanges {
   DelegationPools delegation_pools = 2;
   CurationPools curation_pools = 3;
   SubgraphAllocations subgraph_allocations = 4; 
-  IndexingDelegatorRewards indexing_delegator_rewards = 5; 
 }
 
 message Events {
@@ -89,6 +88,7 @@ message Events {
   DelegationParametersUpdatedEvents delegation_parameters_updated_events = 8;
   SignalledEvents signalled_events = 9;
   BurnedEvents burned_events = 10;
+  AllocationCreatedEvents allocation_created_events = 11;
 }
 
 message Transfer {
@@ -157,8 +157,10 @@ message DelegationParametersUpdated{
 message RewardsAssigned{
   string id = 1;
   bytes indexer = 2;
-  string amount = 3;
-  uint64 ordinal = 4;
+  bytes allocation_id = 3;
+  string epoch = 4; 
+  string amount = 5;
+  uint64 ordinal = 6;
 }
 
 message Signalled {
@@ -178,6 +180,16 @@ message Burned {
   string tokens = 4;
   string signal = 5;
   uint64 ordinal = 6;
+}
+
+message AllocationCreated {
+  string id = 1;
+  bytes indexer = 2;
+  bytes subgraph_deployment_id =3;
+  string epoch = 4;
+  string tokens = 5;
+  bytes allocation_id = 6;
+  uint64 ordinal = 7;
 }
 
 message IndexerStake {
@@ -212,21 +224,14 @@ message SubgraphAllocation {
   uint64 ordinal = 5;
 }
 
-message IndexingDelegatorReward {
-  string id = 1;
-  bytes indexer = 2;
-  string subgraph_deployment_id = 3; 
-  string allocation_id = 4;
-  string reward = 5; 
-  uint64 ordinal = 6;
-}
-
 message IndexingReward {
   string id = 1;
   bytes indexer = 2;
-  string amount = 3; 
-  string indexer_rewards = 4;
-  string delegator_rewards = 5; 
-  uint64 ordinal = 6;
+  string subgraph_deployment_id = 3;
+  string allocation_id = 4;
+  string amount = 5; 
+  string indexer_rewards = 6;
+  string delegator_rewards = 7; 
+  uint64 ordinal = 8;
 }
 
