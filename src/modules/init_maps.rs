@@ -8,7 +8,7 @@ use substreams::{hex, log, Hex};
 use substreams_ethereum::pb::eth::v2 as eth;
 use substreams_ethereum::Event;
 use std::str::FromStr;
-substreams_ethereum::init!();
+
 
 // Contract Addresses
 const GRAPH_TOKEN_ADDRESS: [u8; 20] = hex!("c944E90C64B2c07662A292be6244BDf05Cda44a7");
@@ -85,7 +85,6 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
                                     &storage_change.old_value,
                                 )
                                 .into(),
-                                rewards: "false".to_string(),
                                 ordinal: log.ordinal,
                             })
                         }
@@ -108,7 +107,6 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
                                     &storage_change.old_value,
                                 )
                                 .into(),
-                                rewards: "false".to_string(),
                                 ordinal: log.ordinal,
                             })
                         }
@@ -130,7 +128,6 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
                                     &storage_change.old_value,
                                 )
                                 .into(),
-                                rewards: "false".to_string(),
                                 ordinal: log.ordinal,
                             })
                         }
@@ -138,11 +135,15 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
                 }
             }
             if let Some(event) =
-                abi::rewards_manager::events::RewardsAssigned::match_and_decode(&log)
+                abi::staking::events::AllocationClosed::match_and_decode(&log)
             {
+                // We track the AllocationClosed event instead of RewardsAssigned here. I think it is because their calls are different
+                // when their transaction is the same. And we have the call data here, so we need to use the event that shares the same call
+                // with the storage_change 
                 for storage_change in &call_view.call.storage_changes {
                     if storage_change.address.eq(&STAKING_CONTRACT) {
                         if storage_change.key == utils::find_key(&event.indexer, 20, 2) {
+                            //trx.hash is not a great id since multiple allocations might be closed in one transaction. Should be updated 
                             delegation_pools.push(DelegationPool {
                                 id: Hex(&trx.hash).to_string(),
                                 indexer: event.indexer.clone(),
@@ -154,8 +155,7 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
                                     &storage_change.old_value,
                                 )
                                 .into(),
-                                rewards: "true".to_string(),
-                                ordinal: log.ordinal,
+                                ordinal: log.ordinal as u64,
                             })
                         }
                     }
@@ -447,24 +447,19 @@ fn map_indexing_rewards(storage_changes: StorageChanges, events: Events) -> Resu
             ordinal: rewards_assigned.ordinal,
         });
         for delegation_pool in &delegation_pools.delegation_pools {
-            if delegation_pool.rewards == "true" {
-            log::info!("sth{:?}{:?}", rewards_assigned.indexer,delegation_pool.indexer );
-            if rewards_assigned.clone().indexer == delegation_pool.indexer && rewards_assigned.ordinal == delegation_pool.ordinal {
-                log::info!("stj", );
-                let delegator_rewards = BigInt::from_str(&delegation_pool.new_stake).unwrap().sub(BigInt::from_str(&delegation_pool.old_stake).unwrap());
-                let indexer_rewards = BigInt::from_str(&rewards_assigned.clone().amount).unwrap().sub(delegator_rewards.clone());
-                indexing_rewards_vec.push(IndexingReward {
-                    id: rewards_assigned.id.clone(), // Each event needs a unique id
-                    indexer: rewards_assigned.clone().indexer,
-                    amount: rewards_assigned.clone().amount, // Tokens is origanally BigInt but proto does not have BigInt so we use string
-                    indexer_rewards: indexer_rewards.to_string(),
-                    delegator_rewards: delegator_rewards.clone().to_string(),
-                    ordinal: rewards_assigned.ordinal,
-                });
+            if rewards_assigned.clone().id == delegation_pool.id {
+                let target_id = rewards_assigned.clone().id;
+                for indexing_reward in &mut indexing_rewards_vec {
+                    if indexing_reward.id == target_id {
+                        let delegator_rewards = BigInt::from_str(&delegation_pool.new_stake).unwrap().sub(BigInt::from_str(&delegation_pool.old_stake).unwrap());
+                        let indexer_rewards = BigInt::from_str(&rewards_assigned.clone().amount).unwrap().sub(delegator_rewards.clone());
+                        indexing_reward.delegator_rewards = delegator_rewards.to_string();
+                        indexing_reward.indexer_rewards = indexer_rewards.to_string();
+                    }   
+                } 
             }
-        } 
+            break;
         }
-
     }
     indexing_rewards.indexing_rewards = indexing_rewards_vec;
     Ok(indexing_rewards)

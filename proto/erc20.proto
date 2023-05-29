@@ -188,8 +188,7 @@ message DelegationPool {
   bytes indexer = 2;
   string new_stake = 3;
   string old_stake = 4;
-  string rewards = 5;
-  uint64 ordinal = 6;
+  uint64 ordinal = 5;
 }
 
 message CurationPool {
