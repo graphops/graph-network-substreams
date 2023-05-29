@@ -3,7 +3,6 @@ use crate::utils;
 use std::ops::Sub;
 use std::str::FromStr;
 use substreams::prelude::*;
-use substreams::{hex, log, Hex};
 use substreams::scalar::BigInt;
 use substreams::{
     store::StoreAddBigInt, store::StoreSetIfNotExists, store::StoreSetIfNotExistsString,
@@ -115,4 +114,38 @@ fn store_total_delegated_stakes(storage_changes: StorageChanges, s: StoreAddBigI
     }
 }
 
-
+#[substreams::handlers::map]
+fn map_indexing_rewards(storage_changes: StorageChanges, events: Events) -> Result<IndexingRewards, Error> {
+    let mut indexing_rewards = IndexingRewards::default(); 
+    let mut indexing_rewards_vec = vec![];
+    let delegation_pools = storage_changes.delegation_pools.unwrap();
+    let rewards_assigned_events = events.rewards_assigned_events.unwrap();
+    for rewards_assigned in rewards_assigned_events.rewards_assigned_events {
+        indexing_rewards_vec.push(IndexingReward {
+            id: rewards_assigned.id.clone(), // Each event needs a unique id
+            indexer: rewards_assigned.clone().indexer,
+            amount: rewards_assigned.clone().amount, // Tokens is origanally BigInt but proto does not have BigInt so we use string
+            indexer_rewards: rewards_assigned.amount.to_string(),
+            delegator_rewards: "0".to_string(),
+            ordinal: rewards_assigned.ordinal,
+        });
+        // This code overloooks the case where an indexer closes multiple allocations at one transaction. Needs to be updated. Specifically, 
+        // we need to change the ids to something more specific than trx.hash but will still be shared among events from different contracts. 
+        for delegation_pool in &delegation_pools.delegation_pools {
+            if rewards_assigned.clone().id == delegation_pool.id {
+                let target_id = rewards_assigned.clone().id;
+                for indexing_reward in &mut indexing_rewards_vec {
+                    if indexing_reward.id == target_id {
+                        let delegator_rewards = BigInt::from_str(&delegation_pool.new_stake).unwrap().sub(BigInt::from_str(&delegation_pool.old_stake).unwrap());
+                        let indexer_rewards = BigInt::from_str(&rewards_assigned.clone().amount).unwrap().sub(delegator_rewards.clone());
+                        indexing_reward.delegator_rewards = delegator_rewards.to_string();
+                        indexing_reward.indexer_rewards = indexer_rewards.to_string();
+                    }   
+                } 
+            }
+            break;
+        }
+    }
+    indexing_rewards.indexing_rewards = indexing_rewards_vec;
+    Ok(indexing_rewards)
+}

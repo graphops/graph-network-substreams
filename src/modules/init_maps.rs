@@ -3,11 +3,9 @@ use crate::pb::erc20::*;
 use crate::utils;
 use substreams::errors::Error;
 use substreams::scalar::BigInt;
-use std::ops::Sub;
 use substreams::{hex, log, Hex};
 use substreams_ethereum::pb::eth::v2 as eth;
 use substreams_ethereum::Event;
-use std::str::FromStr;
 
 
 // Contract Addresses
@@ -431,36 +429,3 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
     Ok(events)
 }
 
-#[substreams::handlers::map]
-fn map_indexing_rewards(storage_changes: StorageChanges, events: Events) -> Result<IndexingRewards, Error> {
-    let mut indexing_rewards = IndexingRewards::default(); 
-    let mut indexing_rewards_vec = vec![];
-    let delegation_pools = storage_changes.delegation_pools.unwrap();
-    let rewards_assigned_events = events.rewards_assigned_events.unwrap();
-    for rewards_assigned in rewards_assigned_events.rewards_assigned_events {
-        indexing_rewards_vec.push(IndexingReward {
-            id: rewards_assigned.id.clone(), // Each event needs a unique id
-            indexer: rewards_assigned.clone().indexer,
-            amount: rewards_assigned.clone().amount, // Tokens is origanally BigInt but proto does not have BigInt so we use string
-            indexer_rewards: rewards_assigned.amount.to_string(),
-            delegator_rewards: "0".to_string(),
-            ordinal: rewards_assigned.ordinal,
-        });
-        for delegation_pool in &delegation_pools.delegation_pools {
-            if rewards_assigned.clone().id == delegation_pool.id {
-                let target_id = rewards_assigned.clone().id;
-                for indexing_reward in &mut indexing_rewards_vec {
-                    if indexing_reward.id == target_id {
-                        let delegator_rewards = BigInt::from_str(&delegation_pool.new_stake).unwrap().sub(BigInt::from_str(&delegation_pool.old_stake).unwrap());
-                        let indexer_rewards = BigInt::from_str(&rewards_assigned.clone().amount).unwrap().sub(delegator_rewards.clone());
-                        indexing_reward.delegator_rewards = delegator_rewards.to_string();
-                        indexing_reward.indexer_rewards = indexer_rewards.to_string();
-                    }   
-                } 
-            }
-            break;
-        }
-    }
-    indexing_rewards.indexing_rewards = indexing_rewards_vec;
-    Ok(indexing_rewards)
-}
