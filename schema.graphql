@@ -110,5 +110,11 @@ type SubgrapDeployment @entity {
   "Total rewards accrued all time by indexers"
   indexingIndexerRewardAmount: BigInt!
   "Total rewards accrued all time by delegators"
-  indexingDelegatorRewardAmount: BigInt!
+  indexingDelegatorRewardAmount: BigInt!  
+  "Total query fees earned by this Subgraph Deployment, without curator query fees"
+  queryFeesAmount: BigInt!
+  "Total query fee rebates earned from the protocol, through the cobbs douglas formula. Does not include delegation fees"
+  queryFeeRebates: BigInt!
+  "Total curator rewards from fees"
+  curatorFeeRewards: BigInt!
 }

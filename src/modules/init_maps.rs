@@ -2,6 +2,7 @@ use crate::abi;
 use crate::pb::erc20::*;
 use crate::utils;
 use substreams::errors::Error;
+use std::ops::Sub;
 use substreams::scalar::BigInt;
 use substreams::{hex, log, Hex};
 use substreams_ethereum::pb::eth::v2 as eth;
@@ -22,6 +23,7 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
     let mut delegation_pools = vec![];
     let mut curation_pools = vec![];
     let mut subgraph_allocations = vec![];
+    let mut delegator_rewards = vec![];
 
     for trx in blk.transactions() {
         for (log, call_view) in trx.logs_with_calls() {
@@ -138,7 +140,6 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
                 for storage_change in &call_view.call.storage_changes {
                     if storage_change.address.eq(&STAKING_CONTRACT) {
                         if storage_change.key == utils::find_key(&event.indexer, 20, 2) {
-                            //trx.hash is not a great id since multiple allocations might be closed in one transaction. Should be updated
                             delegation_pools.push(DelegationPool {
                                 id: Hex(&trx.hash).to_string(),
                                 indexer: event.indexer.clone(),
@@ -150,6 +151,14 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
                                     &storage_change.old_value,
                                 )
                                 .into(),
+                                ordinal: log.ordinal,
+                            });
+                            // indexingDelegatorRewards are distributed whenever an allocation is closed
+                            delegator_rewards.push(DelegatorReward{
+                                id: Hex(&trx.hash).to_string(),
+                                allocation_id: event.allocation_id.to_vec(),
+                                rewards: BigInt::from_unsigned_bytes_be(&storage_change.new_value)
+                                .sub(BigInt::from_signed_bytes_be(&storage_change.old_value)).to_string(),
                                 ordinal: log.ordinal,
                             });
                         }
@@ -261,6 +270,9 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
     });
     storage_changes.delegation_pools = Some(DelegationPools {
         delegation_pools: delegation_pools,
+    });
+    storage_changes.delegator_rewards = Some(DelegatorRewards {
+        delegator_rewards: delegator_rewards,
     });
     storage_changes.curation_pools = Some(CurationPools {
         curation_pools: curation_pools,

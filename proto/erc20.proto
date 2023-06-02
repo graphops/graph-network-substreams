@@ -58,6 +58,10 @@ message DelegationPools {
   repeated DelegationPool delegation_pools = 1;
 }
 
+message DelegatorRewards {
+  repeated DelegatorReward delegator_rewards = 1;
+}
+
 message CurationPools {
   repeated CurationPool curation_pools = 1;
 }
@@ -73,8 +77,9 @@ message IndexingRewards {
 message StorageChanges {
   IndexerStakes indexer_stakes = 1;
   DelegationPools delegation_pools = 2;
-  CurationPools curation_pools = 3;
-  SubgraphAllocations subgraph_allocations = 4; 
+  DelegatorRewards delegator_rewards = 3;
+  CurationPools curation_pools = 4;
+  SubgraphAllocations subgraph_allocations = 5; 
 }
 
 message Events {
@@ -206,6 +211,13 @@ message DelegationPool {
   string new_stake = 3;
   string old_stake = 4;
   uint64 ordinal = 5;
+}
+
+message DelegatorReward {
+  string id = 1;
+  bytes allocation_id = 2;
+  string rewards = 3;
+  uint64 ordinal = 4;
 }
 
 message CurationPool {
