@@ -34,6 +34,16 @@ modules:
     output:
       type: proto:eth.erc20.v1.Events
 
+  - name: map_indexing_rewards
+    kind: map
+    initialBlock: 11446769
+    inputs:
+      - map: map_storage_changes
+      - map: map_events
+      - store: store_subgraph_deployment_id
+    output:
+      type: proto:eth.erc20.v1.IndexingRewards
+
   - name: store_grt_balances
     kind: store
     initialBlock: 11446769
@@ -130,6 +140,14 @@ modules:
     inputs:
       - map: map_events
 
+  - name: store_subgraph_deployment_id
+    kind: store
+    initialBlock: 11446769
+    updatePolicy: set
+    valueType: string
+    inputs:
+      - map: map_events
+
   - name: store_cumulative_curator_burned
     kind: store
     initialBlock: 11446769
@@ -167,5 +185,6 @@ modules:
         mode: deltas
       - store: store_total_signalled
         mode: deltas
+      - map: map_indexing_rewards
     output:
       type: proto:sf.substreams.entity.v1.EntityChanges

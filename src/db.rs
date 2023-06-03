@@ -1,4 +1,6 @@
-use crate::pb::erc20::{CurationPools, DelegationPools, IndexerStakes, SubgraphAllocations};
+use crate::pb::erc20::{
+    CurationPools, DelegationPools, IndexerStakes, IndexingRewards, SubgraphAllocations,
+};
 use crate::utils;
 use std::str::FromStr;
 use substreams::scalar::BigInt;
@@ -261,6 +263,7 @@ pub fn graph_account_change(
 pub fn subgraph_deployment_change(
     subgraph_allocations: SubgraphAllocations,
     curation_pools: CurationPools,
+    indexing_rewards: IndexingRewards,
     entity_changes: &mut EntityChanges,
 ) {
     for subgraph_allocation in subgraph_allocations.subgraph_allocations {
@@ -287,6 +290,24 @@ pub fn subgraph_deployment_change(
             .change(
                 "signalledTokens",
                 BigInt::from_str(&curation_pool.new_signal).unwrap(),
+            );
+    }
+    for indexing_reward in indexing_rewards.indexing_rewards {
+        entity_changes
+            .push_change(
+                "SubgraphDeployment",
+                &indexing_reward.subgraph_deployment_id,
+                indexing_reward.ordinal,
+                Operation::Update, // Update will create the entity if it does not exist
+            )
+            .change("indexingRewardAmount", indexing_reward.amount)
+            .change(
+                "indexingIndexerRewardAmount",
+                indexing_reward.indexer_rewards,
+            )
+            .change(
+                "indexingDelegatorRewardAmount",
+                indexing_reward.delegator_rewards,
             );
     }
 }

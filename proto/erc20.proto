@@ -46,12 +46,20 @@ message BurnedEvents {
   repeated Burned burned_events = 1;
 }
 
+message AllocationCreatedEvents {
+  repeated AllocationCreated allocation_created_events = 1;
+}
+
 message IndexerStakes {
   repeated IndexerStake indexer_stakes = 1;
 }
 
 message DelegationPools {
   repeated DelegationPool delegation_pools = 1;
+}
+
+message DelegatorRewards {
+  repeated DelegatorReward delegator_rewards = 1;
 }
 
 message CurationPools {
@@ -62,11 +70,16 @@ message SubgraphAllocations {
   repeated SubgraphAllocation subgraph_allocations = 1;
 }
 
+message IndexingRewards {
+  repeated IndexingReward indexing_rewards = 1;
+}
+
 message StorageChanges {
   IndexerStakes indexer_stakes = 1;
   DelegationPools delegation_pools = 2;
-  CurationPools curation_pools = 3;
-  SubgraphAllocations subgraph_allocations = 4; 
+  DelegatorRewards delegator_rewards = 3;
+  CurationPools curation_pools = 4;
+  SubgraphAllocations subgraph_allocations = 5; 
 }
 
 message Events {
@@ -80,6 +93,7 @@ message Events {
   DelegationParametersUpdatedEvents delegation_parameters_updated_events = 8;
   SignalledEvents signalled_events = 9;
   BurnedEvents burned_events = 10;
+  AllocationCreatedEvents allocation_created_events = 11;
 }
 
 message Transfer {
@@ -148,8 +162,10 @@ message DelegationParametersUpdated{
 message RewardsAssigned{
   string id = 1;
   bytes indexer = 2;
-  string amount = 3;
-  uint64 ordinal = 4;
+  bytes allocation_id = 3;
+  string epoch = 4; 
+  string amount = 5;
+  uint64 ordinal = 6;
 }
 
 message Signalled {
@@ -171,6 +187,16 @@ message Burned {
   uint64 ordinal = 6;
 }
 
+message AllocationCreated {
+  string id = 1;
+  bytes indexer = 2;
+  bytes subgraph_deployment_id =3;
+  string epoch = 4;
+  string tokens = 5;
+  bytes allocation_id = 6;
+  uint64 ordinal = 7;
+}
+
 message IndexerStake {
   string id = 1;
   bytes indexer = 2;
@@ -185,6 +211,13 @@ message DelegationPool {
   string new_stake = 3;
   string old_stake = 4;
   uint64 ordinal = 5;
+}
+
+message DelegatorReward {
+  string id = 1;
+  bytes allocation_id = 2;
+  string rewards = 3;
+  uint64 ordinal = 4;
 }
 
 message CurationPool {
@@ -202,3 +235,15 @@ message SubgraphAllocation {
   string old_tokens = 4;
   uint64 ordinal = 5;
 }
+
+message IndexingReward {
+  string id = 1;
+  bytes indexer = 2;
+  string subgraph_deployment_id = 3;
+  string allocation_id = 4;
+  string amount = 5; 
+  string indexer_rewards = 6;
+  string delegator_rewards = 7; 
+  uint64 ordinal = 8;
+}
+
