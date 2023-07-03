@@ -192,6 +192,7 @@ modules:
     kind: map
     initialBlock: 11446769
     inputs:
+      - map: map_events
       - store: store_grt_global
         mode: deltas
       - store: store_grt_balances

@@ -11,6 +11,7 @@ use substreams_entity_change::pb::entity::EntityChanges;
 
 #[substreams::handlers::map]
 pub fn graph_out(
+    events: Events,
     grt_global_deltas: Deltas<DeltaBigInt>,
     grt_balance_deltas: Deltas<DeltaBigInt>,
     graph_account_indexer_deltas: Deltas<DeltaString>,
@@ -82,6 +83,12 @@ pub fn graph_out(
         &mut subgraph_deployment_entity_changes,
     );
 
+    let mut allocation_entity_changes: EntityChanges = Default::default();
+    db::allocation_change(
+        events,
+        &mut allocation_entity_changes,
+    );
+
     Ok(EntityChanges {
         entity_changes: [
             graph_network_entity_changes.entity_changes,
@@ -90,6 +97,7 @@ pub fn graph_out(
             delegated_stake_entity_changes.entity_changes,
             curator_entity_changes.entity_changes,
             subgraph_deployment_entity_changes.entity_changes,
+            allocation_entity_changes.entity_changes,
         ]
         .concat(),
     })

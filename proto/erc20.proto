@@ -50,6 +50,10 @@ message AllocationCreatedEvents {
   repeated AllocationCreated allocation_created_events = 1;
 }
 
+message AllocationClosedEvents {
+  repeated AllocationClosed allocation_closed_events = 1;
+}
+
 message AllocationCollectedEvents {
   repeated AllocationCollected allocation_collected_events = 1;
 }
@@ -98,7 +102,8 @@ message Events {
   SignalledEvents signalled_events = 9;
   BurnedEvents burned_events = 10;
   AllocationCreatedEvents allocation_created_events = 11;
-  AllocationCollectedEvents allocation_collected_events = 12;
+  AllocationClosedEvents allocation_closed_events = 12;
+  AllocationCollectedEvents allocation_collected_events = 13;
 }
 
 message Transfer {
@@ -203,6 +208,17 @@ message AllocationCreated {
   string tokens = 5;
   bytes allocation_id = 6;
   uint64 ordinal = 7;
+}
+
+message AllocationClosed {
+  string id = 1;
+  bytes indexer = 2;
+  bytes subgraph_deployment_id =3;
+  string epoch = 4;
+  string tokens = 5;
+  bytes allocation_id = 6;
+  string effective_allocation = 7;
+  uint64 ordinal = 8;
 }
 
 message AllocationCollected {

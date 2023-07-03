@@ -1,5 +1,5 @@
 use crate::pb::erc20::{
-    CurationPools, DelegationPools, IndexerStakes, IndexingRewards, SubgraphAllocations,
+    CurationPools, DelegationPools, IndexerStakes, IndexingRewards, SubgraphAllocations, Events
 };
 use crate::utils;
 use std::str::FromStr;
@@ -367,4 +367,40 @@ pub fn subgraph_deployment_change(
                 &delta,
             );
     }
+}
+pub fn allocation_change(
+    events: Events,
+    entity_changes: &mut EntityChanges,
+) {
+    let allocation_created_events = events.allocation_created_events.unwrap();
+    let allocation_closed_events = events.allocation_closed_events.unwrap();
+
+    for allocation_created in allocation_created_events.allocation_created_events {
+        entity_changes
+            .push_change(
+                "Allocation",
+                &utils::generate_key(&allocation_created.allocation_id),
+                allocation_created.ordinal,
+                Operation::Update, // Update will create the entity if it does not exist
+            )
+            .change("indexer", allocation_created.indexer)
+            .change("subgraphDeploymentId", allocation_created.subgraph_deployment_id)
+            .change(
+                "allocatedTokens",
+                allocation_created.tokens,
+            );
+    }
+    for allocation_closed in allocation_closed_events.allocation_closed_events {
+        entity_changes
+            .push_change(
+                "Allocation",
+                &utils::generate_key(&allocation_closed.allocation_id),
+                allocation_closed.ordinal,
+                Operation::Update, // Update will create the entity if it does not exist
+            ).change(
+                "effectiveAllocation",
+                allocation_closed.effective_allocation,
+            );
+    }
+
 }

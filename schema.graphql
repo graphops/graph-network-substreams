@@ -120,3 +120,32 @@ type SubgrapDeployment @entity {
   "Total curator rewards from fees"
   curatorFeeRewards: BigInt!
 }
+
+type Allocation @entity {
+  "Channel Address"
+  id: ID!
+  "Indexer of this allocation"
+  indexer: Indexer!
+  "Creator of the allocation - can be the operator or the indexer"
+  creator: Bytes!
+  "If the Allocation is active it shows the indexer. If closed, it is null"
+  activeForIndexer: Indexer
+  "Subgraph deployment that is being allocated to"
+  subgraphDeployment: SubgraphDeployment!
+  "Tokens allocation in this allocation"
+  allocatedTokens: BigInt!
+  "Effective allocation that is realized upon closing"
+  effectiveAllocation: BigInt!
+  "Fees this allocation collected from query fees upon closing. Excludes curator reward and protocol tax"
+  queryFeesCollected: BigInt!
+  "Query fee rebate amount claimed from the protocol through cobbs douglas. Does not include portion given to delegators"
+  queryFeeRebates: BigInt!
+  "Curator rewards deposited to the curating bonding curve"
+  curatorRewards: BigInt!
+  "Indexing rewards earned by this allocation. Includes delegator and indexer rewards"
+  indexingRewards: BigInt!
+  "Indexing rewards earned by this allocation by indexers"
+  indexingIndexerRewards: BigInt!
+  "Indexing rewards earned by this allocation by delegators"
+  indexingDelegatorRewards: BigInt!
+}
