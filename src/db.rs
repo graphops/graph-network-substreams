@@ -296,6 +296,9 @@ pub fn subgraph_deployment_change(
                 BigInt::from_str(&curation_pool.new_signal).unwrap(),
             );
     }
+
+    // just realized I need to add a store to aggregate indexer rewards per subgraph deployment since they are for all indexers 
+    // this code needs to be updated. db should recive some stores, not indexing rewards directly. allocations should use indexing rewards directly
     for indexing_reward in indexing_rewards.indexing_rewards {
         entity_changes
             .push_change(
@@ -370,6 +373,7 @@ pub fn subgraph_deployment_change(
 }
 pub fn allocation_change(
     events: Events,
+    indexing_rewards:IndexingRewards,
     entity_changes: &mut EntityChanges,
 ) {
     let allocation_created_events = events.allocation_created_events.unwrap();
@@ -400,6 +404,24 @@ pub fn allocation_change(
             ).change(
                 "effectiveAllocation",
                 allocation_closed.effective_allocation,
+            );
+    }
+    for indexing_reward in indexing_rewards.indexing_rewards {
+        entity_changes
+            .push_change(
+                "Allocation",
+                &indexing_reward.allocation_id,
+                indexing_reward.ordinal,
+                Operation::Update, // Update will create the entity if it does not exist
+            )
+            .change("indexingRewards", indexing_reward.amount)
+            .change(
+                "indexingIndexerRewards",
+                indexing_reward.indexer_rewards,
+            )
+            .change(
+                "indexingDelegatorRewards",
+                indexing_reward.delegator_rewards,
             );
     }
 

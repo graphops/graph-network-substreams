@@ -75,7 +75,7 @@ pub fn graph_out(
     db::subgraph_deployment_change(
         subgraph_allocations,
         curation_pools,
-        indexing_rewards,
+        indexing_rewards.clone(),
         query_fee_rebate_deltas,
         query_fees_amount_deltas,
         curator_fee_rewards_deltas,
@@ -86,6 +86,7 @@ pub fn graph_out(
     let mut allocation_entity_changes: EntityChanges = Default::default();
     db::allocation_change(
         events,
+        indexing_rewards,
         &mut allocation_entity_changes,
     );
 
