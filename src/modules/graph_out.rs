@@ -26,6 +26,7 @@ pub fn graph_out(
     total_signalled_deltas: Deltas<DeltaBigInt>,
     query_fee_rebate_deltas: Deltas<DeltaBigInt>,
     query_fees_amount_deltas: Deltas<DeltaBigInt>,
+    curator_fee_rewards_deltas: Deltas<DeltaBigInt>,
     indexing_rewards: IndexingRewards,
 ) -> Result<EntityChanges, substreams::errors::Error> {
     let mut graph_network_entity_changes: EntityChanges = Default::default();
@@ -75,6 +76,7 @@ pub fn graph_out(
         indexing_rewards,
         query_fee_rebate_deltas,
         query_fees_amount_deltas,
+        curator_fee_rewards_deltas,
         &mut subgraph_deployment_entity_changes,
     );
 

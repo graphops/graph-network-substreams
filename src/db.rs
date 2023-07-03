@@ -266,6 +266,7 @@ pub fn subgraph_deployment_change(
     indexing_rewards: IndexingRewards,
     query_fee_rebate_deltas: Deltas<DeltaBigInt>,
     query_fees_amount_deltas: Deltas<DeltaBigInt>,
+    curator_fee_rewards_deltas: Deltas<DeltaBigInt>,
     entity_changes: &mut EntityChanges,
 ) {
     for subgraph_allocation in subgraph_allocations.subgraph_allocations {
@@ -336,6 +337,19 @@ pub fn subgraph_deployment_change(
             )
             .change(
                 "queryFeesAmount",
+                &delta,
+            );
+    }
+    for delta in curator_fee_rewards_deltas.deltas {
+        entity_changes
+            .push_change(
+                "SubgraphDeployment",
+                &delta.key,
+                delta.ordinal,
+                Operation::Update, // Update will create the entity if it does not exist
+            )
+            .change(
+                "curatorFeeRewards",
                 &delta,
             );
     }
