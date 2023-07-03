@@ -203,11 +203,13 @@ message Burned {
 message AllocationCreated {
   string id = 1;
   bytes indexer = 2;
-  bytes subgraph_deployment_id =3;
-  string epoch = 4;
-  string tokens = 5;
-  bytes allocation_id = 6;
-  uint64 ordinal = 7;
+  bytes creator = 3;
+  bytes active_for = 4;
+  bytes subgraph_deployment_id = 5;
+  string epoch = 6;
+  string tokens = 7;
+  bytes allocation_id = 8;
+  uint64 ordinal = 9;
 }
 
 message AllocationClosed {

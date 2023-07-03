@@ -404,7 +404,9 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
         } else if let Some(event) = abi::staking::events::AllocationCreated::match_and_decode(log) {
             allocation_created_events.push(AllocationCreated {
                 id: Hex(&log.receipt.transaction.hash).to_string(), // Each event needs a unique id
-                indexer: event.indexer,
+                indexer: event.indexer.clone(),
+                creator: event.indexer.clone(), //migh also be the operator, need to update
+                active_for: event.indexer, //need to find a way to make this null later
                 subgraph_deployment_id: event.subgraph_deployment_id.to_vec(),
                 epoch: event.epoch.to_string(),
                 tokens: event.tokens.to_string(),
