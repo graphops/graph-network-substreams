@@ -24,6 +24,7 @@ pub fn graph_out(
     cumulative_curator_signalled_deltas: Deltas<DeltaBigInt>,
     cumulative_curator_burned_deltas: Deltas<DeltaBigInt>,
     total_signalled_deltas: Deltas<DeltaBigInt>,
+    query_fee_rebate_deltas: Deltas<DeltaBigInt>,
     indexing_rewards: IndexingRewards,
 ) -> Result<EntityChanges, substreams::errors::Error> {
     let mut graph_network_entity_changes: EntityChanges = Default::default();
@@ -71,6 +72,7 @@ pub fn graph_out(
         subgraph_allocations,
         curation_pools,
         indexing_rewards,
+        query_fee_rebate_deltas,
         &mut subgraph_deployment_entity_changes,
     );
 

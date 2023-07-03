@@ -145,8 +145,11 @@ message StakeDelegatedLocked {
 message RebateClaimed {
   string id = 1;
   bytes indexer = 2;
-  string delegated_tokens = 3;
-  uint64 ordinal = 4;
+  bytes subgraph_deployment_id = 3;
+  bytes allocation_id = 4;
+  string tokens = 5;
+  string delegation_fees = 6;
+  uint64 ordinal = 7;
 }
 
 message DelegationParametersUpdated{

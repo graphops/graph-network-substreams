@@ -156,6 +156,14 @@ modules:
     inputs:
       - map: map_events
 
+  - name: store_query_fee_rebates
+    kind: store
+    initialBlock: 11446769
+    updatePolicy: add
+    valueType: bigint
+    inputs:
+      - map: map_events
+
   - name: graph_out
     kind: map
     initialBlock: 11446769
@@ -184,6 +192,8 @@ modules:
       - store: store_cumulative_curator_burned
         mode: deltas
       - store: store_total_signalled
+        mode: deltas
+      - store: store_query_fee_rebates
         mode: deltas
       - map: map_indexing_rewards
     output:

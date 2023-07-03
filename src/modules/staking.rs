@@ -128,6 +128,18 @@ fn store_subgraph_deployment_id(events: Events, s: StoreSetString) {
         );
     }
 }
+#[substreams::handlers::store]
+fn store_query_fee_rebates(events: Events, s: StoreAddBigInt) {
+    let rebate_claimed_events = events.rebate_claimed_events.unwrap();
+
+    for rebate_claimed in rebate_claimed_events.rebate_claimed_events {
+        s.add(
+            rebate_claimed.ordinal,
+            Hex(&rebate_claimed.subgraph_deployment_id).to_string(),
+            BigInt::from_str(&rebate_claimed.tokens).unwrap(),
+        );
+    }
+}
 
 #[substreams::handlers::map]
 fn map_indexing_rewards(

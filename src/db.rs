@@ -264,6 +264,7 @@ pub fn subgraph_deployment_change(
     subgraph_allocations: SubgraphAllocations,
     curation_pools: CurationPools,
     indexing_rewards: IndexingRewards,
+    query_fee_rebate_deltas: Deltas<DeltaBigInt>,
     entity_changes: &mut EntityChanges,
 ) {
     for subgraph_allocation in subgraph_allocations.subgraph_allocations {
@@ -308,6 +309,20 @@ pub fn subgraph_deployment_change(
             .change(
                 "indexingDelegatorRewardAmount",
                 indexing_reward.delegator_rewards,
+            );
+    }
+
+    for delta in query_fee_rebate_deltas.deltas {
+        entity_changes
+            .push_change(
+                "SubgraphDeployment",
+                &delta.key,
+                delta.ordinal,
+                Operation::Update, // Update will create the entity if it does not exist
+            )
+            .change(
+                "queryFeeRebates",
+                &delta,
             );
     }
 }
