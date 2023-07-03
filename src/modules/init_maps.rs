@@ -423,6 +423,7 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
                 id: Hex(&log.receipt.transaction.hash).to_string(), // Each event needs a unique id
                 indexer: event.indexer,
                 subgraph_deployment_id: event.subgraph_deployment_id.to_vec(),
+<<<<<<< HEAD
                 closed_at_epoch: event.epoch.to_string(),
                 closed_at_block_hash: Hex(&blk.hash).to_string(),
                 closed_at_block_number: blk.number.to_string(),
@@ -435,6 +436,15 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
             });
         } else if let Some(event) = abi::staking::events::AllocationCollected::match_and_decode(log)
         {
+=======
+                epoch: event.epoch.to_string(),
+                tokens: event.tokens.to_string(),
+                allocation_id: event.allocation_id.to_vec(),
+                effective_allocation: event.effective_allocation.to_string(),
+                ordinal: log.ordinal() as u64,
+            });
+        }else if let Some(event) = abi::staking::events::AllocationCollected::match_and_decode(log) {
+>>>>>>> f35136d (feat: some of the fields of the allocation entity added)
             allocation_collected_events.push(AllocationCollected {
                 id: Hex(&log.receipt.transaction.hash).to_string(), // Each event needs a unique id
                 indexer: event.indexer,
