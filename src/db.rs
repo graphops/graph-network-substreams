@@ -472,6 +472,7 @@ pub fn query_fees_change(
 }
 pub fn allocation_change(
     events: Events,
+    indexing_rewards:IndexingRewards,
     entity_changes: &mut EntityChanges,
 ) {
     let allocation_created_events = events.allocation_created_events.unwrap();
@@ -502,6 +503,24 @@ pub fn allocation_change(
             ).change(
                 "effectiveAllocation",
                 allocation_closed.effective_allocation,
+            );
+    }
+    for indexing_reward in indexing_rewards.indexing_rewards {
+        entity_changes
+            .push_change(
+                "Allocation",
+                &indexing_reward.allocation_id,
+                indexing_reward.ordinal,
+                Operation::Update, // Update will create the entity if it does not exist
+            )
+            .change("indexingRewards", indexing_reward.amount)
+            .change(
+                "indexingIndexerRewards",
+                indexing_reward.indexer_rewards,
+            )
+            .change(
+                "indexingDelegatorRewards",
+                indexing_reward.delegator_rewards,
             );
     }
 
