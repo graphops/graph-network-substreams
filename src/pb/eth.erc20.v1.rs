@@ -337,6 +337,25 @@ pub struct AllocationClosed {
     pub ordinal: u64,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
+pub struct AllocationClosed {
+    #[prost(string, tag="1")]
+    pub id: ::prost::alloc::string::String,
+    #[prost(bytes="vec", tag="2")]
+    pub indexer: ::prost::alloc::vec::Vec<u8>,
+    #[prost(bytes="vec", tag="3")]
+    pub subgraph_deployment_id: ::prost::alloc::vec::Vec<u8>,
+    #[prost(string, tag="4")]
+    pub epoch: ::prost::alloc::string::String,
+    #[prost(string, tag="5")]
+    pub tokens: ::prost::alloc::string::String,
+    #[prost(bytes="vec", tag="6")]
+    pub allocation_id: ::prost::alloc::vec::Vec<u8>,
+    #[prost(string, tag="7")]
+    pub effective_allocation: ::prost::alloc::string::String,
+    #[prost(uint64, tag="8")]
+    pub ordinal: u64,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AllocationCollected {
     #[prost(string, tag="1")]
     pub id: ::prost::alloc::string::String,
