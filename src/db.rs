@@ -263,7 +263,11 @@ pub fn graph_account_change(
 pub fn subgraph_deployment_change(
     subgraph_allocations: SubgraphAllocations,
     curation_pools: CurationPools,
+<<<<<<< HEAD
     subgraph_deployment_rewards_deltas: Deltas<DeltaBigInt>,
+=======
+    indexing_rewards: IndexingRewards,
+>>>>>>> d432184 (feat: query fees added)
     curator_fee_rewards_deltas: Deltas<DeltaBigInt>,
     signal_amount_deltas: Deltas<DeltaBigInt>,
     entity_changes: &mut EntityChanges,
@@ -481,4 +485,8 @@ pub fn query_fees_change(
             );
         }    
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> d432184 (feat: query fees added)

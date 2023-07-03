@@ -68,6 +68,7 @@ pub fn generate_key_query_fee_rebates(who: String, id: &Vec<u8>) -> String {
         Hex(id).to_string()
     );
 }
+<<<<<<< HEAD
 
 pub fn generate_key_indexing_rewards(who: String, id: String) -> String {
     return format!(
@@ -76,3 +77,5 @@ pub fn generate_key_indexing_rewards(who: String, id: String) -> String {
         id,
     );
 }
+=======
+>>>>>>> d432184 (feat: query fees added)
