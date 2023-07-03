@@ -264,8 +264,6 @@ pub fn subgraph_deployment_change(
     subgraph_allocations: SubgraphAllocations,
     curation_pools: CurationPools,
     indexing_rewards: IndexingRewards,
-    query_fee_rebate_deltas: Deltas<DeltaBigInt>,
-    query_fees_amount_deltas: Deltas<DeltaBigInt>,
     curator_fee_rewards_deltas: Deltas<DeltaBigInt>,
     signal_amount_deltas: Deltas<DeltaBigInt>,
     entity_changes: &mut EntityChanges,
@@ -318,32 +316,6 @@ pub fn subgraph_deployment_change(
             );
     }
 
-    for delta in query_fee_rebate_deltas.deltas {
-        entity_changes
-            .push_change(
-                "SubgraphDeployment",
-                &delta.key,
-                delta.ordinal,
-                Operation::Update, // Update will create the entity if it does not exist
-            )
-            .change(
-                "queryFeeRebates",
-                &delta,
-            );
-    }
-    for delta in query_fees_amount_deltas.deltas {
-        entity_changes
-            .push_change(
-                "SubgraphDeployment",
-                &delta.key,
-                delta.ordinal,
-                Operation::Update, // Update will create the entity if it does not exist
-            )
-            .change(
-                "queryFeesAmount",
-                &delta,
-            );
-    }
     for delta in curator_fee_rewards_deltas.deltas {
         entity_changes
             .push_change(
@@ -425,4 +397,73 @@ pub fn allocation_change(
             );
     }
 
+}
+
+pub fn query_fee_rebate_change(
+    query_fee_rebate_deltas: Deltas<DeltaBigInt>,
+    entity_changes: &mut EntityChanges,
+
+) {
+    for delta in query_fee_rebate_deltas.deltas {
+        if  &delta.key.as_str().split(":").nth(0).unwrap() == &"SubgraphDeployment"{
+            entity_changes
+            .push_change(
+                "SubgraphDeployment",
+                &delta.key.as_str().split(":").last().unwrap().to_string(),
+                delta.ordinal,
+                Operation::Update, // Update will create the entity if it does not exist
+            )
+            .change(
+                "queryFeeRebates",
+                &delta,
+            );
+        }    
+        else if  &delta.key.as_str().split(":").nth(0).unwrap() == &"Allocation"{
+            entity_changes
+            .push_change(
+                "Allocation",
+                &delta.key.as_str().split(":").last().unwrap().to_string(),
+                delta.ordinal,
+                Operation::Update, // Update will create the entity if it does not exist
+            )
+            .change(
+                "queryFeeRebates",
+                &delta,
+            );
+        }    
+    }
+}
+pub fn query_fees_change(
+    query_fees_amount_deltas: Deltas<DeltaBigInt>,
+    entity_changes: &mut EntityChanges,
+
+) {
+    for delta in query_fees_amount_deltas.deltas {
+        if  &delta.key.as_str().split(":").nth(0).unwrap() == &"SubgraphDeployment"{
+            entity_changes
+            .push_change(
+                "SubgraphDeployment",
+                &delta.key.as_str().split(":").last().unwrap().to_string(),
+                delta.ordinal,
+                Operation::Update, // Update will create the entity if it does not exist
+            )
+            .change(
+                "queryFeesAmount",
+                &delta,
+            );
+        }    
+        else if  &delta.key.as_str().split(":").nth(0).unwrap() == &"Allocation"{
+            entity_changes
+            .push_change(
+                "Allocation",
+                &delta.key.as_str().split(":").last().unwrap().to_string(),
+                delta.ordinal,
+                Operation::Update, // Update will create the entity if it does not exist
+            )
+            .change(
+                "queryFeesCollected",
+                &delta,
+            );
+        }    
+    }
 }

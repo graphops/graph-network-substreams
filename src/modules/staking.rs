@@ -135,7 +135,12 @@ fn store_query_fee_rebates(events: Events, s: StoreAddBigInt) {
     for rebate_claimed in rebate_claimed_events.rebate_claimed_events {
         s.add(
             rebate_claimed.ordinal,
-            Hex(&rebate_claimed.subgraph_deployment_id).to_string(),
+            utils::generate_key_query_fee_rebates("SubgraphDeployment".to_string(),&rebate_claimed.subgraph_deployment_id).to_string(),
+            BigInt::from_str(&rebate_claimed.tokens).unwrap(),
+        );
+        s.add(
+            rebate_claimed.ordinal,
+            utils::generate_key_query_fee_rebates("Allocation".to_string(),&rebate_claimed.allocation_id).to_string(),
             BigInt::from_str(&rebate_claimed.tokens).unwrap(),
         );
     }
@@ -147,8 +152,13 @@ fn store_query_fees_amount(events: Events, s: StoreAddBigInt) {
     for allocation_collected in allocation_collected_events.allocation_collected_events {
         s.add(
             allocation_collected.ordinal,
-            Hex(&allocation_collected.subgraph_deployment_id).to_string(),
-            BigInt::from_str(&allocation_collected.rebate_fees).unwrap(),
+            utils::generate_key_query_fee_rebates("SubgraphDeployment".to_string(),&allocation_collected.subgraph_deployment_id).to_string(),
+            BigInt::from_str(&allocation_collected.tokens).unwrap(),
+        );
+        s.add(
+            allocation_collected.ordinal,
+            utils::generate_key_query_fee_rebates("Allocation".to_string(),&allocation_collected.allocation_id).to_string(),
+            BigInt::from_str(&allocation_collected.tokens).unwrap(),
         );
     }
 }

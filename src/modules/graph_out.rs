@@ -76,8 +76,6 @@ pub fn graph_out(
         subgraph_allocations,
         curation_pools,
         indexing_rewards.clone(),
-        query_fee_rebate_deltas,
-        query_fees_amount_deltas,
         curator_fee_rewards_deltas,
         signal_amount_deltas,
         &mut subgraph_deployment_entity_changes,
@@ -90,6 +88,18 @@ pub fn graph_out(
         &mut allocation_entity_changes,
     );
 
+    let mut query_fee_rebate_changes: EntityChanges = Default::default();
+    db::query_fee_rebate_change(
+        query_fee_rebate_deltas,
+        &mut query_fee_rebate_changes,
+    );
+
+    let mut query_fee_changes: EntityChanges = Default::default();
+    db::query_fees_change(
+        query_fees_amount_deltas,
+        &mut query_fee_changes,
+    );
+
     Ok(EntityChanges {
         entity_changes: [
             graph_network_entity_changes.entity_changes,
@@ -99,6 +109,8 @@ pub fn graph_out(
             curator_entity_changes.entity_changes,
             subgraph_deployment_entity_changes.entity_changes,
             allocation_entity_changes.entity_changes,
+            query_fee_rebate_changes.entity_changes,
+            query_fee_changes.entity_changes,
         ]
         .concat(),
     })

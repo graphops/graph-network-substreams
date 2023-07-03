@@ -60,3 +60,11 @@ pub fn generate_key_delegated_stake(delegator: &Vec<u8>, indexer: &Vec<u8>) -> S
         Hex(indexer).to_string()
     );
 }
+
+pub fn generate_key_query_fee_rebates(who: String, id: &Vec<u8>) -> String {
+    return format!(
+        "{}:{}",
+        who,
+        Hex(id).to_string()
+    );
+}
