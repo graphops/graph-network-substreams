@@ -3,6 +3,7 @@ use crate::utils;
 use std::ops::Sub;
 use std::str::FromStr;
 use substreams::prelude::*;
+use substreams::{hex, log, Hex};
 use substreams::scalar::BigInt;
 use substreams::{
     store::StoreAddBigInt, store::StoreSetIfNotExists, store::StoreSetIfNotExistsString,
@@ -50,6 +51,29 @@ fn store_total_signalled(store_changes: StorageChanges, s: StoreAddBigInt) {
             BigInt::from_str(&curation_pool.new_signal)
                 .unwrap()
                 .sub(BigInt::from_str(&curation_pool.old_signal).unwrap()),
+        );
+    }
+}
+
+#[substreams::handlers::store]
+fn store_signal_amount(events: Events, s: StoreAddBigInt) {
+    let signalled_events = events.signalled_events.unwrap();
+    let burned_events = events.burned_events.unwrap();
+
+    for signalled in signalled_events.signalled_events {
+        s.add(
+            1,
+            Hex(&signalled.subgraph_deployment_id).to_string(),
+            BigInt::from_str(&signalled.signal)
+                .unwrap(),
+        );
+    }
+    for burned in burned_events.burned_events {
+        s.add(
+            1,
+            Hex(&burned.subgraph_deployment_id).to_string(),
+            BigInt::from_str(&burned.signal)
+                .unwrap().neg(),
         );
     }
 }
