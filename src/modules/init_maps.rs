@@ -213,6 +213,30 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
                     }
                 }
             }
+            if let Some(event) = abi::staking::events::AllocationCollected::match_and_decode(&log) {
+                for storage_change in &call_view.call.storage_changes {
+                    if storage_change.address.eq(&CURATION_CONTRACT) {
+                        if storage_change.key
+                            == utils::find_key(&event.subgraph_deployment_id, 15, 0)
+                        {
+                            curation_pools.push(CurationPool {
+                                id: Hex(&trx.hash).to_string(),
+                                subgraph_deployment_id: Hex(&event.subgraph_deployment_id)
+                                    .to_string(),
+                                new_signal: BigInt::from_unsigned_bytes_be(
+                                    &storage_change.new_value,
+                                )
+                                .into(),
+                                old_signal: BigInt::from_unsigned_bytes_be(
+                                    &storage_change.old_value,
+                                )
+                                .into(),
+                                ordinal: log.ordinal,
+                            })
+                        }
+                    }
+                }
+            }
             if let Some(event) = abi::gns::events::SubgraphPublished::match_and_decode(&log) {
                 for storage_change in &call_view.call.storage_changes {
                     if storage_change.address.eq(&STAKING_CONTRACT) {
