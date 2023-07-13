@@ -352,10 +352,15 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
                 ordinal: log.ordinal() as u64,
             });
         } else if let Some(event) = abi::staking::events::RebateClaimed::match_and_decode(log) {
-            rebate_claimed_events.push(RebateClaimed {
+            rebate_claimed_events.push(
+                //missing epoch and forEpoch fields since they are not yet needed
+                RebateClaimed {
                 id: Hex(&log.receipt.transaction.hash).to_string(), // Each event needs a unique id
                 indexer: event.indexer,
-                delegated_tokens: event.delegation_fees.to_string(), // Tokens is origanally BigInt but proto does not have BigInt so we use string
+                subgraph_deployment_id: event.subgraph_deployment_id.to_vec(),
+                allocation_id: event.allocation_id,
+                tokens: event.tokens.to_string(),
+                delegation_fees: event.delegation_fees.to_string(), // Tokens is origanally BigInt but proto does not have BigInt so we use string
                 ordinal: log.ordinal() as u64,
             });
         } else if let Some(event) =
