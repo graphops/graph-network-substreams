@@ -50,6 +50,10 @@ message AllocationCreatedEvents {
   repeated AllocationCreated allocation_created_events = 1;
 }
 
+message AllocationCollectedEvents {
+  repeated AllocationCollected allocation_collected_events = 1;
+}
+
 message IndexerStakes {
   repeated IndexerStake indexer_stakes = 1;
 }
@@ -94,6 +98,7 @@ message Events {
   SignalledEvents signalled_events = 9;
   BurnedEvents burned_events = 10;
   AllocationCreatedEvents allocation_created_events = 11;
+  AllocationCollectedEvents allocation_collected_events = 12;
 }
 
 message Transfer {
@@ -198,6 +203,18 @@ message AllocationCreated {
   string tokens = 5;
   bytes allocation_id = 6;
   uint64 ordinal = 7;
+}
+
+message AllocationCollected {
+  string id = 1;
+  bytes indexer = 2;
+  bytes subgraph_deployment_id =3;
+  string epoch = 4;
+  string tokens = 5;
+  bytes allocation_id = 6;
+  string curation_fees = 7;
+  string rebate_fees = 8;
+  uint64 ordinal = 9;
 }
 
 message IndexerStake {

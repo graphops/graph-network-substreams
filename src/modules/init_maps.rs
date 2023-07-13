@@ -298,6 +298,7 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
     let mut signalled_events = vec![];
     let mut burned_events = vec![];
     let mut allocation_created_events = vec![];
+    let mut allocation_collected_events = vec![];
 
     // Potentially consider adding log.index() to the IDs, to have them be truly unique in
     // transactions with potentially more than 1 of these messages
@@ -385,6 +386,18 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
                 allocation_id: event.allocation_id.to_vec(),
                 ordinal: log.ordinal() as u64,
             });
+        } else if let Some(event) = abi::staking::events::AllocationCollected::match_and_decode(log) {
+            allocation_collected_events.push(AllocationCollected {
+                id: Hex(&log.receipt.transaction.hash).to_string(), // Each event needs a unique id
+                indexer: event.indexer,
+                subgraph_deployment_id: event.subgraph_deployment_id.to_vec(),
+                epoch: event.epoch.to_string(),
+                tokens: event.tokens.to_string(),
+                allocation_id: event.allocation_id.to_vec(),
+                curation_fees: event.curation_fees.to_string(),
+                rebate_fees: event.rebate_fees.to_string(),
+                ordinal: log.ordinal() as u64,
+            });
         } else if let Some(event) =
             abi::rewards_manager::events::RewardsAssigned::match_and_decode(log)
         {
@@ -454,6 +467,9 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
     });
     events.allocation_created_events = Some(AllocationCreatedEvents {
         allocation_created_events: allocation_created_events,
+    });
+    events.allocation_collected_events = Some(AllocationCollectedEvents {
+        allocation_collected_events: allocation_collected_events,
     });
 
     Ok(events)
