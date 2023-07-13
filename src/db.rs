@@ -360,7 +360,7 @@ pub fn allocation_change(
                 Operation::Update, // Update will create the entity if it does not exist
             )
             .change("indexer", &allocation_created.indexer)
-            .change("creator", &allocation_created.indexer)
+            .change("creator", &allocation_created.creator)
             .change("activeForIndexer", &allocation_created.indexer)
             .change("subgraphDeploymentId", allocation_created.subgraph_deployment_id)
             .change(
