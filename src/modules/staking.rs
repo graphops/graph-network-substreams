@@ -153,12 +153,12 @@ fn store_query_fees_amount(events: Events, s: StoreAddBigInt) {
         s.add(
             allocation_collected.ordinal,
             utils::generate_key_query_fee_rebates("SubgraphDeployment".to_string(),&allocation_collected.subgraph_deployment_id).to_string(),
-            BigInt::from_str(&allocation_collected.tokens).unwrap(),
+            BigInt::from_str(&allocation_collected.rebate_fees).unwrap(),
         );
         s.add(
             allocation_collected.ordinal,
             utils::generate_key_query_fee_rebates("Allocation".to_string(),&allocation_collected.allocation_id).to_string(),
-            BigInt::from_str(&allocation_collected.tokens).unwrap(),
+            BigInt::from_str(&allocation_collected.rebate_fees).unwrap(),
         );
     }
 }
@@ -170,6 +170,18 @@ fn store_curator_fee_rewards(events: Events, s: StoreAddBigInt) {
         s.add(
             allocation_collected.ordinal,
             Hex(&allocation_collected.subgraph_deployment_id).to_string(),
+            BigInt::from_str(&allocation_collected.curation_fees).unwrap(),
+        );
+    }
+}
+#[substreams::handlers::store]
+fn store_curator_rewards(events: Events, s: StoreAddBigInt) {
+    let allocation_collected_events = events.allocation_collected_events.unwrap();
+
+    for allocation_collected in allocation_collected_events.allocation_collected_events {
+        s.add(
+            allocation_collected.ordinal,
+            Hex(&allocation_collected.allocation_id).to_string(),
             BigInt::from_str(&allocation_collected.curation_fees).unwrap(),
         );
     }

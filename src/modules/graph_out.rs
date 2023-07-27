@@ -28,6 +28,7 @@ pub fn graph_out(
     query_fee_rebate_deltas: Deltas<DeltaBigInt>,
     query_fees_amount_deltas: Deltas<DeltaBigInt>,
     curator_fee_rewards_deltas: Deltas<DeltaBigInt>,
+    curator_rewards_deltas: Deltas<DeltaBigInt>,
     signal_amount_deltas: Deltas<DeltaBigInt>,
     subgraph_deployment_rewards_deltas: Deltas<DeltaBigInt>,
     indexing_rewards: IndexingRewards,
@@ -86,6 +87,7 @@ pub fn graph_out(
     db::allocation_change(
         events,
         indexing_rewards,
+        curator_rewards_deltas,
         &mut allocation_entity_changes,
     );
 

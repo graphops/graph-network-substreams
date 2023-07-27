@@ -346,6 +346,7 @@ pub fn subgraph_deployment_change(
 pub fn allocation_change(
     events: Events,
     indexing_rewards:IndexingRewards,
+    curator_rewards_deltas: Deltas<DeltaBigInt>,
     entity_changes: &mut EntityChanges,
 ) {
     let allocation_created_events = events.allocation_created_events.unwrap();
@@ -397,6 +398,18 @@ pub fn allocation_change(
                 "indexingDelegatorRewards",
                 indexing_reward.delegator_rewards,
             );
+    }
+    for delta in curator_rewards_deltas.deltas {
+        entity_changes
+        .push_change(
+            "Allocation",
+            &delta.key,
+            delta.ordinal,
+            Operation::Update, // Update will create the entity if it does not exist
+        ).change(
+            "curatorRewards",
+            &delta,
+        );
     }
 
 }
