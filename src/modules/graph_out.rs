@@ -29,6 +29,7 @@ pub fn graph_out(
     query_fees_amount_deltas: Deltas<DeltaBigInt>,
     curator_fee_rewards_deltas: Deltas<DeltaBigInt>,
     signal_amount_deltas: Deltas<DeltaBigInt>,
+    subgraph_deployment_rewards_deltas: Deltas<DeltaBigInt>,
     indexing_rewards: IndexingRewards,
 ) -> Result<EntityChanges, substreams::errors::Error> {
     let mut graph_network_entity_changes: EntityChanges = Default::default();
@@ -75,7 +76,7 @@ pub fn graph_out(
     db::subgraph_deployment_change(
         subgraph_allocations,
         curation_pools,
-        indexing_rewards.clone(),
+        subgraph_deployment_rewards_deltas,
         curator_fee_rewards_deltas,
         signal_amount_deltas,
         &mut subgraph_deployment_entity_changes,

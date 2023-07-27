@@ -174,6 +174,26 @@ fn store_curator_fee_rewards(events: Events, s: StoreAddBigInt) {
         );
     }
 }
+#[substreams::handlers::store]
+fn store_subgraph_deployment_rewards(indexing_rewards: IndexingRewards, s: StoreAddBigInt) {
+    for indexing_rewards in indexing_rewards.indexing_rewards {
+        s.add(
+            indexing_rewards.ordinal,
+            utils::generate_key_indexing_rewards(indexing_rewards.subgraph_deployment_id.clone(), "indexingRewardAmount".to_string()),
+            BigInt::from_str(&indexing_rewards.amount).unwrap(),
+        );
+        s.add(
+            indexing_rewards.ordinal,
+            utils::generate_key_indexing_rewards(indexing_rewards.subgraph_deployment_id.clone(), "indexingIndexerRewardAmount".to_string()),
+            BigInt::from_str(&indexing_rewards.indexer_rewards).unwrap(),
+        );
+        s.add(
+            indexing_rewards.ordinal,
+            utils::generate_key_indexing_rewards(indexing_rewards.subgraph_deployment_id, "indexingDelegatorRewardAmount".to_string()),
+            BigInt::from_str(&indexing_rewards.delegator_rewards).unwrap(),
+        );
+    }
+}
 
 #[substreams::handlers::map]
 fn map_indexing_rewards(

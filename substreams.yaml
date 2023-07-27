@@ -188,6 +188,14 @@ modules:
     inputs:
       - map: map_events
 
+  - name: store_subgraph_deployment_rewards
+    kind: store
+    initialBlock: 11446769
+    updatePolicy: add
+    valueType: bigint
+    inputs:
+      - map: map_indexing_rewards
+
   - name: graph_out
     kind: map
     initialBlock: 11446769
@@ -225,6 +233,8 @@ modules:
       - store: store_curator_fee_rewards
         mode: deltas
       - store: store_signal_amount
+        mode: deltas
+      - store: store_subgraph_deployment_rewards
         mode: deltas
       - map: map_indexing_rewards
     output:

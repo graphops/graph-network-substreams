@@ -263,7 +263,7 @@ pub fn graph_account_change(
 pub fn subgraph_deployment_change(
     subgraph_allocations: SubgraphAllocations,
     curation_pools: CurationPools,
-    indexing_rewards: IndexingRewards,
+    subgraph_deployment_rewards_deltas: Deltas<DeltaBigInt>,
     curator_fee_rewards_deltas: Deltas<DeltaBigInt>,
     signal_amount_deltas: Deltas<DeltaBigInt>,
     entity_changes: &mut EntityChanges,
@@ -297,23 +297,23 @@ pub fn subgraph_deployment_change(
 
     // just realized I need to add a store to aggregate indexer rewards per subgraph deployment since they are for all indexers 
     // this code needs to be updated. db should recive some stores, not indexing rewards directly. allocations should use indexing rewards directly
-    for indexing_reward in indexing_rewards.indexing_rewards {
+    for delta in subgraph_deployment_rewards_deltas.deltas {
+        let name = match delta.key.as_str().split(":").last().unwrap() {
+            "indexingRewardAmount" => "indexingRewardAmount",
+            "indexingIndexerRewardAmount" => "indexingIndexerRewardAmount",
+            "indexingDelegatorRewardAmount" => "indexingDelegatorRewardAmount",
+            _ => {
+                continue;
+            }
+        };
         entity_changes
             .push_change(
                 "SubgraphDeployment",
-                &indexing_reward.subgraph_deployment_id,
-                indexing_reward.ordinal,
+                &delta.key.as_str().split(":").nth(0).unwrap(), 
+                delta.ordinal,
                 Operation::Update, // Update will create the entity if it does not exist
             )
-            .change("indexingRewardAmount", indexing_reward.amount)
-            .change(
-                "indexingIndexerRewardAmount",
-                indexing_reward.indexer_rewards,
-            )
-            .change(
-                "indexingDelegatorRewardAmount",
-                indexing_reward.delegator_rewards,
-            );
+            .change(name, delta);
     }
 
     for delta in curator_fee_rewards_deltas.deltas {

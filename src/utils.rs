@@ -68,3 +68,11 @@ pub fn generate_key_query_fee_rebates(who: String, id: &Vec<u8>) -> String {
         Hex(id).to_string()
     );
 }
+
+pub fn generate_key_indexing_rewards(who: String, id: String) -> String {
+    return format!(
+        "{}:{}",
+        who,
+        id,
+    );
+}
