@@ -206,10 +206,12 @@ message AllocationCreated {
   bytes creator = 3;
   bytes active_for = 4;
   bytes subgraph_deployment_id = 5;
-  string epoch = 6;
-  string tokens = 7;
-  bytes allocation_id = 8;
-  uint64 ordinal = 9;
+  string created_at_epoch = 6;
+  bytes created_at_block_hash = 7;
+  string created_at_block_number = 8;
+  string tokens = 9;
+  bytes allocation_id = 10;
+  uint64 ordinal = 11;
 }
 
 message AllocationClosed {

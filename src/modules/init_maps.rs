@@ -409,6 +409,8 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
                 active_for: event.indexer, //need to find a way to make this null later
                 subgraph_deployment_id: event.subgraph_deployment_id.to_vec(),
                 epoch: event.epoch.to_string(),
+                //created_at_block_hash: blk.hash,
+                //created_at_block_number: blk.number,
                 tokens: event.tokens.to_string(),
                 allocation_id: event.allocation_id.to_vec(),
                 ordinal: log.ordinal() as u64,
