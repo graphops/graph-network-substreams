@@ -358,7 +358,7 @@ dependencies = [
  "num-bigint",
  "prost",
  "prost-types",
- "substreams",
+ "substreams 0.5.10",
  "substreams-entity-change",
  "substreams-ethereum",
  "tiny-keccak",
@@ -509,6 +509,12 @@ name = "linux-raw-sys"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "09fc20d2ca12cb9f044c93e3bd6d32d523e6e2ec3db4f7b2939cd99026ecd3f0"
+
+[[package]]
+name = "libm"
+version = "0.2.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f7012b1bbb0719e1097c47611d3898568c546d597c2e74d66f6087edd5233ff4"
 
 [[package]]
 name = "log"
@@ -896,7 +902,11 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "af972e374502cdfc9998132f5343848d1c58f27a295dc061a89804371f408a46"
 dependencies = [
  "anyhow",
+<<<<<<< HEAD
  "bigdecimal 0.3.1",
+=======
+ "bigdecimal 0.3.0",
+>>>>>>> a7d68e1 (feat version updates missing files)
  "hex",
  "hex-literal",
  "num-bigint",
@@ -905,7 +915,26 @@ dependencies = [
  "prost",
  "prost-build",
  "prost-types",
- "substreams-macro",
+ "substreams-macro 0.5.6",
+ "thiserror",
+]
+
+[[package]]
+name = "substreams"
+version = "0.5.10"
+source = "git+https://github.com/streamingfast/substreams-rs#e5c5ceec86a6ebc421c8850cd747c53d300fda9f"
+dependencies = [
+ "anyhow",
+ "bigdecimal 0.3.0",
+ "hex",
+ "hex-literal",
+ "num-bigint",
+ "num-traits",
+ "pad",
+ "prost",
+ "prost-build",
+ "prost-types",
+ "substreams-macro 0.5.10",
  "thiserror",
 ]
 
@@ -918,7 +947,7 @@ dependencies = [
  "base64",
  "prost",
  "prost-types",
- "substreams",
+ "substreams 0.5.6",
 ]
 
 [[package]]
@@ -929,7 +958,7 @@ checksum = "c0bd6c3ecb69e76111515d8087080ce7a750f41df79de221d24ab76bc3efe81e"
 dependencies = [
  "getrandom",
  "num-bigint",
- "substreams",
+ "substreams 0.5.6",
  "substreams-ethereum-abigen",
  "substreams-ethereum-core",
  "substreams-ethereum-derive",
@@ -965,7 +994,7 @@ dependencies = [
  "prost",
  "prost-build",
  "prost-types",
- "substreams",
+ "substreams 0.5.6",
 ]
 
 [[package]]
@@ -993,6 +1022,17 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 1.0.109",
+ "thiserror",
+]
+
+[[package]]
+name = "substreams-macro"
+version = "0.5.10"
+source = "git+https://github.com/streamingfast/substreams-rs#e5c5ceec86a6ebc421c8850cd747c53d300fda9f"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
  "thiserror",
 ]
 
