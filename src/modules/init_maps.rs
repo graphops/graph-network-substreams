@@ -4,7 +4,7 @@ use crate::utils;
 use substreams::errors::Error;
 use std::ops::Sub;
 use substreams::scalar::BigInt;
-use substreams::{hex, log, Hex};
+use substreams::{hex, Hex};
 use substreams_ethereum::pb::eth::v2 as eth;
 use substreams_ethereum::Event;
 

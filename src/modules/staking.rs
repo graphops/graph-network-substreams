@@ -5,7 +5,7 @@ use std::str::FromStr;
 use substreams::errors::Error;
 use substreams::prelude::*;
 use substreams::scalar::BigInt;
-use substreams::{hex, log, Hex};
+use substreams::{ Hex};
 use substreams::{
     store::StoreAddBigInt, store::StoreSetIfNotExists, store::StoreSetIfNotExistsString,
     store::StoreSetProto,

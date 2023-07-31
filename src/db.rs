@@ -2,8 +2,6 @@ use crate::pb::erc20::{
     CurationPools, DelegationPools, IndexerStakes, IndexingRewards, SubgraphAllocations, Events
 };
 use crate::utils;
-use std::str::FromStr;
-use substreams::scalar::BigInt;
 use substreams::store::{DeltaBigInt, DeltaString, Deltas};
 use substreams_entity_change::pb::entity::{entity_change::Operation, EntityChanges};
 
@@ -30,7 +28,7 @@ pub fn grt_global_change(
                 delta.ordinal,
                 Operation::Update, // Update will create the entity if it does not exist
             )
-            .change(name, delta);
+            .change(name, delta.new_value.to_string());
     }
 }
 
@@ -45,7 +43,7 @@ pub fn indexer_stake_change(
     for delta in staked_token_deltas.deltas {
         entity_changes
             .push_change("GraphNetwork", "1", delta.ordinal, Operation::Update)
-            .change("totalTokensStaked", delta);
+            .change("totalTokensStaked", delta.new_value.to_string());
     }
     for indexer_stake in indexer_stakes.indexer_stakes {
         entity_changes
@@ -57,7 +55,7 @@ pub fn indexer_stake_change(
             )
             .change(
                 "stakedTokens",
-                BigInt::from_str(&indexer_stake.new_stake).unwrap(),
+                &indexer_stake.new_stake,
             );
     }
 }
@@ -80,7 +78,7 @@ pub fn delegated_stake_change(
                 delta.ordinal,
                 Operation::Update, // Update will create the entity if it does not exist
             )
-            .change("stakedTokens", &delta);
+            .change("stakedTokens", &delta.new_value.to_string());
     }
 
     for delta in cumulative_delegator_stake_deltas.deltas {
@@ -91,7 +89,7 @@ pub fn delegated_stake_change(
                 delta.ordinal,
                 Operation::Update, // Update will create the entity if it does not exist
             )
-            .change("totalStakedTokens", &delta);
+            .change("totalStakedTokens", &delta.new_value.to_string());
     }
 
     for delta in total_delegated_stake_deltas.deltas {
@@ -102,7 +100,7 @@ pub fn delegated_stake_change(
                 delta.ordinal,
                 Operation::Update, // Update will create the entity if it does not exist
             )
-            .change("totalTokensDelegated", &delta);
+            .change("totalTokensDelegated", &delta.new_value.to_string());
     }
 
     for delegation_pool in delegation_pools.delegation_pools {
@@ -115,7 +113,7 @@ pub fn delegated_stake_change(
             )
             .change(
                 "delegatedTokens",
-                BigInt::from_str(&delegation_pool.new_stake).unwrap(),
+                &delegation_pool.new_stake,
             );
     }
 }
@@ -137,7 +135,7 @@ pub fn curation_signal_change(
                 delta.ordinal,
                 Operation::Update, // Update will create the entity if it does not exist
             )
-            .change("totalSignalledTokens", &delta);
+            .change("totalSignalledTokens", &delta.new_value.to_string());
     }
 
     for delta in cumulative_curator_burned_deltas.deltas {
@@ -148,7 +146,7 @@ pub fn curation_signal_change(
                 delta.ordinal,
                 Operation::Update, // Update will create the entity if it does not exist
             )
-            .change("totalUnsignalledTokens", &delta);
+            .change("totalUnsignalledTokens", &delta.new_value.to_string());
     }
 
     for delta in total_signalled_deltas.deltas {
@@ -159,7 +157,7 @@ pub fn curation_signal_change(
                 delta.ordinal,
                 Operation::Update, // Update will create the entity if it does not exist
             )
-            .change("totalTokensSignalled", &delta);
+            .change("totalTokensSignalled", &delta.new_value.to_string());
     }
 }
 
@@ -181,7 +179,7 @@ pub fn graph_account_change(
                 delta.ordinal,
                 Operation::Update, // Update will create the entity if it does not exist
             )
-            .change("balance", delta);
+            .change("balance", delta.new_value.to_string());
     }
     for delta in graph_account_indexer_deltas.deltas {
         entity_changes
@@ -278,7 +276,7 @@ pub fn subgraph_deployment_change(
             )
             .change(
                 "stakedTokens",
-                BigInt::from_str(&subgraph_allocation.new_tokens).unwrap(),
+                &subgraph_allocation.new_tokens,
             );
     }
     for curation_pool in curation_pools.curation_pools {
@@ -291,7 +289,7 @@ pub fn subgraph_deployment_change(
             )
             .change(
                 "signalledTokens",
-                BigInt::from_str(&curation_pool.new_signal).unwrap(),
+                &curation_pool.new_signal,
             );
     }
 
@@ -313,7 +311,7 @@ pub fn subgraph_deployment_change(
                 delta.ordinal,
                 Operation::Update, // Update will create the entity if it does not exist
             )
-            .change(name, delta);
+            .change(name, delta.new_value.to_string());
     }
 
     for delta in curator_fee_rewards_deltas.deltas {
@@ -326,7 +324,7 @@ pub fn subgraph_deployment_change(
             )
             .change(
                 "curatorFeeRewards",
-                &delta,
+                &delta.new_value.to_string(),
             );
     }
     for delta in signal_amount_deltas.deltas {
@@ -339,7 +337,7 @@ pub fn subgraph_deployment_change(
             )
             .change(
                 "signalAmount",
-                &delta,
+                &delta.new_value.to_string(),
             );
     }
 }
@@ -408,7 +406,7 @@ pub fn allocation_change(
             Operation::Update, // Update will create the entity if it does not exist
         ).change(
             "curatorRewards",
-            &delta,
+            &delta.new_value.to_string(),
         );
     }
 
@@ -430,7 +428,7 @@ pub fn query_fee_rebate_change(
             )
             .change(
                 "queryFeeRebates",
-                &delta,
+                &delta.new_value.to_string(),
             );
         }    
         else if  &delta.key.as_str().split(":").nth(0).unwrap() == &"Allocation"{
@@ -443,7 +441,7 @@ pub fn query_fee_rebate_change(
             )
             .change(
                 "queryFeeRebates",
-                &delta,
+                &delta.new_value.to_string(),
             );
         }    
     }
@@ -464,7 +462,7 @@ pub fn query_fees_change(
             )
             .change(
                 "queryFeesAmount",
-                &delta,
+                &delta.new_value.to_string(),
             );
         }    
         else if  &delta.key.as_str().split(":").nth(0).unwrap() == &"Allocation"{
@@ -477,7 +475,7 @@ pub fn query_fees_change(
             )
             .change(
                 "queryFeesCollected",
-                &delta,
+                &delta.new_value.to_string(),
             );
         }    
     }
