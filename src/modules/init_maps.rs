@@ -408,9 +408,9 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
                 creator: log.receipt.transaction.from.clone(), //migh also be the operator, need to update
                 active_for: event.indexer, //need to find a way to make this null later
                 subgraph_deployment_id: event.subgraph_deployment_id.to_vec(),
-                epoch: event.epoch.to_string(),
-                //created_at_block_hash: blk.hash,
-                //created_at_block_number: blk.number,
+                created_at_epoch: event.epoch.to_string(),
+                created_at_block_hash: blk.hash.clone(),
+                created_at_block_number: blk.number.to_string(),
                 tokens: event.tokens.to_string(),
                 allocation_id: event.allocation_id.to_vec(),
                 ordinal: log.ordinal() as u64,
