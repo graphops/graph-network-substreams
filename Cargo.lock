@@ -358,7 +358,7 @@ dependencies = [
  "num-bigint",
  "prost",
  "prost-types",
- "substreams 0.5.10",
+ "substreams",
  "substreams-entity-change",
  "substreams-ethereum",
  "tiny-keccak",
@@ -497,6 +497,7 @@ name = "libc"
 version = "0.2.147"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b4668fb0ea861c1df094127ac5f1da3409a82116a4ba74fca2e58ef927159bb3"
+<<<<<<< HEAD
 
 [[package]]
 name = "libm"
@@ -509,6 +510,8 @@ name = "linux-raw-sys"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "09fc20d2ca12cb9f044c93e3bd6d32d523e6e2ec3db4f7b2939cd99026ecd3f0"
+=======
+>>>>>>> 4f6ae61 (feat: codegenworking)
 
 [[package]]
 name = "libm"
@@ -517,9 +520,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f7012b1bbb0719e1097c47611d3898568c546d597c2e74d66f6087edd5233ff4"
 
 [[package]]
+<<<<<<< HEAD
 name = "log"
 version = "0.4.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
+=======
+name = "linux-raw-sys"
+version = "0.4.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "09fc20d2ca12cb9f044c93e3bd6d32d523e6e2ec3db4f7b2939cd99026ecd3f0"
+
+[[package]]
+name = "log"
+version = "0.4.19"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+>>>>>>> 4f6ae61 (feat: codegenworking)
 checksum = "b06a4cde4c0f271a446782e3eff8de789548ce57dbc8eca9292c27f4a42004b4"
 
 [[package]]
@@ -897,6 +912,7 @@ checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
 
 [[package]]
 name = "substreams"
+<<<<<<< HEAD
 version = "0.5.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "af972e374502cdfc9998132f5343848d1c58f27a295dc061a89804371f408a46"
@@ -921,11 +937,14 @@ dependencies = [
 
 [[package]]
 name = "substreams"
+=======
+>>>>>>> 4f6ae61 (feat: codegenworking)
 version = "0.5.10"
-source = "git+https://github.com/streamingfast/substreams-rs#e5c5ceec86a6ebc421c8850cd747c53d300fda9f"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "af972e374502cdfc9998132f5343848d1c58f27a295dc061a89804371f408a46"
 dependencies = [
  "anyhow",
- "bigdecimal 0.3.0",
+ "bigdecimal 0.3.1",
  "hex",
  "hex-literal",
  "num-bigint",
@@ -934,7 +953,7 @@ dependencies = [
  "prost",
  "prost-build",
  "prost-types",
- "substreams-macro 0.5.10",
+ "substreams-macro",
  "thiserror",
 ]
 
@@ -947,7 +966,7 @@ dependencies = [
  "base64",
  "prost",
  "prost-types",
- "substreams 0.5.6",
+ "substreams",
 ]
 
 [[package]]
@@ -958,7 +977,7 @@ checksum = "c0bd6c3ecb69e76111515d8087080ce7a750f41df79de221d24ab76bc3efe81e"
 dependencies = [
  "getrandom",
  "num-bigint",
- "substreams 0.5.6",
+ "substreams",
  "substreams-ethereum-abigen",
  "substreams-ethereum-core",
  "substreams-ethereum-derive",
@@ -994,7 +1013,7 @@ dependencies = [
  "prost",
  "prost-build",
  "prost-types",
- "substreams 0.5.6",
+ "substreams",
 ]
 
 [[package]]
@@ -1011,6 +1030,7 @@ dependencies = [
  "quote",
  "substreams-ethereum-abigen",
  "syn 1.0.109",
+<<<<<<< HEAD
 ]
 
 [[package]]
@@ -1023,16 +1043,19 @@ dependencies = [
  "quote",
  "syn 1.0.109",
  "thiserror",
+=======
+>>>>>>> 4f6ae61 (feat: codegenworking)
 ]
 
 [[package]]
 name = "substreams-macro"
 version = "0.5.10"
-source = "git+https://github.com/streamingfast/substreams-rs#e5c5ceec86a6ebc421c8850cd747c53d300fda9f"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6521ccd011a4c3f52cd3c31fc7400733e4feba2094e0e0e6354adca25b2b3f37"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn",
+ "syn 1.0.109",
  "thiserror",
 ]
 

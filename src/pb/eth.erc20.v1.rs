@@ -77,6 +77,7 @@ pub struct AllocationClosedEvents {
     #[prost(message, repeated, tag="1")]
     pub allocation_closed_events: ::prost::alloc::vec::Vec<AllocationClosed>,
 }
+#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AllocationCollectedEvents {
     #[prost(message, repeated, tag="1")]
@@ -356,6 +357,7 @@ pub struct AllocationCreated {
     #[prost(uint64, tag="12")]
     pub ordinal: u64,
 }
+#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AllocationClosed {
     #[prost(string, tag="1")]
