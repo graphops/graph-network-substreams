@@ -344,15 +344,17 @@ pub struct AllocationCreated {
     pub subgraph_deployment_id: ::prost::alloc::vec::Vec<u8>,
     #[prost(string, tag="6")]
     pub created_at_epoch: ::prost::alloc::string::String,
-    #[prost(bytes="vec", tag="7")]
-    pub created_at_block_hash: ::prost::alloc::vec::Vec<u8>,
+    #[prost(string, tag="7")]
+    pub created_at_block_hash: ::prost::alloc::string::String,
     #[prost(string, tag="8")]
     pub created_at_block_number: ::prost::alloc::string::String,
     #[prost(string, tag="9")]
+    pub created_at: ::prost::alloc::string::String,
+    #[prost(string, tag="10")]
     pub tokens: ::prost::alloc::string::String,
-    #[prost(bytes="vec", tag="10")]
+    #[prost(bytes="vec", tag="11")]
     pub allocation_id: ::prost::alloc::vec::Vec<u8>,
-    #[prost(uint64, tag="11")]
+    #[prost(uint64, tag="12")]
     pub ordinal: u64,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -364,14 +366,22 @@ pub struct AllocationClosed {
     #[prost(bytes="vec", tag="3")]
     pub subgraph_deployment_id: ::prost::alloc::vec::Vec<u8>,
     #[prost(string, tag="4")]
-    pub epoch: ::prost::alloc::string::String,
+    pub closed_at_epoch: ::prost::alloc::string::String,
     #[prost(string, tag="5")]
-    pub tokens: ::prost::alloc::string::String,
-    #[prost(bytes="vec", tag="6")]
-    pub allocation_id: ::prost::alloc::vec::Vec<u8>,
+    pub closed_at_block_hash: ::prost::alloc::string::String,
+    #[prost(string, tag="6")]
+    pub closed_at_block_number: ::prost::alloc::string::String,
     #[prost(string, tag="7")]
+    pub closed_at: ::prost::alloc::string::String,
+    #[prost(string, tag="8")]
+    pub tokens: ::prost::alloc::string::String,
+    #[prost(bytes="vec", tag="9")]
+    pub allocation_id: ::prost::alloc::vec::Vec<u8>,
+    #[prost(string, tag="10")]
     pub effective_allocation: ::prost::alloc::string::String,
-    #[prost(uint64, tag="8")]
+    #[prost(string, tag="11")]
+    pub poi: ::prost::alloc::string::String,
+    #[prost(uint64, tag="12")]
     pub ordinal: u64,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]

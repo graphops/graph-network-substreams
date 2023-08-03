@@ -1,8 +1,8 @@
 use crate::abi;
 use crate::pb::erc20::*;
 use crate::utils;
-use substreams::errors::Error;
 use std::ops::Sub;
+use substreams::errors::Error;
 use substreams::scalar::BigInt;
 use substreams::{hex, Hex};
 use substreams_ethereum::pb::eth::v2 as eth;
@@ -154,11 +154,12 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
                                 ordinal: log.ordinal,
                             });
                             // indexingDelegatorRewards are distributed whenever an allocation is closed
-                            delegator_rewards.push(DelegatorReward{
+                            delegator_rewards.push(DelegatorReward {
                                 id: Hex(&trx.hash).to_string(),
                                 allocation_id: event.allocation_id.to_vec(),
                                 rewards: BigInt::from_unsigned_bytes_be(&storage_change.new_value)
-                                .sub(BigInt::from_signed_bytes_be(&storage_change.old_value)).to_string(),
+                                    .sub(BigInt::from_signed_bytes_be(&storage_change.old_value))
+                                    .to_string(),
                                 ordinal: log.ordinal,
                             });
                         }
@@ -381,14 +382,15 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
             rebate_claimed_events.push(
                 //missing epoch and forEpoch fields since they are not yet needed
                 RebateClaimed {
-                id: Hex(&log.receipt.transaction.hash).to_string(), // Each event needs a unique id
-                indexer: event.indexer,
-                subgraph_deployment_id: event.subgraph_deployment_id.to_vec(),
-                allocation_id: event.allocation_id,
-                tokens: event.tokens.to_string(),
-                delegation_fees: event.delegation_fees.to_string(), // Tokens is origanally BigInt but proto does not have BigInt so we use string
-                ordinal: log.ordinal() as u64,
-            });
+                    id: Hex(&log.receipt.transaction.hash).to_string(), // Each event needs a unique id
+                    indexer: event.indexer,
+                    subgraph_deployment_id: event.subgraph_deployment_id.to_vec(),
+                    allocation_id: event.allocation_id,
+                    tokens: event.tokens.to_string(),
+                    delegation_fees: event.delegation_fees.to_string(), // Tokens is origanally BigInt but proto does not have BigInt so we use string
+                    ordinal: log.ordinal() as u64,
+                },
+            );
         } else if let Some(event) =
             abi::staking::events::DelegationParametersUpdated::match_and_decode(log)
         {
@@ -409,8 +411,9 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
                 active_for: event.indexer, //need to find a way to make this null later
                 subgraph_deployment_id: event.subgraph_deployment_id.to_vec(),
                 created_at_epoch: event.epoch.to_string(),
-                created_at_block_hash: blk.hash.clone(),
+                created_at_block_hash: Hex(&blk.hash).to_string(),
                 created_at_block_number: blk.number.to_string(),
+                created_at: blk.header.clone().unwrap().timestamp.unwrap().to_string(),
                 tokens: event.tokens.to_string(),
                 allocation_id: event.allocation_id.to_vec(),
                 ordinal: log.ordinal() as u64,
@@ -420,13 +423,18 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
                 id: Hex(&log.receipt.transaction.hash).to_string(), // Each event needs a unique id
                 indexer: event.indexer,
                 subgraph_deployment_id: event.subgraph_deployment_id.to_vec(),
-                epoch: event.epoch.to_string(),
+                closed_at_epoch: event.epoch.to_string(),
+                closed_at_block_hash: Hex(&blk.hash).to_string(),
+                closed_at_block_number: blk.number.to_string(),
+                closed_at: blk.header.clone().unwrap().timestamp.unwrap().to_string(),
                 tokens: event.tokens.to_string(),
                 allocation_id: event.allocation_id.to_vec(),
                 effective_allocation: event.effective_allocation.to_string(),
+                poi: Hex(&event.poi).to_string(),
                 ordinal: log.ordinal() as u64,
             });
-        }else if let Some(event) = abi::staking::events::AllocationCollected::match_and_decode(log) {
+        } else if let Some(event) = abi::staking::events::AllocationCollected::match_and_decode(log)
+        {
             allocation_collected_events.push(AllocationCollected {
                 id: Hex(&log.receipt.transaction.hash).to_string(), // Each event needs a unique id
                 indexer: event.indexer,
