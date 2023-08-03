@@ -180,6 +180,14 @@ modules:
     inputs:
       - map: map_events
 
+  - name: store_curator_rewards
+    kind: store
+    initialBlock: 11446769
+    updatePolicy: add
+    valueType: bigint
+    inputs:
+      - map: map_events
+
   - name: store_signal_amount
     kind: store
     initialBlock: 11446769
@@ -188,10 +196,19 @@ modules:
     inputs:
       - map: map_events
 
+  - name: store_subgraph_deployment_rewards
+    kind: store
+    initialBlock: 11446769
+    updatePolicy: add
+    valueType: bigint
+    inputs:
+      - map: map_indexing_rewards
+
   - name: graph_out
     kind: map
     initialBlock: 11446769
     inputs:
+      - map: map_events
       - store: store_grt_global
         mode: deltas
       - store: store_grt_balances
@@ -223,7 +240,11 @@ modules:
         mode: deltas
       - store: store_curator_fee_rewards
         mode: deltas
+      - store: store_curator_rewards
+        mode: deltas
       - store: store_signal_amount
+        mode: deltas
+      - store: store_subgraph_deployment_rewards
         mode: deltas
       - map: map_indexing_rewards
     output:
