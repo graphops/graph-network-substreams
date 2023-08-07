@@ -24,6 +24,11 @@ type GraphNetwork @entity {
   totalGRTMinted: BigInt
   "Total amount of GRT burned"
   totalGRTBurned: BigInt
+
+  "True if the protocol is paused"
+  isPaused: Boolean!
+  "True if the protocol is partially paused"
+  isPartialPaused: Boolean!
 }
 
 type GraphAccount @entity {

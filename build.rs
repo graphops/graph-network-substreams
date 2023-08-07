@@ -1,7 +1,6 @@
 use anyhow::{Ok, Result};
 use substreams_ethereum::Abigen;
 
-
 fn main() -> Result<(), anyhow::Error> {
     Abigen::new("erc20", "./abis/erc20.json")?
         .generate()?
@@ -18,5 +17,8 @@ fn main() -> Result<(), anyhow::Error> {
     Abigen::new("gns", "./abis/gns.json")?
         .generate()?
         .write_to_file("src/abi/gns.rs")?;
+    Abigen::new("controller", "./abis/controller.json")?
+        .generate()?
+        .write_to_file("src/abi/controller.rs")?;
     Ok(())
 }

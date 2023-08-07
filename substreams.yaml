@@ -10,7 +10,7 @@ protobuf:
     - ./proto
 
 imports:
-   entities_change: https://github.com/streamingfast/substreams-sink-entity-changes/releases/download/v1.3.0/substreams-sink-entity-changes-v1.3.0.spkg
+  entities_change: https://github.com/streamingfast/substreams-sink-entity-changes/releases/download/v1.3.0/substreams-sink-entity-changes-v1.3.0.spkg
 
 binaries:
   default:
@@ -28,7 +28,7 @@ modules:
 
   - name: map_events
     kind: map
-    initialBlock: 11446769
+    initialBlock: 11446764
     inputs:
       - source: sf.ethereum.type.v2.Block
     output:
@@ -206,8 +206,9 @@ modules:
 
   - name: graph_out
     kind: map
-    initialBlock: 11446769
+    initialBlock: 11446764
     inputs:
+      - source: sf.substreams.v1.Clock
       - map: map_events
       - store: store_grt_global
         mode: deltas

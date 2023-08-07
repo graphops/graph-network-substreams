@@ -1,7 +1,10 @@
 use crate::db;
 use crate::pb::erc20::*;
 
-use substreams::store::{DeltaBigInt, DeltaString, Deltas};
+use substreams::{
+    pb::substreams::Clock,
+    store::{DeltaBigInt, DeltaString, Deltas},
+};
 
 use substreams_entity_change::pb::entity::EntityChanges;
 
@@ -11,6 +14,7 @@ use substreams_entity_change::pb::entity::EntityChanges;
 
 #[substreams::handlers::map]
 pub fn graph_out(
+    clock: Clock,
     events: Events,
     grt_global_deltas: Deltas<DeltaBigInt>,
     grt_balance_deltas: Deltas<DeltaBigInt>,
@@ -34,7 +38,12 @@ pub fn graph_out(
     indexing_rewards: IndexingRewards,
 ) -> Result<EntityChanges, substreams::errors::Error> {
     let mut graph_network_entity_changes: EntityChanges = Default::default();
-    db::grt_global_change(grt_global_deltas, &mut graph_network_entity_changes);
+    db::graph_network_change(
+        grt_global_deltas,
+        events.clone(),
+        &mut graph_network_entity_changes,
+        clock.number == 11446764, //hard-coded, block number where graph-network entity is created
+    );
 
     let mut graph_account_entity_changes: EntityChanges = Default::default();
     db::graph_account_change(
@@ -92,16 +101,10 @@ pub fn graph_out(
     );
 
     let mut query_fee_rebate_changes: EntityChanges = Default::default();
-    db::query_fee_rebate_change(
-        query_fee_rebate_deltas,
-        &mut query_fee_rebate_changes,
-    );
+    db::query_fee_rebate_change(query_fee_rebate_deltas, &mut query_fee_rebate_changes);
 
     let mut query_fee_changes: EntityChanges = Default::default();
-    db::query_fees_change(
-        query_fees_amount_deltas,
-        &mut query_fee_changes,
-    );
+    db::query_fees_change(query_fees_amount_deltas, &mut query_fee_changes);
 
     Ok(EntityChanges {
         entity_changes: [

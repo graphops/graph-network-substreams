@@ -8,10 +8,48 @@ use substreams_entity_change::pb::entity::{entity_change::Operation, EntityChang
 // --------------------
 //  Map GRT Mint, Burn and Total Supply Entity Changes
 // --------------------
-pub fn grt_global_change(
+pub fn graph_network_change(
     grt_global_deltas: Deltas<DeltaBigInt>,
+    events: Events,
     entity_changes: &mut EntityChanges,
+    creation: bool,
 ) {
+    let pause_changed_event = events.pause_changed_events.unwrap();
+    let partial_pause_changed_events = events.partial_pause_changed_events.unwrap();
+
+    if creation {
+        entity_changes
+            .push_change(
+                "GraphNetwork",
+                "1", // GraphNetwork has id 1
+                1,
+                Operation::Update, // Update will create the entity if it does not exist
+            )
+            .change("isPaused", "false".to_string())
+            .change("isPartialPaused", "false".to_string());
+    }
+
+    for pause_changed in pause_changed_event.paused_changed_events {
+        entity_changes
+            .push_change(
+                "GraphNetwork",
+                "1", // GraphNetwork has id 1
+                1,
+                Operation::Update, // Update will create the entity if it does not exist
+            )
+            .change("isPaused", pause_changed.is_paused);
+    }
+
+    for partial_pause_changed in partial_pause_changed_events.partial_paused_changed_events {
+        entity_changes
+            .push_change(
+                "GraphNetwork",
+                "1", // GraphNetwork has id 1
+                1,
+                Operation::Update, // Update will create the entity if it does not exist
+            )
+            .change("isPartialPaused", partial_pause_changed.is_paused);
+    }
     for delta in grt_global_deltas.deltas {
         let name = match delta.key.as_str() {
             "totalGRTBurned" => "totalGRTBurned",
