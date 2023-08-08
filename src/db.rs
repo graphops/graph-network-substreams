@@ -281,8 +281,6 @@ pub fn subgraph_deployment_change(
             .change("signalledTokens", &curation_pool.new_signal);
     }
 
-    // just realized I need to add a store to aggregate indexer rewards per subgraph deployment since they are for all indexers
-    // this code needs to be updated. db should recive some stores, not indexing rewards directly. allocations should use indexing rewards directly
     for delta in subgraph_deployment_rewards_deltas.deltas {
         let name = match delta.key.as_str().split(":").last().unwrap() {
             "indexingRewardAmount" => "indexingRewardAmount",
