@@ -1,9 +1,7 @@
 use crate::pb::erc20::{
-    CurationPools, DelegationPools, IndexerStakes, IndexingRewards, SubgraphAllocations, Events
+    CurationPools, DelegationPools, Events, IndexerStakes, IndexingRewards, SubgraphAllocations,
 };
 use crate::utils;
-use std::str::FromStr;
-use substreams::scalar::BigInt;
 use substreams::store::{DeltaBigInt, DeltaString, Deltas};
 use substreams_entity_change::pb::entity::{entity_change::Operation, EntityChanges};
 
@@ -30,7 +28,7 @@ pub fn grt_global_change(
                 delta.ordinal,
                 Operation::Update, // Update will create the entity if it does not exist
             )
-            .change(name, delta);
+            .change(name, delta.new_value.to_string());
     }
 }
 
@@ -45,7 +43,7 @@ pub fn indexer_stake_change(
     for delta in staked_token_deltas.deltas {
         entity_changes
             .push_change("GraphNetwork", "1", delta.ordinal, Operation::Update)
-            .change("totalTokensStaked", delta);
+            .change("totalTokensStaked", delta.new_value.to_string());
     }
     for indexer_stake in indexer_stakes.indexer_stakes {
         entity_changes
@@ -55,10 +53,7 @@ pub fn indexer_stake_change(
                 indexer_stake.ordinal,
                 Operation::Update, // Update will create the entity if it does not exist
             )
-            .change(
-                "stakedTokens",
-                BigInt::from_str(&indexer_stake.new_stake).unwrap(),
-            );
+            .change("stakedTokens", &indexer_stake.new_stake);
     }
 }
 
@@ -80,7 +75,7 @@ pub fn delegated_stake_change(
                 delta.ordinal,
                 Operation::Update, // Update will create the entity if it does not exist
             )
-            .change("stakedTokens", &delta);
+            .change("stakedTokens", &delta.new_value.to_string());
     }
 
     for delta in cumulative_delegator_stake_deltas.deltas {
@@ -91,7 +86,7 @@ pub fn delegated_stake_change(
                 delta.ordinal,
                 Operation::Update, // Update will create the entity if it does not exist
             )
-            .change("totalStakedTokens", &delta);
+            .change("totalStakedTokens", &delta.new_value.to_string());
     }
 
     for delta in total_delegated_stake_deltas.deltas {
@@ -102,7 +97,7 @@ pub fn delegated_stake_change(
                 delta.ordinal,
                 Operation::Update, // Update will create the entity if it does not exist
             )
-            .change("totalTokensDelegated", &delta);
+            .change("totalTokensDelegated", &delta.new_value.to_string());
     }
 
     for delegation_pool in delegation_pools.delegation_pools {
@@ -113,10 +108,7 @@ pub fn delegated_stake_change(
                 delegation_pool.ordinal,
                 Operation::Update, // Update will create the entity if it does not exist
             )
-            .change(
-                "delegatedTokens",
-                BigInt::from_str(&delegation_pool.new_stake).unwrap(),
-            );
+            .change("delegatedTokens", &delegation_pool.new_stake);
     }
 }
 
@@ -137,7 +129,7 @@ pub fn curation_signal_change(
                 delta.ordinal,
                 Operation::Update, // Update will create the entity if it does not exist
             )
-            .change("totalSignalledTokens", &delta);
+            .change("totalSignalledTokens", &delta.new_value.to_string());
     }
 
     for delta in cumulative_curator_burned_deltas.deltas {
@@ -148,7 +140,7 @@ pub fn curation_signal_change(
                 delta.ordinal,
                 Operation::Update, // Update will create the entity if it does not exist
             )
-            .change("totalUnsignalledTokens", &delta);
+            .change("totalUnsignalledTokens", &delta.new_value.to_string());
     }
 
     for delta in total_signalled_deltas.deltas {
@@ -159,7 +151,7 @@ pub fn curation_signal_change(
                 delta.ordinal,
                 Operation::Update, // Update will create the entity if it does not exist
             )
-            .change("totalTokensSignalled", &delta);
+            .change("totalTokensSignalled", &delta.new_value.to_string());
     }
 }
 
@@ -181,7 +173,7 @@ pub fn graph_account_change(
                 delta.ordinal,
                 Operation::Update, // Update will create the entity if it does not exist
             )
-            .change("balance", delta);
+            .change("balance", delta.new_value.to_string());
     }
     for delta in graph_account_indexer_deltas.deltas {
         entity_changes
@@ -276,10 +268,7 @@ pub fn subgraph_deployment_change(
                 subgraph_allocation.ordinal,
                 Operation::Update,
             )
-            .change(
-                "stakedTokens",
-                BigInt::from_str(&subgraph_allocation.new_tokens).unwrap(),
-            );
+            .change("stakedTokens", &subgraph_allocation.new_tokens);
     }
     for curation_pool in curation_pools.curation_pools {
         entity_changes
@@ -289,14 +278,9 @@ pub fn subgraph_deployment_change(
                 curation_pool.ordinal,
                 Operation::Update, // Update will create the entity if it does not exist
             )
-            .change(
-                "signalledTokens",
-                BigInt::from_str(&curation_pool.new_signal).unwrap(),
-            );
+            .change("signalledTokens", &curation_pool.new_signal);
     }
 
-    // just realized I need to add a store to aggregate indexer rewards per subgraph deployment since they are for all indexers 
-    // this code needs to be updated. db should recive some stores, not indexing rewards directly. allocations should use indexing rewards directly
     for delta in subgraph_deployment_rewards_deltas.deltas {
         let name = match delta.key.as_str().split(":").last().unwrap() {
             "indexingRewardAmount" => "indexingRewardAmount",
@@ -309,11 +293,11 @@ pub fn subgraph_deployment_change(
         entity_changes
             .push_change(
                 "SubgraphDeployment",
-                &delta.key.as_str().split(":").nth(0).unwrap(), 
+                &delta.key.as_str().split(":").nth(0).unwrap(),
                 delta.ordinal,
                 Operation::Update, // Update will create the entity if it does not exist
             )
-            .change(name, delta);
+            .change(name, delta.new_value.to_string());
     }
 
     for delta in curator_fee_rewards_deltas.deltas {
@@ -324,10 +308,7 @@ pub fn subgraph_deployment_change(
                 delta.ordinal,
                 Operation::Update, // Update will create the entity if it does not exist
             )
-            .change(
-                "curatorFeeRewards",
-                &delta,
-            );
+            .change("curatorFeeRewards", &delta.new_value.to_string());
     }
     for delta in signal_amount_deltas.deltas {
         entity_changes
@@ -337,20 +318,18 @@ pub fn subgraph_deployment_change(
                 delta.ordinal,
                 Operation::Update, // Update will create the entity if it does not exist
             )
-            .change(
-                "signalAmount",
-                &delta,
-            );
+            .change("signalAmount", &delta.new_value.to_string());
     }
 }
 pub fn allocation_change(
     events: Events,
-    indexing_rewards:IndexingRewards,
+    indexing_rewards: IndexingRewards,
     curator_rewards_deltas: Deltas<DeltaBigInt>,
     entity_changes: &mut EntityChanges,
 ) {
     let allocation_created_events = events.allocation_created_events.unwrap();
     let allocation_closed_events = events.allocation_closed_events.unwrap();
+    let rebate_claimed_events = events.rebate_claimed_events.unwrap();
 
     for allocation_created in allocation_created_events.allocation_created_events {
         entity_changes
@@ -363,11 +342,22 @@ pub fn allocation_change(
             .change("indexer", &allocation_created.indexer)
             .change("creator", &allocation_created.creator)
             .change("activeForIndexer", &allocation_created.indexer)
-            .change("subgraphDeploymentId", allocation_created.subgraph_deployment_id)
             .change(
-                "allocatedTokens",
-                allocation_created.tokens,
-            );
+                "subgraphDeploymentId",
+                allocation_created.subgraph_deployment_id,
+            )
+            .change("createdAtEpoch", &allocation_created.created_at_epoch)
+            .change(
+                "createdAtBlockHash",
+                &allocation_created.created_at_block_hash,
+            )
+            .change(
+                "createdAtBlockNumber",
+                &allocation_created.created_at_block_number,
+            )
+            .change("createdAt", &allocation_created.created_at)
+            .change("status", "Active".to_string())
+            .change("allocatedTokens", allocation_created.tokens);
     }
     for allocation_closed in allocation_closed_events.allocation_closed_events {
         entity_changes
@@ -376,10 +366,30 @@ pub fn allocation_change(
                 &utils::generate_key(&allocation_closed.allocation_id),
                 allocation_closed.ordinal,
                 Operation::Update, // Update will create the entity if it does not exist
-            ).change(
+            )
+            .change(
                 "effectiveAllocation",
                 allocation_closed.effective_allocation,
-            );
+            )
+            .change("closedAtEpoch", &allocation_closed.closed_at_epoch)
+            .change("closedAtBlockHash", &allocation_closed.closed_at_block_hash)
+            .change(
+                "closedAtBlockNumber",
+                &allocation_closed.closed_at_block_number,
+            )
+            .change("closedAt", &allocation_closed.closed_at)
+            .change("status", "Closed".to_string())
+            .change("poi", &allocation_closed.poi);
+    }
+    for rebate_claimed in rebate_claimed_events.rebate_claimed_events {
+        entity_changes
+            .push_change(
+                "Allocation",
+                &utils::generate_key(&rebate_claimed.allocation_id),
+                rebate_claimed.ordinal,
+                Operation::Update,
+            )
+            .change("status", "Claimed".to_string());
     }
     for indexing_reward in indexing_rewards.indexing_rewards {
         entity_changes
@@ -390,10 +400,7 @@ pub fn allocation_change(
                 Operation::Update, // Update will create the entity if it does not exist
             )
             .change("indexingRewards", indexing_reward.amount)
-            .change(
-                "indexingIndexerRewards",
-                indexing_reward.indexer_rewards,
-            )
+            .change("indexingIndexerRewards", indexing_reward.indexer_rewards)
             .change(
                 "indexingDelegatorRewards",
                 indexing_reward.delegator_rewards,
@@ -401,84 +408,65 @@ pub fn allocation_change(
     }
     for delta in curator_rewards_deltas.deltas {
         entity_changes
-        .push_change(
-            "Allocation",
-            &delta.key,
-            delta.ordinal,
-            Operation::Update, // Update will create the entity if it does not exist
-        ).change(
-            "curatorRewards",
-            &delta,
-        );
+            .push_change(
+                "Allocation",
+                &delta.key,
+                delta.ordinal,
+                Operation::Update, // Update will create the entity if it does not exist
+            )
+            .change("curatorRewards", &delta.new_value.to_string());
     }
-
 }
 
 pub fn query_fee_rebate_change(
     query_fee_rebate_deltas: Deltas<DeltaBigInt>,
     entity_changes: &mut EntityChanges,
-
 ) {
     for delta in query_fee_rebate_deltas.deltas {
-        if  &delta.key.as_str().split(":").nth(0).unwrap() == &"SubgraphDeployment"{
+        if &delta.key.as_str().split(":").nth(0).unwrap() == &"SubgraphDeployment" {
             entity_changes
-            .push_change(
-                "SubgraphDeployment",
-                &delta.key.as_str().split(":").last().unwrap().to_string(),
-                delta.ordinal,
-                Operation::Update, // Update will create the entity if it does not exist
-            )
-            .change(
-                "queryFeeRebates",
-                &delta,
-            );
-        }    
-        else if  &delta.key.as_str().split(":").nth(0).unwrap() == &"Allocation"{
+                .push_change(
+                    "SubgraphDeployment",
+                    &delta.key.as_str().split(":").last().unwrap().to_string(),
+                    delta.ordinal,
+                    Operation::Update, // Update will create the entity if it does not exist
+                )
+                .change("queryFeeRebates", &delta.new_value.to_string());
+        } else if &delta.key.as_str().split(":").nth(0).unwrap() == &"Allocation" {
             entity_changes
-            .push_change(
-                "Allocation",
-                &delta.key.as_str().split(":").last().unwrap().to_string(),
-                delta.ordinal,
-                Operation::Update, // Update will create the entity if it does not exist
-            )
-            .change(
-                "queryFeeRebates",
-                &delta,
-            );
-        }    
+                .push_change(
+                    "Allocation",
+                    &delta.key.as_str().split(":").last().unwrap().to_string(),
+                    delta.ordinal,
+                    Operation::Update, // Update will create the entity if it does not exist
+                )
+                .change("queryFeeRebates", &delta.new_value.to_string());
+        }
     }
 }
 pub fn query_fees_change(
     query_fees_amount_deltas: Deltas<DeltaBigInt>,
     entity_changes: &mut EntityChanges,
-
 ) {
     for delta in query_fees_amount_deltas.deltas {
-        if  &delta.key.as_str().split(":").nth(0).unwrap() == &"SubgraphDeployment"{
+        if &delta.key.as_str().split(":").nth(0).unwrap() == &"SubgraphDeployment" {
             entity_changes
-            .push_change(
-                "SubgraphDeployment",
-                &delta.key.as_str().split(":").last().unwrap().to_string(),
-                delta.ordinal,
-                Operation::Update, // Update will create the entity if it does not exist
-            )
-            .change(
-                "queryFeesAmount",
-                &delta,
-            );
-        }    
-        else if  &delta.key.as_str().split(":").nth(0).unwrap() == &"Allocation"{
+                .push_change(
+                    "SubgraphDeployment",
+                    &delta.key.as_str().split(":").last().unwrap().to_string(),
+                    delta.ordinal,
+                    Operation::Update, // Update will create the entity if it does not exist
+                )
+                .change("queryFeesAmount", &delta.new_value.to_string());
+        } else if &delta.key.as_str().split(":").nth(0).unwrap() == &"Allocation" {
             entity_changes
-            .push_change(
-                "Allocation",
-                &delta.key.as_str().split(":").last().unwrap().to_string(),
-                delta.ordinal,
-                Operation::Update, // Update will create the entity if it does not exist
-            )
-            .change(
-                "queryFeesCollected",
-                &delta,
-            );
-        }    
+                .push_change(
+                    "Allocation",
+                    &delta.key.as_str().split(":").last().unwrap().to_string(),
+                    delta.ordinal,
+                    Operation::Update, // Update will create the entity if it does not exist
+                )
+                .change("queryFeesCollected", &delta.new_value.to_string());
+        }
     }
 }

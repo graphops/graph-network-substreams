@@ -3,7 +3,7 @@ use crate::utils;
 use std::ops::Sub;
 use std::str::FromStr;
 use substreams::prelude::*;
-use substreams::{hex, log, Hex};
+use substreams::{ Hex};
 use substreams::scalar::BigInt;
 use substreams::{
     store::StoreAddBigInt, store::StoreSetIfNotExists, store::StoreSetIfNotExistsString,

@@ -10,7 +10,7 @@ protobuf:
     - ./proto
 
 imports:
-  entity: https://github.com/streamingfast/substreams-entity-change/releases/download/v1.1.0/substreams-entity-change-v1.1.0.spkg
+   entities_change: https://github.com/streamingfast/substreams-sink-entity-changes/releases/download/v1.3.0/substreams-sink-entity-changes-v1.3.0.spkg
 
 binaries:
   default:
@@ -248,4 +248,4 @@ modules:
         mode: deltas
       - map: map_indexing_rewards
     output:
-      type: proto:sf.substreams.entity.v1.EntityChanges
+      type: proto:sf.substreams.sink.entity.v1.EntityChanges

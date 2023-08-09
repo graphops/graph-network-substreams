@@ -112,7 +112,7 @@ type SubgrapDeployment @entity {
   "Total rewards accrued all time by indexers"
   indexingIndexerRewardAmount: BigInt!
   "Total rewards accrued all time by delegators"
-  indexingDelegatorRewardAmount: BigInt!  
+  indexingDelegatorRewardAmount: BigInt!
   "Total query fees earned by this Subgraph Deployment, without curator query fees"
   queryFeesAmount: BigInt!
   "Total query fee rebates earned from the protocol, through the cobbs douglas formula. Does not include delegation fees"
@@ -136,6 +136,18 @@ type Allocation @entity {
   allocatedTokens: BigInt!
   "Effective allocation that is realized upon closing"
   effectiveAllocation: BigInt!
+  "Epoch this allocation was created"
+  createdAtEpoch: Int!
+  "Block at which this allocation was created"
+  createdAtBlockHash: Bytes!
+  "Block number at which this allocation was created"
+  createdAtBlockNumber: Int!
+  "Epoch this allocation was closed in"
+  closedAtEpoch: Int
+  "Block hash at which this allocation was closed"
+  closedAtBlockHash: Bytes
+  "Block number at which this allocation was closed"
+  closedAtBlockNumber: Int
   "Fees this allocation collected from query fees upon closing. Excludes curator reward and protocol tax"
   queryFeesCollected: BigInt!
   "Query fee rebate amount claimed from the protocol through cobbs douglas. Does not include portion given to delegators"
@@ -148,4 +160,20 @@ type Allocation @entity {
   indexingIndexerRewards: BigInt!
   "Indexing rewards earned by this allocation by delegators"
   indexingDelegatorRewards: BigInt!
+  "Status of the allocation"
+  status: AllocationStatus!
+  "Timestamp this allocation was created at, human readable, not epoch unlike the original subgraph"
+  createdAt: Int!
+  "Timestamp this allocation was closed at, human readable, not epoch unlike the original subgraph"
+  closedAt: Int
+  "POI submitted with a closed allocation"
+  poi: Bytes
+}
+
+enum AllocationStatus {
+  Null # == indexer == address(0)
+  Active # == not Null && tokens > 0 #
+  Closed # == Active && closedAtEpoch != 0. Still can collect, while you are waiting to be finalized. a.k.a settling
+  Finalized # == Closing && closedAtEpoch + channelDisputeEpochs > now(). Note, the subgraph has no way to return this value. it is implied
+  Claimed # == not Null && tokens == 0 - i.e. finalized, and all tokens withdrawn
 }
