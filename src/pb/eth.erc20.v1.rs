@@ -85,6 +85,18 @@ pub struct AllocationCollectedEvents {
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
+pub struct PauseChangedEvents {
+    #[prost(message, repeated, tag="1")]
+    pub paused_changed_events: ::prost::alloc::vec::Vec<PauseChanged>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct PartialPauseChangedEvents {
+    #[prost(message, repeated, tag="1")]
+    pub partial_paused_changed_events: ::prost::alloc::vec::Vec<PartialPauseChanged>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct IndexerStakes {
     #[prost(message, repeated, tag="1")]
     pub indexer_stakes: ::prost::alloc::vec::Vec<IndexerStake>,
@@ -162,6 +174,10 @@ pub struct Events {
     pub allocation_closed_events: ::core::option::Option<AllocationClosedEvents>,
     #[prost(message, optional, tag="13")]
     pub allocation_collected_events: ::core::option::Option<AllocationCollectedEvents>,
+    #[prost(message, optional, tag="14")]
+    pub pause_changed_events: ::core::option::Option<PauseChangedEvents>,
+    #[prost(message, optional, tag="15")]
+    pub partial_pause_changed_events: ::core::option::Option<PartialPauseChangedEvents>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -357,6 +373,7 @@ pub struct AllocationCreated {
     #[prost(uint64, tag="12")]
     pub ordinal: u64,
 }
+#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AllocationClosed {
     #[prost(string, tag="1")]
@@ -404,6 +421,26 @@ pub struct AllocationCollected {
     #[prost(string, tag="8")]
     pub rebate_fees: ::prost::alloc::string::String,
     #[prost(uint64, tag="9")]
+    pub ordinal: u64,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct PauseChanged {
+    #[prost(string, tag="1")]
+    pub id: ::prost::alloc::string::String,
+    #[prost(bool, tag="2")]
+    pub is_paused: bool,
+    #[prost(uint64, tag="3")]
+    pub ordinal: u64,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct PartialPauseChanged {
+    #[prost(string, tag="1")]
+    pub id: ::prost::alloc::string::String,
+    #[prost(bool, tag="2")]
+    pub is_paused: bool,
+    #[prost(uint64, tag="3")]
     pub ordinal: u64,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]

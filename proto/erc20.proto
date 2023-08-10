@@ -58,6 +58,13 @@ message AllocationCollectedEvents {
   repeated AllocationCollected allocation_collected_events = 1;
 }
 
+message PauseChangedEvents {
+  repeated PauseChanged paused_changed_events = 1;
+}
+message PartialPauseChangedEvents {
+  repeated PartialPauseChanged partial_paused_changed_events = 1;
+}
+
 message IndexerStakes {
   repeated IndexerStake indexer_stakes = 1;
 }
@@ -104,6 +111,8 @@ message Events {
   AllocationCreatedEvents allocation_created_events = 11;
   AllocationClosedEvents allocation_closed_events = 12;
   AllocationCollectedEvents allocation_collected_events = 13;
+  PauseChangedEvents pause_changed_events = 14;
+  PartialPauseChangedEvents partial_pause_changed_events = 15;
 }
 
 message Transfer {
@@ -240,6 +249,18 @@ message AllocationCollected {
   string curation_fees = 7;
   string rebate_fees = 8;
   uint64 ordinal = 9;
+}
+
+message PauseChanged {
+  string id = 1;
+  bool is_paused = 2;
+  uint64 ordinal = 3;
+}
+
+message PartialPauseChanged {
+  string id = 1;
+  bool is_paused = 2;
+  uint64 ordinal = 3;
 }
 
 message IndexerStake {

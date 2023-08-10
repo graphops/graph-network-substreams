@@ -14,6 +14,7 @@ const STAKING_CONTRACT: [u8; 20] = hex!("F55041E37E12cD407ad00CE2910B8269B01263b
 const REWARDS_MANAGER_CONTRACT: [u8; 20] = hex!("9Ac758AB77733b4150A901ebd659cbF8cB93ED66");
 const GNS_CONTRACT: [u8; 20] = hex!("aDcA0dd4729c8BA3aCf3E99F3A9f471EF37b6825");
 const CURATION_CONTRACT: [u8; 20] = hex!("8FE00a685Bcb3B2cc296ff6FfEaB10acA4CE1538");
+const CONTROLLER_CONTRACT: [u8; 20] = hex!("24ccd4d3ac8529ff08c58f74ff6755036e616117");
 
 // -------------------- INITIAL MAPS --------------------
 #[substreams::handlers::map]
@@ -325,6 +326,8 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
     let mut allocation_created_events = vec![];
     let mut allocation_closed_events = vec![];
     let mut allocation_collected_events = vec![];
+    let mut pause_changed_events = vec![];
+    let mut partial_pause_changed_events = vec![];
 
     // Potentially consider adding log.index() to the IDs, to have them be truly unique in
     // transactions with potentially more than 1 of these messages
@@ -333,7 +336,8 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
             || &Hex(&STAKING_CONTRACT).to_string() == &Hex(&log.address()).to_string()
             || &Hex(&REWARDS_MANAGER_CONTRACT).to_string() == &Hex(&log.address()).to_string()
             || &Hex(&GNS_CONTRACT).to_string() == &Hex(&log.address()).to_string()
-            || &Hex(&CURATION_CONTRACT).to_string() == &Hex(&log.address()).to_string())
+            || &Hex(&CURATION_CONTRACT).to_string() == &Hex(&log.address()).to_string()
+            || &Hex(&CONTROLLER_CONTRACT).to_string() == &Hex(&log.address()).to_string())
         {
             continue;
         }
@@ -476,6 +480,20 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
                 signal: event.signal.to_string(), // Tokens is origanally BigInt but proto does not have BigInt so we use string
                 ordinal: log.ordinal() as u64,
             });
+        } else if let Some(event) = abi::controller::events::PauseChanged::match_and_decode(log) {
+            pause_changed_events.push(PauseChanged {
+                id: Hex(&log.receipt.transaction.hash).to_string(),
+                is_paused: event.is_paused,
+                ordinal: log.ordinal() as u64,
+            })
+        } else if let Some(event) =
+            abi::controller::events::PartialPauseChanged::match_and_decode(log)
+        {
+            partial_pause_changed_events.push(PartialPauseChanged {
+                id: Hex(&log.receipt.transaction.hash).to_string(),
+                is_paused: event.is_paused,
+                ordinal: log.ordinal() as u64,
+            })
         }
     }
 
@@ -521,6 +539,12 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
     });
     events.allocation_collected_events = Some(AllocationCollectedEvents {
         allocation_collected_events: allocation_collected_events,
+    });
+    events.pause_changed_events = Some(PauseChangedEvents {
+        paused_changed_events: pause_changed_events,
+    });
+    events.partial_pause_changed_events = Some(PartialPauseChangedEvents {
+        partial_paused_changed_events: partial_pause_changed_events,
     });
 
     Ok(events)
