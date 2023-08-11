@@ -20,5 +20,8 @@ fn main() -> Result<(), anyhow::Error> {
     Abigen::new("controller", "./abis/controller.json")?
         .generate()?
         .write_to_file("src/abi/controller.rs")?;
+    Abigen::new("epochManager", "./abis/epochManager.json")?
+        .generate()?
+        .write_to_file("src/abi/epoch_manager.rs")?;
     Ok(())
 }

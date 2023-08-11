@@ -15,6 +15,7 @@ const REWARDS_MANAGER_CONTRACT: [u8; 20] = hex!("9Ac758AB77733b4150A901ebd659cbF
 const GNS_CONTRACT: [u8; 20] = hex!("aDcA0dd4729c8BA3aCf3E99F3A9f471EF37b6825");
 const CURATION_CONTRACT: [u8; 20] = hex!("8FE00a685Bcb3B2cc296ff6FfEaB10acA4CE1538");
 const CONTROLLER_CONTRACT: [u8; 20] = hex!("24ccd4d3ac8529ff08c58f74ff6755036e616117");
+const EPOCH_MANAGER_CONTRACT: [u8; 20] = hex!("64f990bf16552a693dcb043bb7bf3866c5e05ddb");
 
 // -------------------- INITIAL MAPS --------------------
 #[substreams::handlers::map]
@@ -337,7 +338,9 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
             || &Hex(&REWARDS_MANAGER_CONTRACT).to_string() == &Hex(&log.address()).to_string()
             || &Hex(&GNS_CONTRACT).to_string() == &Hex(&log.address()).to_string()
             || &Hex(&CURATION_CONTRACT).to_string() == &Hex(&log.address()).to_string()
-            || &Hex(&CONTROLLER_CONTRACT).to_string() == &Hex(&log.address()).to_string())
+            || &Hex(&CONTROLLER_CONTRACT).to_string() == &Hex(&log.address()).to_string()
+            || &Hex(&EPOCH_MANAGER_CONTRACT).to_string() == &Hex(&log.address()).to_string()
+        )
         {
             continue;
         }
@@ -494,7 +497,7 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
                 is_paused: event.is_paused,
                 ordinal: log.ordinal() as u64,
             })
-        }
+        } 
     }
 
     // GNS ones require a bit extra work, as they are 2 different versions of the name signal and burn
