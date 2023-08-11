@@ -329,6 +329,7 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
     let mut allocation_collected_events = vec![];
     let mut pause_changed_events = vec![];
     let mut partial_pause_changed_events = vec![];
+    let mut epoch_length_updated_events = vec![];
 
     // Potentially consider adding log.index() to the IDs, to have them be truly unique in
     // transactions with potentially more than 1 of these messages
@@ -339,8 +340,7 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
             || &Hex(&GNS_CONTRACT).to_string() == &Hex(&log.address()).to_string()
             || &Hex(&CURATION_CONTRACT).to_string() == &Hex(&log.address()).to_string()
             || &Hex(&CONTROLLER_CONTRACT).to_string() == &Hex(&log.address()).to_string()
-            || &Hex(&EPOCH_MANAGER_CONTRACT).to_string() == &Hex(&log.address()).to_string()
-        )
+            || &Hex(&EPOCH_MANAGER_CONTRACT).to_string() == &Hex(&log.address()).to_string())
         {
             continue;
         }
@@ -497,7 +497,17 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
                 is_paused: event.is_paused,
                 ordinal: log.ordinal() as u64,
             })
-        } 
+        } else if let Some(event) =
+            abi::epoch_manager::events::EpochLengthUpdate::match_and_decode(log)
+        {   
+            epoch_length_updated_events.push(EpochLengthUpdated{
+                id: Hex(&log.receipt.transaction.hash).to_string(),
+                last_length_update_epoch: event.epoch.to_string(),
+                epoch_length: event.epoch_length.to_string(),
+                ordinal: log.ordinal() as u64,
+            })
+
+        }
     }
 
     // GNS ones require a bit extra work, as they are 2 different versions of the name signal and burn
@@ -548,6 +558,9 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
     });
     events.partial_pause_changed_events = Some(PartialPauseChangedEvents {
         partial_paused_changed_events: partial_pause_changed_events,
+    });
+    events.epoch_length_updated_events = Some(EpochLengthUpdatedEvents {
+        epoch_length_updated_events: epoch_length_updated_events,
     });
 
     Ok(events)
