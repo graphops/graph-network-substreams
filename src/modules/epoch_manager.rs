@@ -48,9 +48,9 @@ fn store_epoch_count(store: StoreGetString, clock: Clock, s: StoreAddBigInt) {
 #[substreams::handlers::store]
 fn store_epoch_start(store: StoreGetBigInt, clock: Clock, s: StoreSetIfNotExistsBigInt) {
     match store.get_last("epoch") {
-        Some(current_epoch) => {
-            if current_epoch > BigInt::zero() {
-                s.set_if_not_exists(1, current_epoch.sub(1).to_string(), &clock.number.into())
+        Some(epoch_count) => {
+            if epoch_count > BigInt::zero() {
+                s.set_if_not_exists(1, epoch_count.sub(1).to_string(), &clock.number.into())
             }
         }
         None => (),
@@ -61,9 +61,9 @@ fn store_epoch_start(store: StoreGetBigInt, clock: Clock, s: StoreSetIfNotExists
 fn store_epoch_end(store: StoreGetBigInt, clock: Clock, s: StoreSetIfNotExistsBigInt) {
     match store.get_last("epoch") {
         None => (),
-        Some(current_epoch) => {
-            if current_epoch > BigInt::one() {
-                let previous_epoch = current_epoch.clone().sub(2);
+        Some(epoch_count) => {
+            if epoch_count > BigInt::one() {
+                let previous_epoch = epoch_count.clone().sub(2);
                 s.set_if_not_exists(1, previous_epoch.to_string(), &clock.number.into());
             }
         }

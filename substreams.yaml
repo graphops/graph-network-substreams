@@ -239,6 +239,16 @@ modules:
       - store: store_epoch_count
       - source: sf.substreams.v1.Clock
 
+  - name: store_epoch_signal
+    kind: store
+    initialBlock: 11446769
+    updatePolicy: add
+    valueType: bigint
+    inputs:
+      - map: map_storage_changes
+      - store: store_epoch_count
+      
+
   - name: graph_out
     kind: map
     initialBlock: 11446764
@@ -248,6 +258,8 @@ modules:
       - store: store_epoch_start
         mode: deltas
       - store: store_epoch_end
+        mode: deltas
+      - store: store_epoch_signal
         mode: deltas
       - store: store_grt_global
         mode: deltas

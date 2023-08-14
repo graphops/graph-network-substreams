@@ -512,6 +512,7 @@ pub fn query_fees_change(
 pub fn epoch_change(
     epoch_start_deltas: Deltas<DeltaString>,
     epoch_end_deltas: Deltas<DeltaString>,
+    epoch_signal_deltas: Deltas<DeltaBigInt>,
     entity_changes: &mut EntityChanges,
 ) {
     for delta in epoch_start_deltas.deltas {
@@ -533,5 +534,15 @@ pub fn epoch_change(
                 Operation::Update, // Update will create the entity if it does not exist
             )
             .change("endBlock", delta);
+    }
+    for delta in epoch_signal_deltas.deltas {
+        entity_changes
+            .push_change(
+                "Epoch",
+                &delta.key,
+                delta.ordinal,
+                Operation::Update, // Update will create the entity if it does not exist
+            )
+            .change("signalledTokens", delta);
     }
 }

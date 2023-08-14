@@ -56,6 +56,29 @@ fn store_total_signalled(store_changes: StorageChanges, s: StoreAddBigInt) {
 }
 
 #[substreams::handlers::store]
+fn store_epoch_signal(store_changes: StorageChanges, store: StoreGetBigInt, s: StoreAddBigInt) {
+    let curation_pools = store_changes.curation_pools.unwrap();
+    match store.get_last("epoch") {
+        Some(epoch_count) => {
+            if epoch_count > BigInt::zero() {
+                let current_epoch = epoch_count.sub(1).to_string();
+                for curation_pool in curation_pools.curation_pools {
+                    s.add(
+                        curation_pool.ordinal,
+                        &current_epoch,
+                        BigInt::from_str(&curation_pool.new_signal)
+                            .unwrap()
+                            .sub(BigInt::from_str(&curation_pool.old_signal).unwrap()),
+                    );
+                }
+            }
+        }
+        None => (),
+    }
+   
+}
+
+#[substreams::handlers::store]
 fn store_signal_amount(events: Events, s: StoreAddBigInt) {
     let signalled_events = events.signalled_events.unwrap();
     let burned_events = events.burned_events.unwrap();

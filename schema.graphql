@@ -193,4 +193,6 @@ type Epoch @entity {
   startBlock: Int!
   "End block of the epoch"
   endBlock: Int!
+  "Signaled tokens during this epoch"
+  signalledTokens: BigInt!
 }

@@ -18,6 +18,7 @@ pub fn graph_out(
     events: Events,
     epoch_start_deltas: Deltas<DeltaString>,
     epoch_end_deltas: Deltas<DeltaString>,
+    epoch_signal_deltas: Deltas<DeltaBigInt>,
     grt_global_deltas: Deltas<DeltaBigInt>,
     grt_balance_deltas: Deltas<DeltaBigInt>,
     graph_account_indexer_deltas: Deltas<DeltaString>,
@@ -109,7 +110,7 @@ pub fn graph_out(
     db::query_fees_change(query_fees_amount_deltas, &mut query_fee_changes);
 
     let mut epoch_changes: EntityChanges = Default::default();
-    db::epoch_change(epoch_start_deltas, epoch_end_deltas, &mut epoch_changes);
+    db::epoch_change(epoch_start_deltas, epoch_end_deltas, epoch_signal_deltas, &mut epoch_changes);
 
     Ok(EntityChanges {
         entity_changes: [
