@@ -502,7 +502,7 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
         {   
             epoch_length_updated_events.push(EpochLengthUpdated{
                 id: Hex(&log.receipt.transaction.hash).to_string(),
-                last_length_update_epoch: event.epoch.to_string(),
+                last_length_update_block: blk.number.to_string(),
                 epoch_length: event.epoch_length.to_string(),
                 ordinal: log.ordinal() as u64,
             })

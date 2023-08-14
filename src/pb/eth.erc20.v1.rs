@@ -457,7 +457,7 @@ pub struct EpochLengthUpdated {
     #[prost(string, tag="1")]
     pub id: ::prost::alloc::string::String,
     #[prost(string, tag="2")]
-    pub last_length_update_epoch: ::prost::alloc::string::String,
+    pub last_length_update_block: ::prost::alloc::string::String,
     #[prost(string, tag="3")]
     pub epoch_length: ::prost::alloc::string::String,
     #[prost(uint64, tag="4")]

@@ -271,7 +271,7 @@ message PartialPauseChanged {
 
 message EpochLengthUpdated {
   string id = 1;
-  string last_length_update_epoch = 2;
+  string last_length_update_block = 2;
   string epoch_length = 3;
   uint64 ordinal = 4;
 }
