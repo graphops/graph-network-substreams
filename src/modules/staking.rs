@@ -5,13 +5,12 @@ use std::str::FromStr;
 use substreams::errors::Error;
 use substreams::prelude::*;
 use substreams::scalar::BigInt;
-use substreams::{ Hex};
+use substreams::Hex;
 use substreams::{
     store::StoreAddBigInt, store::StoreSetIfNotExists, store::StoreSetIfNotExistsString,
     store::StoreSetProto,
 };
 
-// DelegatedStake and Delegator entities track the cumulative delegated stake, not the total amount
 #[substreams::handlers::store]
 fn store_staked_tokens(storage_changes: StorageChanges, s: StoreAddBigInt) {
     let indexer_stakes = storage_changes.indexer_stakes.unwrap();
@@ -24,6 +23,26 @@ fn store_staked_tokens(storage_changes: StorageChanges, s: StoreAddBigInt) {
                 .unwrap()
                 .sub(BigInt::from_str(&indexer_stake.old_stake).unwrap()),
         );
+    }
+}
+
+#[substreams::handlers::store]
+fn store_epoch_stake(events: Events, store: StoreGetBigInt, s: StoreAddBigInt) {
+    let stake_deposited_events = events.stake_deposited_events.unwrap();
+    match store.get_last("epoch") {
+        Some(epoch_count) => {
+            if epoch_count > BigInt::zero() {
+                let current_epoch = epoch_count.sub(1).to_string();
+                for stake_deposited in stake_deposited_events.stake_deposited_events {
+                    s.add(
+                        stake_deposited.ordinal,
+                        &current_epoch,
+                        BigInt::from_str(&stake_deposited.tokens).unwrap(),
+                    );
+                }
+            }
+        }
+        None => (),
     }
 }
 
@@ -129,22 +148,46 @@ fn store_subgraph_deployment_id(events: Events, s: StoreSetString) {
     }
 }
 #[substreams::handlers::store]
-fn store_query_fee_rebates(events: Events, s: StoreAddBigInt) {
+fn store_query_fee_rebates(events: Events, store: StoreGetBigInt, s: StoreAddBigInt) {
     let rebate_claimed_events = events.rebate_claimed_events.unwrap();
+    match store.get_last("epoch") {
+        Some(epoch_count) => {
+            if epoch_count > BigInt::zero() {
+                let current_epoch = epoch_count.sub(1).to_string();
+                for rebate_claimed in rebate_claimed_events.rebate_claimed_events.clone() {
+                    s.add(
+                        rebate_claimed.ordinal,
+                        &current_epoch,
+                        BigInt::from_str(&rebate_claimed.tokens).unwrap(),
+                    );
+                }
+            }
+        }
+        None => (),
+    }
 
     for rebate_claimed in rebate_claimed_events.rebate_claimed_events {
         s.add(
             rebate_claimed.ordinal,
-            utils::generate_key_query_fee_rebates("SubgraphDeployment".to_string(),&rebate_claimed.subgraph_deployment_id).to_string(),
+            utils::generate_key_query_fee_rebates(
+                "SubgraphDeployment".to_string(),
+                &rebate_claimed.subgraph_deployment_id,
+            )
+            .to_string(),
             BigInt::from_str(&rebate_claimed.tokens).unwrap(),
         );
         s.add(
             rebate_claimed.ordinal,
-            utils::generate_key_query_fee_rebates("Allocation".to_string(),&rebate_claimed.allocation_id).to_string(),
+            utils::generate_key_query_fee_rebates(
+                "Allocation".to_string(),
+                &rebate_claimed.allocation_id,
+            )
+            .to_string(),
             BigInt::from_str(&rebate_claimed.tokens).unwrap(),
         );
     }
 }
+
 #[substreams::handlers::store]
 fn store_query_fees_amount(events: Events, s: StoreAddBigInt) {
     let allocation_collected_events = events.allocation_collected_events.unwrap();
@@ -152,12 +195,20 @@ fn store_query_fees_amount(events: Events, s: StoreAddBigInt) {
     for allocation_collected in allocation_collected_events.allocation_collected_events {
         s.add(
             allocation_collected.ordinal,
-            utils::generate_key_query_fee_rebates("SubgraphDeployment".to_string(),&allocation_collected.subgraph_deployment_id).to_string(),
+            utils::generate_key_query_fee_rebates(
+                "SubgraphDeployment".to_string(),
+                &allocation_collected.subgraph_deployment_id,
+            )
+            .to_string(),
             BigInt::from_str(&allocation_collected.rebate_fees).unwrap(),
         );
         s.add(
             allocation_collected.ordinal,
-            utils::generate_key_query_fee_rebates("Allocation".to_string(),&allocation_collected.allocation_id).to_string(),
+            utils::generate_key_query_fee_rebates(
+                "Allocation".to_string(),
+                &allocation_collected.allocation_id,
+            )
+            .to_string(),
             BigInt::from_str(&allocation_collected.rebate_fees).unwrap(),
         );
     }
@@ -191,17 +242,26 @@ fn store_subgraph_deployment_rewards(indexing_rewards: IndexingRewards, s: Store
     for indexing_rewards in indexing_rewards.indexing_rewards {
         s.add(
             indexing_rewards.ordinal,
-            utils::generate_key_indexing_rewards(indexing_rewards.subgraph_deployment_id.clone(), "indexingRewardAmount".to_string()),
+            utils::generate_key_indexing_rewards(
+                indexing_rewards.subgraph_deployment_id.clone(),
+                "indexingRewardAmount".to_string(),
+            ),
             BigInt::from_str(&indexing_rewards.amount).unwrap(),
         );
         s.add(
             indexing_rewards.ordinal,
-            utils::generate_key_indexing_rewards(indexing_rewards.subgraph_deployment_id.clone(), "indexingIndexerRewardAmount".to_string()),
+            utils::generate_key_indexing_rewards(
+                indexing_rewards.subgraph_deployment_id.clone(),
+                "indexingIndexerRewardAmount".to_string(),
+            ),
             BigInt::from_str(&indexing_rewards.indexer_rewards).unwrap(),
         );
         s.add(
             indexing_rewards.ordinal,
-            utils::generate_key_indexing_rewards(indexing_rewards.subgraph_deployment_id, "indexingDelegatorRewardAmount".to_string()),
+            utils::generate_key_indexing_rewards(
+                indexing_rewards.subgraph_deployment_id,
+                "indexingDelegatorRewardAmount".to_string(),
+            ),
             BigInt::from_str(&indexing_rewards.delegator_rewards).unwrap(),
         );
     }
@@ -239,7 +299,8 @@ fn map_indexing_rewards(
                 let target_id = rewards_assigned.clone().id;
                 for indexing_reward in &mut indexing_rewards_vec {
                     if indexing_reward.id == target_id {
-                        let delegator_rewards = BigInt::from_str(&delegator_reward.rewards).unwrap();
+                        let delegator_rewards =
+                            BigInt::from_str(&delegator_reward.rewards).unwrap();
                         let indexer_rewards = BigInt::from_str(&rewards_assigned.clone().amount)
                             .unwrap()
                             .sub(delegator_rewards.clone());

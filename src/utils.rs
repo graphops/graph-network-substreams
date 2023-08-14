@@ -76,3 +76,11 @@ pub fn generate_key_indexing_rewards(who: String, id: String) -> String {
         id,
     );
 }
+
+pub fn concat(first: String, second: String) -> String {
+    return format!(
+        "{}:{}",
+        first,
+        second,
+    );
+}

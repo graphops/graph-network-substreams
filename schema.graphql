@@ -195,4 +195,8 @@ type Epoch @entity {
   endBlock: Int!
   "Signaled tokens during this epoch"
   signalledTokens: BigInt!
+  "Stake deposited during this epoch"
+  stakeDeposited: BigInt!
+  "Rebate amount claimed from the protocol through cobbs douglas during this epoch (Doesn't correlate to the queryFeesCollected for this epoch since there's a 7 day period before claiming)"
+  queryFeeRebates: BigInt!
 }

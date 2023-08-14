@@ -3,8 +3,8 @@ use crate::utils;
 use std::ops::Sub;
 use std::str::FromStr;
 use substreams::prelude::*;
-use substreams::{ Hex};
 use substreams::scalar::BigInt;
+use substreams::Hex;
 use substreams::{
     store::StoreAddBigInt, store::StoreSetIfNotExists, store::StoreSetIfNotExistsString,
 };
@@ -75,7 +75,6 @@ fn store_epoch_signal(store_changes: StorageChanges, store: StoreGetBigInt, s: S
         }
         None => (),
     }
-   
 }
 
 #[substreams::handlers::store]
@@ -87,16 +86,14 @@ fn store_signal_amount(events: Events, s: StoreAddBigInt) {
         s.add(
             1,
             Hex(&signalled.subgraph_deployment_id).to_string(),
-            BigInt::from_str(&signalled.signal)
-                .unwrap(),
+            BigInt::from_str(&signalled.signal).unwrap(),
         );
     }
     for burned in burned_events.burned_events {
         s.add(
             1,
             Hex(&burned.subgraph_deployment_id).to_string(),
-            BigInt::from_str(&burned.signal)
-                .unwrap().neg(),
+            BigInt::from_str(&burned.signal).unwrap().neg(),
         );
     }
 }

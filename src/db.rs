@@ -513,6 +513,8 @@ pub fn epoch_change(
     epoch_start_deltas: Deltas<DeltaString>,
     epoch_end_deltas: Deltas<DeltaString>,
     epoch_signal_deltas: Deltas<DeltaBigInt>,
+    epoch_stake_deltas: Deltas<DeltaBigInt>,
+    query_fee_rebate_deltas: Deltas<DeltaBigInt>,
     entity_changes: &mut EntityChanges,
 ) {
     for delta in epoch_start_deltas.deltas {
@@ -544,5 +546,25 @@ pub fn epoch_change(
                 Operation::Update, // Update will create the entity if it does not exist
             )
             .change("signalledTokens", delta);
+    }
+    for delta in epoch_stake_deltas.deltas {
+        entity_changes
+            .push_change(
+                "Epoch",
+                &delta.key,
+                delta.ordinal,
+                Operation::Update, // Update will create the entity if it does not exist
+            )
+            .change("stakeDeposited", delta);
+    }
+    for delta in query_fee_rebate_deltas.deltas {
+        entity_changes
+            .push_change(
+                "Epoch",
+                &delta.key,
+                delta.ordinal,
+                Operation::Update, // Update will create the entity if it does not exist
+            )
+            .change("queryFeeRebates", delta);
     }
 }
