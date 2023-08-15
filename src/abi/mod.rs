@@ -4,4 +4,5 @@ pub mod rewards_manager;
 pub mod curation;
 pub mod gns;
 pub mod controller;
+pub mod epoch_manager;
 

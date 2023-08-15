@@ -61,8 +61,13 @@ message AllocationCollectedEvents {
 message PauseChangedEvents {
   repeated PauseChanged paused_changed_events = 1;
 }
+
 message PartialPauseChangedEvents {
   repeated PartialPauseChanged partial_paused_changed_events = 1;
+}
+
+message EpochLengthUpdatedEvents {
+  repeated EpochLengthUpdated epoch_length_updated_events = 1;
 }
 
 message IndexerStakes {
@@ -113,6 +118,7 @@ message Events {
   AllocationCollectedEvents allocation_collected_events = 13;
   PauseChangedEvents pause_changed_events = 14;
   PartialPauseChangedEvents partial_pause_changed_events = 15;
+  EpochLengthUpdatedEvents epoch_length_updated_events = 16;
 }
 
 message Transfer {
@@ -261,6 +267,13 @@ message PartialPauseChanged {
   string id = 1;
   bool is_paused = 2;
   uint64 ordinal = 3;
+}
+
+message EpochLengthUpdated {
+  string id = 1;
+  string last_length_update_block = 2;
+  string epoch_length = 3;
+  uint64 ordinal = 4;
 }
 
 message IndexerStake {

@@ -182,3 +182,27 @@ enum AllocationStatus {
   Finalized # == Closing && closedAtEpoch + channelDisputeEpochs > now(). Note, the subgraph has no way to return this value. it is implied
   Claimed # == not Null && tokens == 0 - i.e. finalized, and all tokens withdrawn
 }
+
+"""
+Epoch aggregate data for network statistics on signaling, rewards, and query fees
+"""
+type Epoch @entity {
+  "Epoch number"
+  id: ID!
+  "Start block of the epoch"
+  startBlock: Int!
+  "End block of the epoch"
+  endBlock: Int!
+  "Signaled tokens during this epoch"
+  signalledTokens: BigInt!
+  "Stake deposited during this epoch"
+  stakeDeposited: BigInt!
+  "Rebate amount claimed from the protocol through cobbs douglas during this epoch (Doesn't correlate to the queryFeesCollected for this epoch since there's a 7 day period before claiming)"
+  queryFeeRebates: BigInt!
+  "Total indexing rewards earned in this epoch. Includes both delegator and indexer rewards"
+  totalRewards: BigInt!
+  "Total indexing rewards earned in this epoch by indexers"
+  totalIndexerRewards: BigInt!
+  "Total indexing rewards earned in this epoch by delegators"
+  totalDelegatorRewards: BigInt!
+}

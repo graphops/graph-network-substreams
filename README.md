@@ -61,6 +61,7 @@ graph LR;
   map_events --> store_cumulative_curator_burned;
   store_query_fee_rebates[store: store_query_fee_rebates];
   map_events --> store_query_fee_rebates;
+  store_epoch_count --> store_query_fee_rebates;
   store_query_fees_amount[store: store_query_fees_amount];
   map_events --> store_query_fees_amount;
   store_curator_fee_rewards[store: store_curator_fee_rewards];
@@ -71,9 +72,34 @@ graph LR;
   map_events --> store_signal_amount;
   store_subgraph_deployment_rewards[store: store_subgraph_deployment_rewards];
   map_indexing_rewards --> store_subgraph_deployment_rewards;
+  store_epoch_length[store: store_epoch_length];
+  map_events --> store_epoch_length;
+  store_epoch_count[store: store_epoch_count];
+  store_epoch_length --> store_epoch_count;
+  sf.substreams.v1.Clock[source: sf.substreams.v1.Clock] --> store_epoch_count;
+  store_epoch_start[store: store_epoch_start];
+  store_epoch_count --> store_epoch_start;
+  sf.substreams.v1.Clock[source: sf.substreams.v1.Clock] --> store_epoch_start;
+  store_epoch_en[store: store_epoch_end];
+  store_epoch_count --> store_epoch_en;
+  sf.substreams.v1.Clock[source: sf.substreams.v1.Clock] --> store_epoch_en;
+  store_epoch_signal[store: store_epoch_signal];
+  map_storage_changes --> store_epoch_signal;
+  store_epoch_count --> store_epoch_signal;
+  store_epoch_stake[store: store_epoch_stake];
+  map_events --> store_epoch_stake;
+  store_epoch_count --> store_epoch_stake;
+  store_epoch_rewards[store: store_epoch_rewards];
+  map_indexing_rewards --> store_epoch_rewards;
+  store_epoch_count --> store_epoch_rewards;
   graph_out[map: graph_out];
   sf.substreams.v1.Clock[source: sf.substreams.v1.Clock] --> graph_out;
   map_events --> graph_out;
+  store_epoch_start -- deltas --> graph_out;
+  store_epoch_en -- deltas --> graph_out;
+  store_epoch_signal -- deltas --> graph_out;
+  store_epoch_stake -- deltas --> graph_out;
+  store_epoch_rewards -- deltas --> graph_out;
   store_grt_global -- deltas --> graph_out;
   store_grt_balances -- deltas --> graph_out;
   store_graph_account_indexer -- deltas --> graph_out;
@@ -94,8 +120,8 @@ graph LR;
   store_signal_amount -- deltas --> graph_out;
   store_subgraph_deployment_rewards -- deltas --> graph_out;
   map_indexing_rewards --> graph_out;
-```
 
+```
 
 ## Quickstart
 To build and run the substream, 

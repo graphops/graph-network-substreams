@@ -3,8 +3,8 @@ use crate::utils;
 use std::ops::Sub;
 use std::str::FromStr;
 use substreams::prelude::*;
-use substreams::{ Hex};
 use substreams::scalar::BigInt;
+use substreams::Hex;
 use substreams::{
     store::StoreAddBigInt, store::StoreSetIfNotExists, store::StoreSetIfNotExistsString,
 };
@@ -56,6 +56,28 @@ fn store_total_signalled(store_changes: StorageChanges, s: StoreAddBigInt) {
 }
 
 #[substreams::handlers::store]
+fn store_epoch_signal(store_changes: StorageChanges, store: StoreGetBigInt, s: StoreAddBigInt) {
+    let curation_pools = store_changes.curation_pools.unwrap();
+    match store.get_last("epoch") {
+        Some(epoch_count) => {
+            if epoch_count > BigInt::zero() {
+                let current_epoch = epoch_count.sub(1).to_string();
+                for curation_pool in curation_pools.curation_pools {
+                    s.add(
+                        curation_pool.ordinal,
+                        &current_epoch,
+                        BigInt::from_str(&curation_pool.new_signal)
+                            .unwrap()
+                            .sub(BigInt::from_str(&curation_pool.old_signal).unwrap()),
+                    );
+                }
+            }
+        }
+        None => (),
+    }
+}
+
+#[substreams::handlers::store]
 fn store_signal_amount(events: Events, s: StoreAddBigInt) {
     let signalled_events = events.signalled_events.unwrap();
     let burned_events = events.burned_events.unwrap();
@@ -64,16 +86,14 @@ fn store_signal_amount(events: Events, s: StoreAddBigInt) {
         s.add(
             1,
             Hex(&signalled.subgraph_deployment_id).to_string(),
-            BigInt::from_str(&signalled.signal)
-                .unwrap(),
+            BigInt::from_str(&signalled.signal).unwrap(),
         );
     }
     for burned in burned_events.burned_events {
         s.add(
             1,
             Hex(&burned.subgraph_deployment_id).to_string(),
-            BigInt::from_str(&burned.signal)
-                .unwrap().neg(),
+            BigInt::from_str(&burned.signal).unwrap().neg(),
         );
     }
 }

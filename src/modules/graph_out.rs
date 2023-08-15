@@ -16,6 +16,11 @@ use substreams_entity_change::pb::entity::EntityChanges;
 pub fn graph_out(
     clock: Clock,
     events: Events,
+    epoch_start_deltas: Deltas<DeltaString>,
+    epoch_end_deltas: Deltas<DeltaString>,
+    epoch_signal_deltas: Deltas<DeltaBigInt>,
+    epoch_stake_deltas: Deltas<DeltaBigInt>,
+    epoch_rewards_deltas: Deltas<DeltaBigInt>,
     grt_global_deltas: Deltas<DeltaBigInt>,
     grt_balance_deltas: Deltas<DeltaBigInt>,
     graph_account_indexer_deltas: Deltas<DeltaString>,
@@ -101,10 +106,24 @@ pub fn graph_out(
     );
 
     let mut query_fee_rebate_changes: EntityChanges = Default::default();
-    db::query_fee_rebate_change(query_fee_rebate_deltas, &mut query_fee_rebate_changes);
+    db::query_fee_rebate_change(
+        query_fee_rebate_deltas.clone(),
+        &mut query_fee_rebate_changes,
+    );
 
     let mut query_fee_changes: EntityChanges = Default::default();
     db::query_fees_change(query_fees_amount_deltas, &mut query_fee_changes);
+
+    let mut epoch_changes: EntityChanges = Default::default();
+    db::epoch_change(
+        epoch_start_deltas,
+        epoch_end_deltas,
+        epoch_signal_deltas,
+        epoch_stake_deltas,
+        query_fee_rebate_deltas,
+        epoch_rewards_deltas,
+        &mut epoch_changes,
+    );
 
     Ok(EntityChanges {
         entity_changes: [
@@ -117,6 +136,7 @@ pub fn graph_out(
             allocation_entity_changes.entity_changes,
             query_fee_rebate_changes.entity_changes,
             query_fee_changes.entity_changes,
+            epoch_changes.entity_changes,
         ]
         .concat(),
     })

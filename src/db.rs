@@ -508,3 +508,82 @@ pub fn query_fees_change(
         }
     }
 }
+
+pub fn epoch_change(
+    epoch_start_deltas: Deltas<DeltaString>,
+    epoch_end_deltas: Deltas<DeltaString>,
+    epoch_signal_deltas: Deltas<DeltaBigInt>,
+    epoch_stake_deltas: Deltas<DeltaBigInt>,
+    query_fee_rebate_deltas: Deltas<DeltaBigInt>,
+    epoch_rewards_deltas: Deltas<DeltaBigInt>,
+    entity_changes: &mut EntityChanges,
+) {
+    for delta in epoch_start_deltas.deltas {
+        entity_changes
+            .push_change(
+                "Epoch",
+                &delta.key,
+                delta.ordinal,
+                Operation::Update, // Update will create the entity if it does not exist
+            )
+            .change("startBlock", delta);
+    }
+    for delta in epoch_end_deltas.deltas {
+        entity_changes
+            .push_change(
+                "Epoch",
+                &delta.key,
+                delta.ordinal,
+                Operation::Update, // Update will create the entity if it does not exist
+            )
+            .change("endBlock", delta);
+    }
+    for delta in epoch_signal_deltas.deltas {
+        entity_changes
+            .push_change(
+                "Epoch",
+                &delta.key,
+                delta.ordinal,
+                Operation::Update, // Update will create the entity if it does not exist
+            )
+            .change("signalledTokens", delta);
+    }
+    for delta in epoch_stake_deltas.deltas {
+        entity_changes
+            .push_change(
+                "Epoch",
+                &delta.key,
+                delta.ordinal,
+                Operation::Update, // Update will create the entity if it does not exist
+            )
+            .change("stakeDeposited", delta);
+    }
+    for delta in query_fee_rebate_deltas.deltas {
+        entity_changes
+            .push_change(
+                "Epoch",
+                &delta.key,
+                delta.ordinal,
+                Operation::Update, // Update will create the entity if it does not exist
+            )
+            .change("queryFeeRebates", delta);
+    }
+    for delta in epoch_rewards_deltas.deltas {
+        let name = match delta.key.as_str().split(":").last().unwrap() {
+            "totalRewards" => "totalRewards",
+            "totalIndexerRewards" => "totalIndexerRewards",
+            "totalDelegatorRewards" => "totalDelegatorRewards",
+            _ => {
+                continue;
+            }
+        };
+        entity_changes
+            .push_change(
+                "Epoch",
+                &delta.key.as_str().split(":").nth(0).unwrap(),
+                delta.ordinal,
+                Operation::Update, // Update will create the entity if it does not exist
+            )
+            .change(name, delta.new_value.to_string());
+    }
+}
