@@ -20,6 +20,7 @@ pub fn graph_out(
     epoch_end_deltas: Deltas<DeltaString>,
     epoch_signal_deltas: Deltas<DeltaBigInt>,
     epoch_stake_deltas: Deltas<DeltaBigInt>,
+    epoch_rewards_deltas: Deltas<DeltaBigInt>,
     grt_global_deltas: Deltas<DeltaBigInt>,
     grt_balance_deltas: Deltas<DeltaBigInt>,
     graph_account_indexer_deltas: Deltas<DeltaString>,
@@ -120,6 +121,7 @@ pub fn graph_out(
         epoch_signal_deltas,
         epoch_stake_deltas,
         query_fee_rebate_deltas,
+        epoch_rewards_deltas,
         &mut epoch_changes,
     );
 

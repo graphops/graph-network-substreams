@@ -258,6 +258,15 @@ modules:
       - map: map_events
       - store: store_epoch_count
 
+  - name: store_epoch_rewards
+    kind: store
+    initialBlock: 11446769
+    updatePolicy: add
+    valueType: bigint
+    inputs:
+      - map: map_indexing_rewards
+      - store: store_epoch_count
+
   - name: graph_out
     kind: map
     initialBlock: 11446764
@@ -271,6 +280,8 @@ modules:
       - store: store_epoch_signal
         mode: deltas
       - store: store_epoch_stake
+        mode: deltas
+      - store: store_epoch_rewards
         mode: deltas
       - store: store_grt_global
         mode: deltas

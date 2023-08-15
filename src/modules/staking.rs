@@ -266,6 +266,47 @@ fn store_subgraph_deployment_rewards(indexing_rewards: IndexingRewards, s: Store
         );
     }
 }
+#[substreams::handlers::store]
+fn store_epoch_rewards(
+    indexing_rewards: IndexingRewards,
+    store: StoreGetBigInt,
+    s: StoreAddBigInt,
+) {
+    match store.get_last("epoch") {
+        Some(epoch_count) => {
+            if epoch_count > BigInt::zero() {
+                let current_epoch = epoch_count.sub(1).to_string();
+                for indexing_rewards in indexing_rewards.indexing_rewards {
+                    s.add(
+                        indexing_rewards.ordinal,
+                        utils::concat(
+                            current_epoch.clone().to_string(),
+                            "totalRewards".to_string(),
+                        ),
+                        BigInt::from_str(&indexing_rewards.amount).unwrap(),
+                    );
+                    s.add(
+                        indexing_rewards.ordinal,
+                        utils::concat(
+                            current_epoch.clone().to_string(),
+                            "totalIndexerRewards".to_string(),
+                        ),
+                        BigInt::from_str(&indexing_rewards.indexer_rewards).unwrap(),
+                    );
+                    s.add(
+                        indexing_rewards.ordinal,
+                        utils::concat(
+                            current_epoch.clone().to_string(),
+                            "totalDelegatorRewards".to_string(),
+                        ),
+                        BigInt::from_str(&indexing_rewards.delegator_rewards).unwrap(),
+                    );
+                }
+            }
+        }
+        None => (),
+    }
+}
 
 #[substreams::handlers::map]
 fn map_indexing_rewards(

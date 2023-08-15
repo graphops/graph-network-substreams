@@ -199,4 +199,10 @@ type Epoch @entity {
   stakeDeposited: BigInt!
   "Rebate amount claimed from the protocol through cobbs douglas during this epoch (Doesn't correlate to the queryFeesCollected for this epoch since there's a 7 day period before claiming)"
   queryFeeRebates: BigInt!
+  "Total indexing rewards earned in this epoch. Includes both delegator and indexer rewards"
+  totalRewards: BigInt!
+  "Total indexing rewards earned in this epoch by indexers"
+  totalIndexerRewards: BigInt!
+  "Total indexing rewards earned in this epoch by delegators"
+  totalDelegatorRewards: BigInt!
 }
