@@ -20,7 +20,7 @@ binaries:
 modules:
   - name: map_storage_changes
     kind: map
-    initialBlock: 11446769
+    initialBlock: 11446764
     inputs:
       - source: sf.ethereum.type.v2.Block
     output:
@@ -36,7 +36,7 @@ modules:
 
   - name: map_indexing_rewards
     kind: map
-    initialBlock: 11446769
+    initialBlock: 11446764
     inputs:
       - map: map_storage_changes
       - map: map_events
@@ -46,7 +46,7 @@ modules:
 
   - name: store_grt_balances
     kind: store
-    initialBlock: 11446769
+    initialBlock: 11446764
     updatePolicy: add
     valueType: bigint
     inputs:
@@ -54,7 +54,7 @@ modules:
 
   - name: store_grt_global
     kind: store
-    initialBlock: 11446769
+    initialBlock: 11446764
     updatePolicy: add
     valueType: bigint
     inputs:
@@ -62,7 +62,7 @@ modules:
 
   - name: store_staked_tokens
     kind: store
-    initialBlock: 11446769
+    initialBlock: 11446764
     updatePolicy: add
     valueType: bigint
     inputs:
@@ -70,7 +70,7 @@ modules:
 
   - name: store_graph_account_indexer
     kind: store
-    initialBlock: 11446769
+    initialBlock: 11446764
     updatePolicy: set_if_not_exists
     valueType: string
     inputs:
@@ -78,7 +78,7 @@ modules:
 
   - name: store_graph_account_delegator
     kind: store
-    initialBlock: 11446769
+    initialBlock: 11446764
     updatePolicy: set_if_not_exists
     valueType: string
     inputs:
@@ -86,7 +86,7 @@ modules:
 
   - name: store_graph_account_curator
     kind: store
-    initialBlock: 11446769
+    initialBlock: 11446764
     updatePolicy: set_if_not_exists
     valueType: string
     inputs:
@@ -94,7 +94,7 @@ modules:
 
   - name: store_cumulative_delegated_stakes
     kind: store
-    initialBlock: 11446769
+    initialBlock: 11446764
     updatePolicy: add
     valueType: bigint
     inputs:
@@ -102,7 +102,7 @@ modules:
 
   - name: store_cumulative_delegator_stakes
     kind: store
-    initialBlock: 11446769
+    initialBlock: 11446764
     updatePolicy: add
     valueType: bigint
     inputs:
@@ -110,7 +110,7 @@ modules:
 
   - name: store_total_delegated_stakes
     kind: store
-    initialBlock: 11446769
+    initialBlock: 11446764
     updatePolicy: add
     valueType: bigint
     inputs:
@@ -118,7 +118,7 @@ modules:
 
   - name: store_delegation_parameters
     kind: store
-    initialBlock: 11446769
+    initialBlock: 11446764
     updatePolicy: set
     valueType: proto:eth.erc20.v1.DelegationParametersUpdated
     inputs:
@@ -126,7 +126,7 @@ modules:
 
   - name: store_total_signalled
     kind: store
-    initialBlock: 11446769
+    initialBlock: 11446764
     updatePolicy: add
     valueType: bigint
     inputs:
@@ -134,7 +134,7 @@ modules:
 
   - name: store_cumulative_curator_signalled
     kind: store
-    initialBlock: 11446769
+    initialBlock: 11446764
     updatePolicy: add
     valueType: bigint
     inputs:
@@ -142,7 +142,23 @@ modules:
 
   - name: store_subgraph_deployment_id
     kind: store
-    initialBlock: 11446769
+    initialBlock: 11446764
+    updatePolicy: set
+    valueType: string
+    inputs:
+      - map: map_events
+
+  - name: store_subgraph_deployment_ipfs_hash
+    kind: store
+    initialBlock: 11446764
+    updatePolicy: set_if_not_exists
+    valueType: string
+    inputs:
+      - map: map_events
+
+  - name: store_subgraph_deployment_id
+    kind: store
+    initialBlock: 11446764
     updatePolicy: set
     valueType: string
     inputs:
@@ -150,7 +166,7 @@ modules:
 
   - name: store_cumulative_curator_burned
     kind: store
-    initialBlock: 11446769
+    initialBlock: 11446764
     updatePolicy: add
     valueType: bigint
     inputs:
@@ -158,7 +174,7 @@ modules:
 
   - name: store_query_fee_rebates
     kind: store
-    initialBlock: 11446769
+    initialBlock: 11446764
     updatePolicy: add
     valueType: bigint
     inputs:
@@ -167,7 +183,7 @@ modules:
 
   - name: store_query_fees_amount
     kind: store
-    initialBlock: 11446769
+    initialBlock: 11446764
     updatePolicy: add
     valueType: bigint
     inputs:
@@ -175,7 +191,7 @@ modules:
 
   - name: store_curator_fee_rewards
     kind: store
-    initialBlock: 11446769
+    initialBlock: 11446764
     updatePolicy: add
     valueType: bigint
     inputs:
@@ -183,7 +199,7 @@ modules:
 
   - name: store_curator_rewards
     kind: store
-    initialBlock: 11446769
+    initialBlock: 11446764
     updatePolicy: add
     valueType: bigint
     inputs:
@@ -191,7 +207,7 @@ modules:
 
   - name: store_signal_amount
     kind: store
-    initialBlock: 11446769
+    initialBlock: 11446764
     updatePolicy: add
     valueType: bigint
     inputs:
@@ -199,7 +215,7 @@ modules:
 
   - name: store_subgraph_deployment_rewards
     kind: store
-    initialBlock: 11446769
+    initialBlock: 11446764
     updatePolicy: add
     valueType: bigint
     inputs:
@@ -207,7 +223,7 @@ modules:
 
   - name: store_epoch_length
     kind: store
-    initialBlock: 11446768
+    initialBlock: 11446764
     updatePolicy: set
     valueType: string
     inputs:
@@ -215,7 +231,7 @@ modules:
 
   - name: store_epoch_count
     kind: store
-    initialBlock: 11446768
+    initialBlock: 11446764
     updatePolicy: add
     valueType: bigint
     inputs:
@@ -224,7 +240,7 @@ modules:
 
   - name: store_epoch_start
     kind: store
-    initialBlock: 11446768
+    initialBlock: 11446764
     updatePolicy: set_if_not_exists
     valueType: bigint
     inputs:
@@ -233,7 +249,7 @@ modules:
 
   - name: store_epoch_end
     kind: store
-    initialBlock: 11446768
+    initialBlock: 11446764
     updatePolicy: set_if_not_exists
     valueType: bigint
     inputs:
@@ -242,7 +258,7 @@ modules:
 
   - name: store_epoch_signal
     kind: store
-    initialBlock: 11446769
+    initialBlock: 11446764
     updatePolicy: add
     valueType: bigint
     inputs:
@@ -251,7 +267,7 @@ modules:
 
   - name: store_epoch_stake
     kind: store
-    initialBlock: 11446769
+    initialBlock: 11446764
     updatePolicy: add
     valueType: bigint
     inputs:
@@ -260,7 +276,7 @@ modules:
 
   - name: store_epoch_rewards
     kind: store
-    initialBlock: 11446769
+    initialBlock: 11446764
     updatePolicy: add
     valueType: bigint
     inputs:
@@ -319,6 +335,8 @@ modules:
       - store: store_signal_amount
         mode: deltas
       - store: store_subgraph_deployment_rewards
+        mode: deltas
+      - store: store_subgraph_deployment_ipfs_hash
         mode: deltas
       - map: map_indexing_rewards
     output:

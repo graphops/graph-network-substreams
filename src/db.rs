@@ -291,13 +291,37 @@ pub fn graph_account_change(
 }
 
 pub fn subgraph_deployment_change(
+    events: Events,
     subgraph_allocations: SubgraphAllocations,
     curation_pools: CurationPools,
     subgraph_deployment_rewards_deltas: Deltas<DeltaBigInt>,
     curator_fee_rewards_deltas: Deltas<DeltaBigInt>,
     signal_amount_deltas: Deltas<DeltaBigInt>,
+    ipfs_hash_deltas: Deltas<DeltaString>,
     entity_changes: &mut EntityChanges,
 ) {
+    let rewards_denied_events = events.rewards_deny_list_updated_events.unwrap();
+    for rewards_denied in rewards_denied_events.rewards_deny_list_updated_events {
+        entity_changes
+            .push_change(
+                "SubgraphDeployment",
+                &rewards_denied.id,
+                rewards_denied.ordinal,
+                Operation::Update,
+            )
+            .change("deniedAt", rewards_denied.denied_at);
+    }
+    for delta in ipfs_hash_deltas.deltas {
+        entity_changes
+            .push_change(
+                "SubgraphDeployment",
+                &delta.key,
+                delta.ordinal,
+                Operation::Update,
+            )
+            .change("ipfsHash", delta)
+            .change("deniedAt", "0".to_string());
+    }
     for subgraph_allocation in subgraph_allocations.subgraph_allocations {
         entity_changes
             .push_change(

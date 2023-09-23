@@ -108,6 +108,8 @@ type SubgrapDeployment @entity {
   id: ID!
   "CURRENT total stake of all indexers on this Subgraph Deployment"
   stakedTokens: BigInt!
+  "Allocations created by indexers for this Subgraph"
+  indexerAllocations: [Allocation!]! @derivedFrom(field: "subgraphDeployment")
   "CURRENT signalled tokens in the bonding curve"
   signalledTokens: BigInt!
   "CURRENT curation signal for this subgraph deployment"
