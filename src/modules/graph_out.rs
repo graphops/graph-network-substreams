@@ -5,7 +5,6 @@ use substreams::{
     pb::substreams::Clock,
     store::{DeltaBigInt, DeltaString, Deltas},
 };
-
 use substreams_entity_change::pb::entity::EntityChanges;
 
 // -------------------- GRAPH_OUT --------------------
@@ -40,6 +39,7 @@ pub fn graph_out(
     curator_rewards_deltas: Deltas<DeltaBigInt>,
     signal_amount_deltas: Deltas<DeltaBigInt>,
     subgraph_deployment_rewards_deltas: Deltas<DeltaBigInt>,
+    subgraph_deployment_ipfs_hash_deltas: Deltas<DeltaString>,
     indexing_rewards: IndexingRewards,
 ) -> Result<EntityChanges, substreams::errors::Error> {
     let mut graph_network_entity_changes: EntityChanges = Default::default();
@@ -89,11 +89,13 @@ pub fn graph_out(
     let subgraph_allocations = storage_changes.subgraph_allocations.unwrap();
     let curation_pools = storage_changes.curation_pools.unwrap();
     db::subgraph_deployment_change(
+        events.clone(),
         subgraph_allocations,
         curation_pools,
         subgraph_deployment_rewards_deltas,
         curator_fee_rewards_deltas,
         signal_amount_deltas,
+        subgraph_deployment_ipfs_hash_deltas,
         &mut subgraph_deployment_entity_changes,
     );
 

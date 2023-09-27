@@ -70,6 +70,10 @@ message EpochLengthUpdatedEvents {
   repeated EpochLengthUpdated epoch_length_updated_events = 1;
 }
 
+message RewardsDenyListUpdatedEvents {
+  repeated RewardsDenyListUpdated rewards_deny_list_updated_events = 1;
+}
+
 message IndexerStakes {
   repeated IndexerStake indexer_stakes = 1;
 }
@@ -119,6 +123,7 @@ message Events {
   PauseChangedEvents pause_changed_events = 14;
   PartialPauseChangedEvents partial_pause_changed_events = 15;
   EpochLengthUpdatedEvents epoch_length_updated_events = 16;
+  RewardsDenyListUpdatedEvents rewards_deny_list_updated_events = 17;
 }
 
 message Transfer {
@@ -274,6 +279,12 @@ message EpochLengthUpdated {
   string last_length_update_block = 2;
   string epoch_length = 3;
   uint64 ordinal = 4;
+}
+
+message RewardsDenyListUpdated {
+  string id = 1;
+  string denied_at = 2;
+  uint64 ordinal = 3;
 }
 
 message IndexerStake {

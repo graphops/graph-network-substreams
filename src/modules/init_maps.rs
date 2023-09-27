@@ -330,6 +330,7 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
     let mut pause_changed_events = vec![];
     let mut partial_pause_changed_events = vec![];
     let mut epoch_length_updated_events = vec![];
+    let mut rewards_deny_list_updated_events = vec![];
 
     // Potentially consider adding log.index() to the IDs, to have them be truly unique in
     // transactions with potentially more than 1 of these messages
@@ -464,6 +465,16 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
                 amount: event.amount.to_string(), // Tokens is origanally BigInt but proto does not have BigInt so we use string
                 ordinal: log.ordinal() as u64,
             });
+        } else if let Some(event) =
+            abi::rewards_manager::events::RewardsDenylistUpdated::match_and_decode(log)
+        {
+            if event.since_block != BigInt::zero() {
+                rewards_deny_list_updated_events.push(RewardsDenyListUpdated {
+                    id: Hex(&log.receipt.transaction.hash).to_string(), // Each event needs a unique id
+                    denied_at: event.since_block.to_string(),
+                    ordinal: log.ordinal() as u64,
+                });
+            }
         } else if let Some(event) = abi::curation::events::Signalled::match_and_decode(log) {
             signalled_events.push(Signalled {
                 id: Hex(&log.receipt.transaction.hash).to_string(), // Each event needs a unique id
@@ -499,14 +510,13 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
             })
         } else if let Some(event) =
             abi::epoch_manager::events::EpochLengthUpdate::match_and_decode(log)
-        {   
-            epoch_length_updated_events.push(EpochLengthUpdated{
+        {
+            epoch_length_updated_events.push(EpochLengthUpdated {
                 id: Hex(&log.receipt.transaction.hash).to_string(),
                 last_length_update_block: blk.number.to_string(),
                 epoch_length: event.epoch_length.to_string(),
                 ordinal: log.ordinal() as u64,
             })
-
         }
     }
 
@@ -562,6 +572,8 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
     events.epoch_length_updated_events = Some(EpochLengthUpdatedEvents {
         epoch_length_updated_events: epoch_length_updated_events,
     });
-
+    events.rewards_deny_list_updated_events = Some(RewardsDenyListUpdatedEvents {
+        rewards_deny_list_updated_events: rewards_deny_list_updated_events,
+    });
     Ok(events)
 }

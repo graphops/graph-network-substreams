@@ -1,25 +1,26 @@
 # Graph Network Subgraph fed by Substreams
 
-Substreams based Graph Network subgraph and substreams. 
+Substreams based Graph Network subgraph and substreams.
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-## Introduction 
+## Introduction
 
-This project is a [subgraph](https://thegraph.com/docs/en/developing/creating-a-subgraph/) fed by [substreams](https://substreams.streamingfast.io/) that allows you to obtain data for The Graph Network. 
+This project is a [subgraph](https://thegraph.com/docs/en/developing/creating-a-subgraph/) fed by [substreams](https://substreams.streamingfast.io/) that allows you to obtain data for The Graph Network.
 
-## Features 
+## Features
 
-### Available Data 
+### Available Data
 
 This subgraph makes available the following data:
-- Total supply, total mints and burns of GRT, 
+
+- Total supply, total mints and burns of GRT,
 - GRT balances of addresses
-- In-protocol balances like indexer, delegator and curator stakes 
+- In-protocol balances like indexer, delegator and curator stakes
 
 ### Substreams Module Graph
 
-Here is the graph of the modules of the substreams: 
+Here is the graph of the modules of the substreams:
 
 ```mermaid
 graph LR;
@@ -55,6 +56,10 @@ graph LR;
   map_storage_changes --> store_total_signalled;
   store_cumulative_curator_signalled[store: store_cumulative_curator_signalled];
   map_events --> store_cumulative_curator_signalled;
+  store_subgraph_deployment_id[store: store_subgraph_deployment_id];
+  map_events --> store_subgraph_deployment_id;
+  store_subgraph_deployment_ipfs_hash[store: store_subgraph_deployment_ipfs_hash];
+  map_events --> store_subgraph_deployment_ipfs_hash;
   store_subgraph_deployment_id[store: store_subgraph_deployment_id];
   map_events --> store_subgraph_deployment_id;
   store_cumulative_curator_burned[store: store_cumulative_curator_burned];
@@ -119,28 +124,37 @@ graph LR;
   store_curator_rewards -- deltas --> graph_out;
   store_signal_amount -- deltas --> graph_out;
   store_subgraph_deployment_rewards -- deltas --> graph_out;
+  store_subgraph_deployment_ipfs_hash -- deltas --> graph_out;
   map_indexing_rewards --> graph_out;
 
 ```
 
 ## Quickstart
-To build and run the substream, 
+
+To build and run the substream,
 
 1. [Install dependencies](https://substreams.streamingfast.io/developers-guide/installation-requirements).
 2. [Get authentication](https://substreams.streamingfast.io/reference-and-specs/authentication).
 3. Clone this repo
+
 ```console
 git clone https://github.com/graphops/graph-network-substreams.git
 ```
-4. Code gen with 
+
+4. Code gen with
+
 ```console
 substreams protogen ./substreams.yaml
-``` 
-5. Build the substream with 
+```
+
+5. Build the substream with
+
 ```console
 cargo build --target wasm32-unknown-unknown --release
-``` 
+```
+
 6. Run the graph_out module with
+
 ```console
 substreams run -e mainnet.eth.streamingfast.io:443 \
 substreams.yaml \

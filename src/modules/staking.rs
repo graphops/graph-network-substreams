@@ -134,7 +134,6 @@ fn store_total_delegated_stakes(storage_changes: StorageChanges, s: StoreAddBigI
     }
 }
 
-// Indexer and GraphNetwork entities track the total delegated stake, not the cumulative amount
 #[substreams::handlers::store]
 fn store_subgraph_deployment_id(events: Events, s: StoreSetString) {
     let allocation_created_events = events.allocation_created_events.unwrap();
@@ -147,6 +146,20 @@ fn store_subgraph_deployment_id(events: Events, s: StoreSetString) {
         );
     }
 }
+
+#[substreams::handlers::store]
+fn store_subgraph_deployment_ipfs_hash(events: Events, s: StoreSetIfNotExistsString) {
+    let allocation_created_events = events.allocation_created_events.unwrap();
+
+    for allocation_created in allocation_created_events.allocation_created_events {
+        s.set_if_not_exists(
+            allocation_created.ordinal,
+            &Hex(&allocation_created.subgraph_deployment_id).to_string(),
+            &utils::generate_ipfs_hash(Hex(&allocation_created.subgraph_deployment_id).to_string()),
+        );
+    }
+}
+
 #[substreams::handlers::store]
 fn store_query_fee_rebates(events: Events, store: StoreGetBigInt, s: StoreAddBigInt) {
     let rebate_claimed_events = events.rebate_claimed_events.unwrap();

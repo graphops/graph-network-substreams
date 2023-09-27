@@ -103,6 +103,12 @@ pub struct EpochLengthUpdatedEvents {
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RewardsDenyListUpdatedEvents {
+    #[prost(message, repeated, tag="1")]
+    pub rewards_deny_list_updated_events: ::prost::alloc::vec::Vec<RewardsDenyListUpdated>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct IndexerStakes {
     #[prost(message, repeated, tag="1")]
     pub indexer_stakes: ::prost::alloc::vec::Vec<IndexerStake>,
@@ -186,6 +192,8 @@ pub struct Events {
     pub partial_pause_changed_events: ::core::option::Option<PartialPauseChangedEvents>,
     #[prost(message, optional, tag="16")]
     pub epoch_length_updated_events: ::core::option::Option<EpochLengthUpdatedEvents>,
+    #[prost(message, optional, tag="17")]
+    pub rewards_deny_list_updated_events: ::core::option::Option<RewardsDenyListUpdatedEvents>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -461,6 +469,16 @@ pub struct EpochLengthUpdated {
     #[prost(string, tag="3")]
     pub epoch_length: ::prost::alloc::string::String,
     #[prost(uint64, tag="4")]
+    pub ordinal: u64,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RewardsDenyListUpdated {
+    #[prost(string, tag="1")]
+    pub id: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub denied_at: ::prost::alloc::string::String,
+    #[prost(uint64, tag="3")]
     pub ordinal: u64,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]

@@ -1,3 +1,5 @@
+use base58::ToBase58;
+use hex::FromHex;
 use substreams::Hex;
 use tiny_keccak::{Hasher, Keccak};
 
@@ -62,25 +64,20 @@ pub fn generate_key_delegated_stake(delegator: &Vec<u8>, indexer: &Vec<u8>) -> S
 }
 
 pub fn generate_key_query_fee_rebates(who: String, id: &Vec<u8>) -> String {
-    return format!(
-        "{}:{}",
-        who,
-        Hex(id).to_string()
-    );
+    return format!("{}:{}", who, Hex(id).to_string());
 }
 
 pub fn generate_key_indexing_rewards(who: String, id: String) -> String {
-    return format!(
-        "{}:{}",
-        who,
-        id,
-    );
+    return format!("{}:{}", who, id,);
 }
 
 pub fn concat(first: String, second: String) -> String {
-    return format!(
-        "{}:{}",
-        first,
-        second,
-    );
+    return format!("{}:{}", first, second,);
+}
+
+pub fn generate_ipfs_hash(subgraph_id: String) -> String {
+    return Vec::from_hex(format!("{}{}", "1220", subgraph_id))
+        .unwrap()
+        .to_base58()
+        .to_string();
 }
