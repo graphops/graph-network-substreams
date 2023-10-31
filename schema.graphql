@@ -208,3 +208,25 @@ type Epoch @entity {
   "Total indexing rewards earned in this epoch by delegators"
   totalDelegatorRewards: BigInt!
 }
+
+type Subgraph @entity {
+  "Subgraph ID - which is derived from the Organization/Individual graph accountID"
+  id: ID!
+  "List of all the subgraph versions included the current one"
+  versions: [SubgraphVersion!]! @derivedFrom(field: "subgraph")
+  "Version counter"
+  versionCount: BigInt!
+}
+
+type SubgraphVersion @entity {
+  "Concatenation of subgraph, subgraph deployment, and version ID"
+  id: ID!
+  "Subgraph of this version"
+  subgraph: Subgraph!
+  "Subgraph deployment of this version"
+  subgraphDeployment: SubgraphDeployment!
+  "Version number"
+  version: Int!
+  "Creation timestamp"
+  createdAt: Int!
+}

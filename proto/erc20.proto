@@ -74,6 +74,17 @@ message RewardsDenyListUpdatedEvents {
   repeated RewardsDenyListUpdated rewards_deny_list_updated_events = 1;
 }
 
+message SubgraphPublished1Events {
+  repeated SubgraphPublished1 subgraph_published1_events = 1;
+}
+message SubgraphPublished2Events {
+  repeated SubgraphPublished2 subgraph_published2_events = 1;
+}
+
+message SubgraphVersionUpdatedEvents {
+  repeated SubgraphVersionUpdated subgraph_version_updated_events = 1;
+}
+
 message IndexerStakes {
   repeated IndexerStake indexer_stakes = 1;
 }
@@ -124,6 +135,9 @@ message Events {
   PartialPauseChangedEvents partial_pause_changed_events = 15;
   EpochLengthUpdatedEvents epoch_length_updated_events = 16;
   RewardsDenyListUpdatedEvents rewards_deny_list_updated_events = 17;
+  SubgraphPublished1Events subgraph_published1_events = 18;
+  SubgraphPublished2Events subgraph_published2_events = 19;
+  SubgraphVersionUpdatedEvents subgraph_version_updated_events = 20;
 }
 
 message Transfer {
@@ -285,6 +299,31 @@ message RewardsDenyListUpdated {
   string id = 1;
   string denied_at = 2;
   uint64 ordinal = 3;
+}
+
+message SubgraphPublished1 {
+  string id = 1;
+  bytes graph_account = 2;
+  string subgraph_number = 3;
+  bytes subgraph_deployment_id = 4;
+  bytes version_metadata = 5;
+  uint64 ordinal = 6;
+}
+
+message SubgraphPublished2 {
+  string id = 1;
+  string subgraph_id = 2;
+  bytes subgraph_deployment_id = 3;
+  string reserve_ratio = 4;
+  uint64 ordinal = 5;
+}
+
+message SubgraphVersionUpdated {
+  string id = 1;
+  string subgraph_id = 2;
+  bytes subgraph_deployment_id = 3;
+  bytes version_metadata = 4;
+  uint64 ordinal = 5;
 }
 
 message IndexerStake {

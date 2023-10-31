@@ -283,6 +283,24 @@ modules:
       - map: map_indexing_rewards
       - store: store_epoch_count
 
+  - name: store_version_count
+    kind: store
+    initialBlock: 11446764
+    updatePolicy: add
+    valueType: bigint
+    inputs:
+      - map: map_events
+
+  - name: store_version
+    kind: store
+    initialBlock: 11446764
+    updatePolicy: set
+    valueType: string
+    inputs:
+      - map: map_events
+      - store: store_version_count
+      - source: sf.substreams.v1.Clock
+
   - name: graph_out
     kind: map
     initialBlock: 11446764
@@ -339,5 +357,9 @@ modules:
       - store: store_subgraph_deployment_ipfs_hash
         mode: deltas
       - map: map_indexing_rewards
+      - store: store_version_count
+        mode: deltas
+      - store: store_version
+        mode: deltas
     output:
       type: proto:sf.substreams.sink.entity.v1.EntityChanges
