@@ -41,6 +41,8 @@ pub fn graph_out(
     subgraph_deployment_rewards_deltas: Deltas<DeltaBigInt>,
     subgraph_deployment_ipfs_hash_deltas: Deltas<DeltaString>,
     indexing_rewards: IndexingRewards,
+    version_count_deltas: Deltas<DeltaBigInt>,
+    version_deltas: Deltas<DeltaString>,
 ) -> Result<EntityChanges, substreams::errors::Error> {
     let mut graph_network_entity_changes: EntityChanges = Default::default();
     db::graph_network_change(
@@ -127,6 +129,12 @@ pub fn graph_out(
         &mut epoch_changes,
     );
 
+    let mut subgraph_changes: EntityChanges = Default::default();
+    db::subgraph_change(version_count_deltas, &mut subgraph_changes);
+
+    let mut version_changes: EntityChanges = Default::default();
+    db::version_change(version_deltas, &mut version_changes);
+
     Ok(EntityChanges {
         entity_changes: [
             graph_network_entity_changes.entity_changes,
@@ -139,6 +147,8 @@ pub fn graph_out(
             query_fee_rebate_changes.entity_changes,
             query_fee_changes.entity_changes,
             epoch_changes.entity_changes,
+            subgraph_changes.entity_changes,
+            version_changes.entity_changes,
         ]
         .concat(),
     })

@@ -109,6 +109,24 @@ pub struct RewardsDenyListUpdatedEvents {
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SubgraphPublished1Events {
+    #[prost(message, repeated, tag="1")]
+    pub subgraph_published1_events: ::prost::alloc::vec::Vec<SubgraphPublished1>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SubgraphPublished2Events {
+    #[prost(message, repeated, tag="1")]
+    pub subgraph_published2_events: ::prost::alloc::vec::Vec<SubgraphPublished2>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SubgraphVersionUpdatedEvents {
+    #[prost(message, repeated, tag="1")]
+    pub subgraph_version_updated_events: ::prost::alloc::vec::Vec<SubgraphVersionUpdated>,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct IndexerStakes {
     #[prost(message, repeated, tag="1")]
     pub indexer_stakes: ::prost::alloc::vec::Vec<IndexerStake>,
@@ -194,6 +212,12 @@ pub struct Events {
     pub epoch_length_updated_events: ::core::option::Option<EpochLengthUpdatedEvents>,
     #[prost(message, optional, tag="17")]
     pub rewards_deny_list_updated_events: ::core::option::Option<RewardsDenyListUpdatedEvents>,
+    #[prost(message, optional, tag="18")]
+    pub subgraph_published1_events: ::core::option::Option<SubgraphPublished1Events>,
+    #[prost(message, optional, tag="19")]
+    pub subgraph_published2_events: ::core::option::Option<SubgraphPublished2Events>,
+    #[prost(message, optional, tag="20")]
+    pub subgraph_version_updated_events: ::core::option::Option<SubgraphVersionUpdatedEvents>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -479,6 +503,50 @@ pub struct RewardsDenyListUpdated {
     #[prost(string, tag="2")]
     pub denied_at: ::prost::alloc::string::String,
     #[prost(uint64, tag="3")]
+    pub ordinal: u64,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SubgraphPublished1 {
+    #[prost(string, tag="1")]
+    pub id: ::prost::alloc::string::String,
+    #[prost(bytes="vec", tag="2")]
+    pub graph_account: ::prost::alloc::vec::Vec<u8>,
+    #[prost(string, tag="3")]
+    pub subgraph_number: ::prost::alloc::string::String,
+    #[prost(bytes="vec", tag="4")]
+    pub subgraph_deployment_id: ::prost::alloc::vec::Vec<u8>,
+    #[prost(bytes="vec", tag="5")]
+    pub version_metadata: ::prost::alloc::vec::Vec<u8>,
+    #[prost(uint64, tag="6")]
+    pub ordinal: u64,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SubgraphPublished2 {
+    #[prost(string, tag="1")]
+    pub id: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub subgraph_id: ::prost::alloc::string::String,
+    #[prost(bytes="vec", tag="3")]
+    pub subgraph_deployment_id: ::prost::alloc::vec::Vec<u8>,
+    #[prost(string, tag="4")]
+    pub reserve_ratio: ::prost::alloc::string::String,
+    #[prost(uint64, tag="5")]
+    pub ordinal: u64,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SubgraphVersionUpdated {
+    #[prost(string, tag="1")]
+    pub id: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub subgraph_id: ::prost::alloc::string::String,
+    #[prost(bytes="vec", tag="3")]
+    pub subgraph_deployment_id: ::prost::alloc::vec::Vec<u8>,
+    #[prost(bytes="vec", tag="4")]
+    pub version_metadata: ::prost::alloc::vec::Vec<u8>,
+    #[prost(uint64, tag="5")]
     pub ordinal: u64,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]

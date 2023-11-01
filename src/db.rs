@@ -611,3 +611,44 @@ pub fn epoch_change(
             .change(name, delta.new_value.to_string());
     }
 }
+
+pub fn subgraph_change(
+    version_count_deltas: Deltas<DeltaBigInt>,
+    entity_changes: &mut EntityChanges,
+) {
+    for delta in version_count_deltas.deltas {
+        entity_changes
+            .push_change(
+                "Subgraph",
+                &delta.key,
+                delta.ordinal,
+                Operation::Update, // Update will create the entity if it does not exist
+            )
+            .change("versionCount", delta);
+    }
+}
+
+pub fn version_change(version_deltas: Deltas<DeltaString>, entity_changes: &mut EntityChanges) {
+    for delta in version_deltas.deltas {
+        entity_changes
+            .push_change(
+                "Subgraph",
+                &delta.key,
+                delta.ordinal,
+                Operation::Update, // Update will create the entity if it does not exist
+            )
+            .change(
+                "subgraph",
+                &delta.key.as_str().split(":").nth(0).unwrap().to_string(),
+            )
+            .change(
+                "subgraphDeployment",
+                &delta.key.as_str().split(":").nth(1).unwrap().to_string(),
+            )
+            .change(
+                "version",
+                &delta.key.as_str().split(":").nth(2).unwrap().to_string(),
+            )
+            .change("createdAt", delta);
+    }
+}

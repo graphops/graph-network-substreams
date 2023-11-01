@@ -240,7 +240,7 @@ fn map_storage_changes(blk: eth::Block) -> Result<StorageChanges, Error> {
                     }
                 }
             }
-            if let Some(event) = abi::gns::events::SubgraphPublished::match_and_decode(&log) {
+            if let Some(event) = abi::gns::events::SubgraphPublished2::match_and_decode(&log) {
                 for storage_change in &call_view.call.storage_changes {
                     if storage_change.address.eq(&STAKING_CONTRACT) {
                         if storage_change.key
@@ -327,10 +327,13 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
     let mut allocation_created_events = vec![];
     let mut allocation_closed_events = vec![];
     let mut allocation_collected_events = vec![];
-    let mut pause_changed_events = vec![];
-    let mut partial_pause_changed_events = vec![];
+    let mut paused_changed_events = vec![];
+    let mut partial_paused_changed_events = vec![];
     let mut epoch_length_updated_events = vec![];
     let mut rewards_deny_list_updated_events = vec![];
+    let mut subgraph_published1_events = vec![];
+    let mut subgraph_published2_events = vec![];
+    let mut subgraph_version_updated_events = vec![];
 
     // Potentially consider adding log.index() to the IDs, to have them be truly unique in
     // transactions with potentially more than 1 of these messages
@@ -495,7 +498,7 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
                 ordinal: log.ordinal() as u64,
             });
         } else if let Some(event) = abi::controller::events::PauseChanged::match_and_decode(log) {
-            pause_changed_events.push(PauseChanged {
+            paused_changed_events.push(PauseChanged {
                 id: Hex(&log.receipt.transaction.hash).to_string(),
                 is_paused: event.is_paused,
                 ordinal: log.ordinal() as u64,
@@ -503,7 +506,7 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
         } else if let Some(event) =
             abi::controller::events::PartialPauseChanged::match_and_decode(log)
         {
-            partial_pause_changed_events.push(PartialPauseChanged {
+            partial_paused_changed_events.push(PartialPauseChanged {
                 id: Hex(&log.receipt.transaction.hash).to_string(),
                 is_paused: event.is_paused,
                 ordinal: log.ordinal() as u64,
@@ -517,6 +520,43 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
                 epoch_length: event.epoch_length.to_string(),
                 ordinal: log.ordinal() as u64,
             })
+        } else if let Some(event) = abi::gns::events::SubgraphPublished1::match_and_decode(log) {
+            subgraph_published1_events.push(SubgraphPublished1 {
+                id: Hex(&log.receipt.transaction.hash).to_string(),
+                graph_account: event.graph_account.to_vec(),
+                subgraph_number: event.subgraph_number.to_string(),
+                subgraph_deployment_id: event.subgraph_deployment_id.to_vec(),
+                version_metadata: event.version_metadata.to_vec(),
+                ordinal: log.ordinal() as u64,
+            })
+        }
+    }
+
+    for trx in blk.transactions() {
+        let mut transaction_hash = String::default();
+        for (log, call_view) in trx.logs_with_calls() {
+            if let Some(event) = abi::gns::events::SubgraphPublished2::match_and_decode(log) {
+                subgraph_published2_events.push(SubgraphPublished2 {
+                    id: Hex(&call_view.transaction.hash).to_string(),
+                    subgraph_id: event.subgraph_id.to_string(),
+                    subgraph_deployment_id: event.subgraph_deployment_id.to_vec(),
+                    reserve_ratio: event.reserve_ratio.to_string(),
+                    ordinal: log.ordinal as u64,
+                });
+                transaction_hash = Hex(&call_view.transaction.hash).to_string();
+            } else if let Some(event) =
+                abi::gns::events::SubgraphVersionUpdated::match_and_decode(log)
+            {
+                if transaction_hash != Hex(&call_view.transaction.hash).to_string() {
+                    subgraph_version_updated_events.push(SubgraphVersionUpdated {
+                        id: Hex(&call_view.transaction.hash).to_string(),
+                        subgraph_id: event.subgraph_id.to_string(),
+                        subgraph_deployment_id: event.subgraph_deployment_id.to_vec(),
+                        version_metadata: event.version_metadata.to_vec(),
+                        ordinal: log.ordinal as u64,
+                    })
+                }
+            }
         }
     }
 
@@ -524,56 +564,59 @@ fn map_events(blk: eth::Block) -> Result<Events, Error> {
     // due to the subgraph ID change/migration from address+index to nft id
     // Might be a bit tricky to support them.
 
-    events.transfers = Some(Transfers {
-        transfers: transfers,
-    });
+    events.transfers = Some(Transfers { transfers });
     events.stake_deposited_events = Some(StakeDepositedEvents {
-        stake_deposited_events: stake_deposited_events,
+        stake_deposited_events,
     });
     events.stake_withdrawn_events = Some(StakeWithdrawnEvents {
-        stake_withdrawn_events: stake_withdrawn_events,
+        stake_withdrawn_events,
     });
     events.stake_delegated_events = Some(StakeDelegatedEvents {
-        stake_delegated_events: stake_delegated_events,
+        stake_delegated_events,
     });
     events.stake_delegated_locked_events = Some(StakeDelegatedLockedEvents {
-        stake_delegated_locked_events: stake_delegated_locked_events,
+        stake_delegated_locked_events,
     });
     events.rebate_claimed_events = Some(RebateClaimedEvents {
-        rebate_claimed_events: rebate_claimed_events,
+        rebate_claimed_events,
     });
     events.delegation_parameters_updated_events = Some(DelegationParametersUpdatedEvents {
-        delegation_parameters_updated_events: delegation_parameters_updated_events,
+        delegation_parameters_updated_events,
     });
     events.rewards_assigned_events = Some(RewardsAssignedEvents {
-        rewards_assigned_events: rewards_assigned_events,
+        rewards_assigned_events,
     });
-    events.signalled_events = Some(SignalledEvents {
-        signalled_events: signalled_events,
-    });
-    events.burned_events = Some(BurnedEvents {
-        burned_events: burned_events,
-    });
+    events.signalled_events = Some(SignalledEvents { signalled_events });
+    events.burned_events = Some(BurnedEvents { burned_events });
     events.allocation_created_events = Some(AllocationCreatedEvents {
-        allocation_created_events: allocation_created_events,
+        allocation_created_events,
     });
     events.allocation_closed_events = Some(AllocationClosedEvents {
-        allocation_closed_events: allocation_closed_events,
+        allocation_closed_events,
     });
     events.allocation_collected_events = Some(AllocationCollectedEvents {
-        allocation_collected_events: allocation_collected_events,
+        allocation_collected_events,
     });
     events.pause_changed_events = Some(PauseChangedEvents {
-        paused_changed_events: pause_changed_events,
+        paused_changed_events,
     });
     events.partial_pause_changed_events = Some(PartialPauseChangedEvents {
-        partial_paused_changed_events: partial_pause_changed_events,
+        partial_paused_changed_events,
     });
     events.epoch_length_updated_events = Some(EpochLengthUpdatedEvents {
-        epoch_length_updated_events: epoch_length_updated_events,
+        epoch_length_updated_events,
     });
     events.rewards_deny_list_updated_events = Some(RewardsDenyListUpdatedEvents {
-        rewards_deny_list_updated_events: rewards_deny_list_updated_events,
+        rewards_deny_list_updated_events,
+    });
+    events.subgraph_published1_events = Some(SubgraphPublished1Events {
+        subgraph_published1_events,
+    });
+    events.subgraph_published2_events = Some(SubgraphPublished2Events {
+        subgraph_published2_events,
+    });
+    events.subgraph_version_updated_events = Some(SubgraphVersionUpdatedEvents {
+        subgraph_version_updated_events,
     });
     Ok(events)
 }
